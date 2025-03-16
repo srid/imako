@@ -1,7 +1,8 @@
 # imako
 
-> [!warning] WIP
-> imaka is not yet ready for any use.
+[いま](https://en.wiktionary.org/wiki/%E3%81%84%E3%81%BE) + [ここ](https://en.wiktionary.org/wiki/%E3%81%93%E3%81%93)
+
+TBD
 
 ## Running
 
