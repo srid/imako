@@ -1,5 +1,4 @@
 
 -- You can manually `git clone` the libraries at these path, if you are developping on them.
 optional-packages:
-  ./home-units/commonmark-simple
-  ./home-units/unionmount
+  ./home-units/*
