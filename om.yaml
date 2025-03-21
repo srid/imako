@@ -1,0 +1,33 @@
+ci:
+  default:
+    imaok:
+      dir: .
+      steps:
+        custom:
+          run-imako:
+            type: app
+            args:
+              - --run-once
+              - ./example
+health:
+  default:
+    nix-version:
+      supported: ">=2.16.0"
+    direnv:
+      required: true
+develop:
+  default:
+    readme: |
+      🍾 Welcome to the **imako** project
+
+      To run imako,
+
+      ```sh-session
+      just run
+      ```
+
+      (Now, as you edit the Haskell sources, the above will reload!)
+
+      🍎🍎 Run 'just' to see more commands. See <https://nixos.asia/en/vscode> for IDE setup.
+
+      See ./home-units for developping on dependent libraries.

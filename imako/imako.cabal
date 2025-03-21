@@ -79,5 +79,6 @@ common shared
   default-language:   GHC2021
 
 executable imako
-  import:  shared
-  main-is: Main.hs
+  import:        shared
+  main-is:       Main.hs
+  other-modules: Imako.CLI
