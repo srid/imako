@@ -10,6 +10,14 @@
 
     git-hooks.url = "github:cachix/git-hooks.nix";
     git-hooks.flake = false;
+
+    unionmount.url = "github:srid/unionmount";
+    unionmount.flake = false;
+    htmx.url = "github:JonathanLorimer/htmx";
+    htmx.flake = false;
+    co-log-effectful.url = "github:eldritch-cookie/co-log-effectful";
+    htmx-extensions.url = "github:juspay/htmx-extensions/sse-unload"; # https://github.com/bigskysoftware/htmx-extensions/pull/147
+    htmx-extensions.flake = false;
   };
 
   outputs = inputs:

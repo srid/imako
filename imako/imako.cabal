@@ -48,16 +48,29 @@ common shared
   build-depends:
     , aeson
     , async
-    , base          >=4   && <5
+    , base                   >=4   && <5
     , data-default
     , directory
     , filepath
+    , filepattern
+    , htmx
+    , htmx-lucid
+    , htmx-servant
+    , monad-logger
     , mtl
     , optics-core
+    , optparse-applicative
     , profunctors
-    , relude        >=1.0
+    , relude                 >=1.0
+    , servant
+    , servant-event-stream
+    , servant-server
     , shower
     , time
+    , unionmount             >=0.3
+    , unliftio-core
+    , wai-extra
+    , wai-middleware-static
     , with-utf8
 
   hs-source-dirs:     src
