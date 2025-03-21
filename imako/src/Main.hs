@@ -15,7 +15,7 @@ main :: IO ()
 main = do
   Utf8.withUtf8 $ do
     runStdoutLoggingT $ do
-      let baseDir = "/Users/srid/Documents/Perdurable/Text"
+      baseDir <- liftIO parseArgs
       (model0, modelF) <- UM.mount baseDir (one ((), "*.md")) [] mempty (const $ handlePathUpdate baseDir)
       liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Map.size model0) <> "; sample = " <> show (take 4 $ Map.keys model0)
       modelVar <- newTVarIO model0
@@ -32,3 +32,10 @@ handlePathUpdate baseDir path action = do
       pure $ Map.insert path doc
     UM.Delete -> do
       pure $ Map.delete path
+
+parseArgs :: IO FilePath
+parseArgs = do
+  args <- getArgs
+  case args of
+    [path] -> pure path
+    _ -> die "Usage: imako <path>"

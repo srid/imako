@@ -4,6 +4,7 @@ default:
 import 'home-units/mod.just'
 
 CABAL_REPL_ARGS:="--enable-multi-repl $MULTI_REPL_LIBRARIES"
+NOTEBOOK:="/Users/srid/Documents/Perdurable/Text"
 
 # Run hoogle
 docs:
@@ -16,4 +17,4 @@ repl *ARGS:
 
 # Run ghcid -- auto-recompile and run `main` function
 run:
-    ghcid -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }}'
+    ghcid -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }}' --setup ":set args {{ NOTEBOOK }}"
