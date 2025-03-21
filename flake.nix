@@ -15,6 +15,8 @@
     unionmount.flake = false;
     commonmark-simple.url = "github:srid/commonmark-simple";
     commonmark-simple.flake = false;
+    commonmark-wikilink.url = "github:srid/commonmark-wikilink";
+    commonmark-wikilink.flake = false;
 
     htmx.url = "github:JonathanLorimer/htmx";
     htmx.flake = false;

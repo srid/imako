@@ -59,6 +59,7 @@ common shared
     , htmx-servant
     , monad-logger
     , mtl
+    , ob
     , optics-core
     , optparse-applicative
     , pandoc-types

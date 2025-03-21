@@ -39,6 +39,22 @@
         "type": "github"
       }
     },
+    "commonmark-wikilink": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1738248145,
+        "narHash": "sha256-UN2Nh+uf+DzM336Ojzr6YZV4RJy8BPx9Q5GZpax3wt0=",
+        "owner": "srid",
+        "repo": "commonmark-wikilink",
+        "rev": "1d7aa327fb33b41f3c4899d5b29aa122780c900f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "commonmark-wikilink",
+        "type": "github"
+      }
+    },
     "devshell": {
       "inputs": {
         "nixpkgs": [
@@ -307,6 +323,7 @@
       "inputs": {
         "co-log-effectful": "co-log-effectful",
         "commonmark-simple": "commonmark-simple",
+        "commonmark-wikilink": "commonmark-wikilink",
         "flake-parts": "flake-parts_2",
         "fourmolu-nix": "fourmolu-nix",
         "git-hooks": "git-hooks",
