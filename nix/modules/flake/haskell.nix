@@ -12,6 +12,7 @@
         inherit root;
         fileset = lib.fileset.unions [
           (root + /imako)
+          (root + /ob)
           (root + /cabal.project)
           (root + /LICENSE)
           (root + /README.md)
@@ -23,6 +24,7 @@
       packages = {
         unionmount.source = inputs.unionmount;
         commonmark-simple.source = inputs.commonmark-simple;
+        commonmark-wikilink.source = inputs.commonmark-wikilink;
 
         htmx.source = inputs.htmx + /htmx;
         htmx-lucid.source = inputs.htmx + /htmx-lucid;
