@@ -1,7 +1,9 @@
 default:
     @just --list
 
-CABAL_REPL_ARGS:="--enable-multi-repl imako commonmark-simple"
+import 'home-units/mod.just'
+
+CABAL_REPL_ARGS:="--enable-multi-repl $MULTI_REPL_LIBRARIES"
 
 # Run hoogle
 docs:

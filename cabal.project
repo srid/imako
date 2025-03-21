@@ -3,6 +3,4 @@ packages:
 
 -- Nix won't recognize the settings below, because haskell-flake doesn't.
 
--- You can manually `git clone` the libraries at these path, if you are developping on them.
-optional-packages:
-  ./libraries/commonmark-simple
+import: ./home-units/cabal.project
