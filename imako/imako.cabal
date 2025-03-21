@@ -49,6 +49,7 @@ common shared
     , aeson
     , async
     , base                   >=4   && <5
+    , commonmark-simple
     , data-default
     , directory
     , filepath
@@ -60,6 +61,7 @@ common shared
     , mtl
     , optics-core
     , optparse-applicative
+    , pandoc-types
     , profunctors
     , relude                 >=1.0
     , servant

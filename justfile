@@ -1,7 +1,7 @@
 default:
     @just --list
 
-CABAL_REPL_ARGS:="--enable-multi-repl imako"
+CABAL_REPL_ARGS:="--enable-multi-repl imako commonmark-simple"
 
 # Run hoogle
 docs:
