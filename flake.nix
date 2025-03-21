@@ -13,6 +13,9 @@
 
     unionmount.url = "github:srid/unionmount";
     unionmount.flake = false;
+    commonmark-simple.url = "github:srid/commonmark-simple";
+    commonmark-simple.flake = false;
+
     htmx.url = "github:JonathanLorimer/htmx";
     htmx.flake = false;
     co-log-effectful.url = "github:eldritch-cookie/co-log-effectful";

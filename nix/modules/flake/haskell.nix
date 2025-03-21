@@ -3,7 +3,7 @@
   imports = [
     inputs.haskell-flake.flakeModule
   ];
-  perSystem = { self', lib, config, pkgs, ... }: {
+  perSystem = { self', lib, ... }: {
     haskellProjects.default = {
       projectFlakeName = "imako-monorepo";
       # To avoid unnecessary rebuilds, we filter projectRoot:
@@ -22,6 +22,7 @@
 
       packages = {
         unionmount.source = inputs.unionmount;
+        commonmark-simple.source = inputs.commonmark-simple;
 
         htmx.source = inputs.htmx + /htmx;
         htmx-lucid.source = inputs.htmx + /htmx-lucid;
