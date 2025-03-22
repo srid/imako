@@ -17,5 +17,5 @@ main = do
     options <- liftIO $ execParser CLI.opts
     if options.runOnce
       then void $ Ob.getNotebook options.path
-      else Ob.withNotebook options.path $ \_notebook -> do
+      else Ob.withLiveNotebook options.path $ \_notebook -> do
         pass

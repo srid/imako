@@ -6,7 +6,7 @@ module Ob (
   Note,
   Notebook,
   getNotebook,
-  withNotebook,
+  withLiveNotebook,
 )
 where
 
@@ -31,8 +31,8 @@ getNotebook path = do
     liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Map.size model0) <> "; sample = " <> show (take 4 $ Map.keys model0)
     pure model0
 
-withNotebook :: FilePath -> (TVar Notebook -> IO ()) -> IO ()
-withNotebook path f = do
+withLiveNotebook :: FilePath -> (TVar Notebook -> IO ()) -> IO ()
+withLiveNotebook path f = do
   runStdoutLoggingT $ do
     (model0, modelF) <- UM.mount path (one ((), "*.md")) [] mempty (const $ handlePathUpdate path)
     liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Map.size model0) <> "; sample = " <> show (take 4 $ Map.keys model0)
