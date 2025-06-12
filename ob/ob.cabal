@@ -45,7 +45,7 @@ library
   build-depends:
     , aeson
     , async
-    , base                 ^>=4.18.2.1
+    , base
     , commonmark-simple
     , commonmark-wikilink
     , containers
@@ -71,5 +71,5 @@ test-suite ob-test
   hs-source-dirs:   test
   main-is:          Main.hs
   build-depends:
-    , base  ^>=4.18.2.1
+    , base
     , ob
