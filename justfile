@@ -4,7 +4,7 @@ default:
 import 'home-units/mod.just'
 
 CABAL_REPL_ARGS:="--enable-multi-repl $MULTI_REPL_LIBRARIES"
-NOTEBOOK:="/Users/srid/Documents/Perdurable/Text"
+NOTEBOOK:="/Users/srid/Dropbox/Notes"
 
 # Run hoogle
 docs:
