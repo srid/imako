@@ -10,11 +10,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [x86_64-linux, aarch64-darwin]
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - name: Install omnix
-        run: nix --accept-flake-config profile install "github:juspay/omnix"
       - name: Build all flake outputs
         run: om ci
