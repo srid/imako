@@ -11,8 +11,8 @@
       projectRoot = builtins.toString (lib.fileset.toSource {
         inherit root;
         fileset = lib.fileset.unions [
-          (root + /imako)
-          (root + /ob)
+          (root + /packages/imako)
+          (root + /packages/ob)
           (root + /cabal.project)
           (root + /LICENSE)
           (root + /README.md)

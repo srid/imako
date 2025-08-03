@@ -1,6 +1,6 @@
 packages:
-  ./imako
-  ./ob
+  ./packages/imako
+  ./packages/ob
 
 -- Nix won't recognize the settings below, because haskell-flake doesn't.
 
