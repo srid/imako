@@ -18,24 +18,9 @@
         ];
       });
 
-      packages = {
-        unionmount.source = inputs.unionmount;
-        commonmark-simple.source = inputs.commonmark-simple;
-        commonmark-wikilink.source = inputs.commonmark-wikilink;
-
-        htmx.source = inputs.htmx + /htmx;
-        htmx-lucid.source = inputs.htmx + /htmx-lucid;
-        htmx-servant.source = inputs.htmx + /htmx-servant;
-      };
-
-      # Add your package overrides here
       settings = {
         imako = {
           stan = true;
-        };
-
-        servant-event-stream = {
-          broken = false;
         };
       };
 
