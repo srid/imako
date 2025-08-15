@@ -31,6 +31,10 @@ getNotebook path = do
     liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Map.size model0) <> "; sample = " <> show (take 4 $ Map.keys model0)
     pure model0
 
+{- | Calls `f` with a `TVar` of `Notebook` reflecting its current state in real-time.
+
+Uses `System.UnionMount` to monitor the filesystem for changes.
+-}
 withLiveNotebook :: FilePath -> (TVar Notebook -> IO ()) -> IO ()
 withLiveNotebook path f = do
   runStdoutLoggingT $ do

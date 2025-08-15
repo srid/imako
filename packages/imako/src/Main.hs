@@ -1,4 +1,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use if" #-}
 
 module Main where
 
@@ -15,7 +18,10 @@ main :: IO ()
 main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
-    if options.runOnce
-      then void $ Ob.getNotebook options.path
-      else Ob.withLiveNotebook options.path $ \_notebook -> do
+    case options.runOnce of
+      True -> do
+        _notebook <- Ob.getNotebook options.path
         pass
+      False -> do
+        Ob.withLiveNotebook options.path $ \_notebook -> do
+          pass

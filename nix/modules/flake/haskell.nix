@@ -11,15 +11,12 @@
       projectRoot = builtins.toString (lib.fileset.toSource {
         inherit root;
         fileset = lib.fileset.unions [
-          (root + /packages/imako)
-          (root + /packages/ob)
+          (root + /packages)
           (root + /cabal.project)
           (root + /LICENSE)
           (root + /README.md)
         ];
       });
-
-      # basePackages = pkgs.haskellPackages;
 
       packages = {
         unionmount.source = inputs.unionmount;
