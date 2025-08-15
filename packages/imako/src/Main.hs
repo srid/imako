@@ -55,19 +55,20 @@ page nodes edges = html_ $ do
     script_ [src_ "https://unpkg.com/htmx.org@1.9.10"] ("" :: Text)
 
   body_ [class_ "bg-gray-50 min-h-screen p-4"] $
-    div_ [class_ "max-w-6xl mx-auto"] $ do
+    div_ [class_ "max-w-4xl mx-auto text-center"] $ do
+      h1_ [class_ "text-3xl font-bold text-gray-800 mb-8"] "Imako"
       searchBox
       grid nodes edges
 
 -- | Search-style input box
 searchBox :: Html ()
 searchBox =
-  form_ [hxPost_ "/add-node", hxTarget_ "#grid", hxSwap_ "outerHTML", class_ "mb-6"] $
+  form_ [hxPost_ "/add-node", hxTarget_ "#grid", hxSwap_ "outerHTML", class_ "mb-8"] $
     input_
       [ type_ "text"
       , name_ "body"
       , placeholder_ "Take a note..."
-      , class_ "w-full max-w-md p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+      , class_ "max-w-md p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mx-auto"
       , required_ ""
       ]
 
