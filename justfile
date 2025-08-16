@@ -18,3 +18,6 @@ repl *ARGS:
 # Run ghcid -- auto-recompile and run `main` function
 run:
     ghcid -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }}' --setup ":set args {{ NOTEBOOK }}"
+
+resetdb:
+    rm -rf ./packages/imako/state

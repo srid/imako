@@ -24,7 +24,7 @@ extra-source-files:
 
 common shared
   ghc-options:
-    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Werror -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wmissing-deriving-strategies -Wunused-foralls -Wunused-foralls
     -fprint-explicit-foralls -fprint-explicit-kinds
 
@@ -46,29 +46,15 @@ common shared
     ViewPatterns
 
   build-depends:
-    , aeson
-    , async
+    , acid-state
     , base
-    , data-default
-    , directory
-    , filepath
-    , filepattern
-    , htmx
+    , containers
     , htmx-lucid
     , lucid2
-    , monad-logger
-    , mtl
-    , optics-core
-    , optparse-applicative
-    , pandoc-types
-    , profunctors
-    , relude                 >=1.0
+    , relude      >=1.0
+    , safecopy
     , scotty
-    , shower
-    , time
-    , unliftio-core
-    , wai-extra
-    , wai-middleware-static
+    , uuid
     , with-utf8
 
   hs-source-dirs:     src
@@ -77,4 +63,4 @@ common shared
 executable imako
   import:        shared
   main-is:       Main.hs
-  other-modules: Imako.CLI
+  other-modules: Imako.GraphDB
