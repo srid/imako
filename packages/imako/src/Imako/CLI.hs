@@ -3,9 +3,8 @@ module Imako.CLI where
 import Options.Applicative
 
 -- Define the data structure to hold parsed arguments
-data Options = Options
-  { runOnce :: Bool
-  , path :: FilePath
+newtype Options = Options
+  { path :: FilePath
   }
   deriving stock (Show)
 
@@ -13,11 +12,7 @@ data Options = Options
 optionsParser :: Parser Options
 optionsParser =
   Options
-    <$> switch
-      ( long "run-once"
-          <> help "Run the program once and exit"
-      )
-    <*> argument
+    <$> argument
       str
       ( metavar "PATH"
           <> help "Path to notebook"
@@ -29,5 +24,6 @@ opts =
   info
     (optionsParser <**> helper)
     ( fullDesc
-        <> header "Imako"
+        <> header "Imako - Notebook Web Viewer"
+        <> progDesc "Start a web server to view your notebook at http://localhost:3000"
     )

@@ -57,6 +57,8 @@ common shared
     , htmx
     , htmx-lucid
     , htmx-servant
+    , http-types
+    , lucid2
     , monad-logger
     , mtl
     , ob
@@ -65,6 +67,7 @@ common shared
     , pandoc-types
     , profunctors
     , relude                 >=1.0
+    , scotty
     , servant
     , servant-event-stream
     , servant-server
