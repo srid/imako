@@ -23,6 +23,9 @@
     co-log-effectful.url = "github:eldritch-cookie/co-log-effectful";
     htmx-extensions.url = "github:juspay/htmx-extensions/sse-unload"; # https://github.com/bigskysoftware/htmx-extensions/pull/147
     htmx-extensions.flake = false;
+    # https://github.com/bflyblue/servant-event-stream/pull/13
+    servant-event-stream.url = "github:bflyblue/servant-event-stream";
+    servant-event-stream.flake = false;
   };
 
   outputs = inputs:

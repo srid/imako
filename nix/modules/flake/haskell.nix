@@ -26,6 +26,7 @@
         htmx.source = inputs.htmx + /htmx;
         htmx-lucid.source = inputs.htmx + /htmx-lucid;
         htmx-servant.source = inputs.htmx + /htmx-servant;
+        servant-event-stream.source = inputs.servant-event-stream;
       };
 
       # Add your package overrides here
@@ -34,9 +35,7 @@
           stan = true;
         };
 
-        servant-event-stream = {
-          broken = false;
-        };
+
       };
 
       # Development shell configuration
