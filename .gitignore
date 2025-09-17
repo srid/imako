@@ -12,5 +12,3 @@ result-*
 .direnv
 
 /.pre-commit-config.yaml
-
-/packages/imako/state
