@@ -10,6 +10,19 @@
 
     git-hooks.url = "github:cachix/git-hooks.nix";
     git-hooks.flake = false;
+
+    unionmount.url = "github:srid/unionmount";
+    unionmount.flake = false;
+    commonmark-simple.url = "github:srid/commonmark-simple";
+    commonmark-simple.flake = false;
+    commonmark-wikilink.url = "github:srid/commonmark-wikilink";
+    commonmark-wikilink.flake = false;
+
+    htmx.url = "github:JonathanLorimer/htmx";
+    htmx.flake = false;
+    co-log-effectful.url = "github:eldritch-cookie/co-log-effectful";
+    htmx-extensions.url = "github:juspay/htmx-extensions/sse-unload"; # https://github.com/bigskysoftware/htmx-extensions/pull/147
+    htmx-extensions.flake = false;
   };
 
   outputs = inputs:

@@ -49,23 +49,28 @@ common shared
     , aeson
     , async
     , base
+    , commonmark-simple
     , data-default
     , directory
     , filepath
     , filepattern
     , htmx
     , htmx-lucid
-    , lucid2
+    , htmx-servant
     , monad-logger
     , mtl
+    , ob
     , optics-core
     , optparse-applicative
     , pandoc-types
     , profunctors
     , relude                 >=1.0
-    , scotty
+    , servant
+    , servant-event-stream
+    , servant-server
     , shower
     , time
+    , unionmount             >=0.3
     , unliftio-core
     , wai-extra
     , wai-middleware-static
