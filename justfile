@@ -4,7 +4,7 @@ default:
 import 'home-units/mod.just'
 
 CABAL_REPL_ARGS:="--enable-multi-repl $MULTI_REPL_LIBRARIES"
-NOTEBOOK:="./example"
+NOTEBOOK:="$HOME/Dropbox/Vault"
 
 # Run hoogle
 docs:
