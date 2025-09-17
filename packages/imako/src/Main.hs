@@ -15,7 +15,9 @@ import Network.HTTP.Types.Status (status404)
 import Ob qualified
 import Options.Applicative (execParser)
 import System.FilePath (takeBaseName)
+import Text.Pandoc (runPure, writeHtml5String)
 import Text.Pandoc.Definition (Pandoc)
+import Text.Pandoc.Options (def)
 import Web.Scotty qualified as S
 
 type Note = Either Text (Maybe Aeson.Value, Pandoc)
@@ -99,5 +101,14 @@ noteView path note =
               h4_ [class_ "font-semibold text-gray-700 mb-2"] "Frontmatter:"
               pre_ [class_ "text-sm text-gray-600"] $ toHtml (show fm :: Text)
           Nothing -> mempty
-        div_ [class_ "prose max-w-none"] $ do
-          p_ [class_ "text-gray-700"] $ toHtml (show pandoc :: Text)
+        div_ [class_ "prose prose-sm max-w-none prose-headings:text-gray-800 prose-p:text-gray-700 prose-a:text-blue-600 prose-code:text-pink-600 prose-pre:bg-gray-100"] $ do
+          case renderPandocToHtml pandoc of
+            Left err -> p_ [class_ "text-red-500"] $ toHtml ("Error rendering content: " <> err)
+            Right htmlContent -> toHtmlRaw htmlContent
+
+-- | Convert Pandoc document to HTML string
+renderPandocToHtml :: Pandoc -> Either Text Text
+renderPandocToHtml pandoc =
+  case runPure (writeHtml5String def pandoc) of
+    Left err -> Left $ show err
+    Right html -> Right html

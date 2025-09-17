@@ -64,6 +64,7 @@ common shared
     , ob
     , optics-core
     , optparse-applicative
+    , pandoc
     , pandoc-types
     , profunctors
     , relude                 >=1.0
