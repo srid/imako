@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Ob.TaskSpec where
 
 import Ob.Markdown (parseMarkdown)
@@ -21,10 +23,8 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "test.md" pandoc
-          length tasks `shouldBe` 3
-
-          let taskTexts = map (extractText . description) tasks
-              completions = map isCompleted tasks
-
-          taskTexts `shouldBe` ["Incomplete task", "Completed task", "Another incomplete task"]
-          completions `shouldBe` [False, True, False]
+          map (\t -> (extractText t.description, t.isCompleted)) tasks
+            `shouldBe` [ ("Incomplete task", False)
+                       , ("Completed task", True)
+                       , ("Another incomplete task", False)
+                       ]

@@ -33,14 +33,18 @@ extractFromItem sourcePath = \case
 -- | Extract task from inline elements
 extractFromInlines :: FilePath -> [Inline] -> [Task]
 extractFromInlines sourcePath = \case
-  -- Handle Unicode checkbox characters (what commonmark outputs)
-  Str "\9744" : Space : rest -> [Task rest sourcePath False]
-  Str "\9746" : Space : rest -> [Task rest sourcePath True]
-  -- Fallback patterns for other possible representations
-  Str "[ ]" : Space : rest -> [Task rest sourcePath False]
-  Str "[x]" : Space : rest -> [Task rest sourcePath True]
-  Str "[X]" : Space : rest -> [Task rest sourcePath True]
+  Str marker : Space : rest
+    | Just completed <- parseCheckbox marker ->
+        [Task rest sourcePath completed]
   _ -> []
+  where
+    parseCheckbox = \case
+      "\9744" -> Just False -- Unicode unchecked
+      "\9746" -> Just True -- Unicode checked
+      "[ ]" -> Just False -- ASCII unchecked
+      "[x]" -> Just True -- ASCII checked lowercase
+      "[X]" -> Just True -- ASCII checked uppercase
+      _ -> Nothing
 
 -- | Extract plain text from inline elements
 extractText :: [Inline] -> Text
