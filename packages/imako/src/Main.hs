@@ -10,9 +10,8 @@ import Imako.CLI qualified as CLI
 import Imako.UI.Components (taskItem, titleBar)
 import Lucid
 import Main.Utf8 qualified as Utf8
-import Ob (Notebook (..), Task (..))
+import Ob (Notebook (..))
 import Ob qualified
-import Ob.Task (extractText)
 import Options.Applicative (execParser)
 import Web.Scotty qualified as S
 
@@ -42,7 +41,7 @@ main = do
                 h2_ [class_ "text-lg font-semibold mb-2"] "Tasks"
                 div_ $
                   forM_ (tasks notebook) $ \task ->
-                    taskItem (extractText task.description) task.sourceNote task.isCompleted
+                    taskItem task
 
               -- Notes section
               div_ $ do

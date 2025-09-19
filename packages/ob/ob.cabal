@@ -60,6 +60,7 @@ library
     , pandoc-types
     , relude
     , stm
+    , time
     , unionmount
     , unliftio
 
