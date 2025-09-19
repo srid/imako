@@ -25,15 +25,24 @@ extractTasks sourcePath = query extractFromBlock
 
 -- | Extract task from a list item
 extractFromItem :: FilePath -> [Block] -> [Task]
-extractFromItem sourcePath [Plain (Str "☐" : Space : rest)] =
-  [Task (extractText rest) sourcePath False]
-extractFromItem sourcePath [Plain (Str "☑" : Space : rest)] =
-  [Task (extractText rest) sourcePath True]
-extractFromItem sourcePath [Plain (Str "[ ]" : Space : rest)] =
-  [Task (extractText rest) sourcePath False]
-extractFromItem sourcePath [Plain (Str "[x]" : Space : rest)] =
-  [Task (extractText rest) sourcePath True]
+extractFromItem sourcePath [Plain inlines] = extractFromInlines sourcePath inlines
 extractFromItem _ _ = []
+
+-- | Extract task from inline elements
+extractFromInlines :: FilePath -> [Inline] -> [Task]
+-- Handle Unicode checkbox characters (what commonmark outputs)
+extractFromInlines sourcePath (Str "\9744" : Space : rest) =
+  [Task (extractText rest) sourcePath False]
+extractFromInlines sourcePath (Str "\9746" : Space : rest) =
+  [Task (extractText rest) sourcePath True]
+-- Fallback patterns for other possible representations
+extractFromInlines sourcePath (Str "[ ]" : Space : rest) =
+  [Task (extractText rest) sourcePath False]
+extractFromInlines sourcePath (Str "[x]" : Space : rest) =
+  [Task (extractText rest) sourcePath True]
+extractFromInlines sourcePath (Str "[X]" : Space : rest) =
+  [Task (extractText rest) sourcePath True]
+extractFromInlines _ _ = []
 
 -- | Extract plain text from inline elements
 extractText :: [Inline] -> Text

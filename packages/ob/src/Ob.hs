@@ -11,10 +11,10 @@ module Ob (
 )
 where
 
-import Commonmark.Simple qualified as CM
 import Control.Monad.Logger (runStdoutLoggingT)
 import Data.Aeson qualified as Aeson
 import Data.Map.Strict qualified as Map
+import Ob.Markdown (parseMarkdown)
 import Ob.Task (Task (..), extractTasks)
 import System.FilePath ((</>))
 import System.UnionMount qualified as UM
@@ -71,6 +71,6 @@ handleMarkdownFile baseDir path = \case
 parseNote :: (MonadIO m) => FilePath -> m Note
 parseNote path = do
   s <- decodeUtf8 <$> readFileBS path
-  case CM.parseMarkdownWithFrontMatter @Aeson.Value CM.fullMarkdownSpec path s of
+  case parseMarkdown path s of
     Left err -> die $ show err
     Right (meta, content) -> pure $ Note meta content

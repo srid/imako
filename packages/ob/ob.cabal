@@ -22,7 +22,11 @@ common warnings
 
 library
   import:             warnings
-  exposed-modules:    Ob
+  exposed-modules:
+    Ob
+    Ob.Markdown
+    Ob.Task
+
   mixins:
     base hiding (Prelude),
     relude (Relude as Prelude, Relude.Container.One),
@@ -62,14 +66,37 @@ library
   default-language:   GHC2021
 
 test-suite ob-test
-  import:           warnings
-  default-language: GHC2021
+  import:             warnings
+  default-language:   GHC2021
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude, Relude.Container.One),
+    relude
 
-  -- other-modules:
+  default-extensions:
+    DataKinds
+    DerivingStrategies
+    DerivingVia
+    LambdaCase
+    MultiWayIf
+    NoStarIsType
+    OverloadedStrings
+    StrictData
+    TypeFamilies
+    ViewPatterns
+
+  other-modules:      Ob.TaskSpec
+
   -- other-extensions:
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Main.hs
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            Spec.hs
   build-depends:
+    , aeson
     , base
+    , commonmark-simple
+    , filepath
+    , hspec
+    , hspec-discover
     , ob
+    , relude
