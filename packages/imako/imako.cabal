@@ -86,4 +86,6 @@ common shared
 executable imako
   import:        shared
   main-is:       Main.hs
-  other-modules: Imako.CLI
+  other-modules:
+    Imako.CLI
+    Imako.UI.Components
