@@ -7,9 +7,10 @@ module Main where
 
 import Data.Map.Strict qualified as Map
 import Imako.CLI qualified as CLI
-import Imako.UI.Components (titleBar)
+import Imako.UI.Components (taskItem, titleBar)
 import Lucid
 import Main.Utf8 qualified as Utf8
+import Ob (Notebook (..), Task (..))
 import Ob qualified
 import Options.Applicative (execParser)
 import Web.Scotty qualified as S
@@ -29,7 +30,22 @@ main = do
               titleBar $ do
                 "Imako: "
                 small_ $ code_ $ toHtml options.path
-              div_ [class_ "text-right text-gray-600"] $ toHtml (show (Map.size notebook) :: Text) <> " notes"
-              div_ [class_ "font-mono"] $
-                forM_ (Map.toList notebook) $ \(key, _note) ->
-                  div_ [class_ "p-2 border border-gray-300"] $ toHtml key
+              div_ [class_ "text-right text-gray-600"] $
+                toHtml (show (length (tasks notebook)) :: Text)
+                  <> " tasks, "
+                  <> toHtml (show (Map.size (notes notebook)) :: Text)
+                  <> " notes"
+
+              -- Tasks section (displayed first)
+              div_ $ do
+                h2_ [class_ "text-lg font-semibold mb-2"] "Tasks"
+                div_ $
+                  forM_ (tasks notebook) $ \task ->
+                    taskItem (taskText task) (sourceNote task) (isCompleted task)
+
+              -- Notes section
+              div_ $ do
+                h2_ [class_ "text-lg font-semibold mb-2"] "Notes"
+                div_ [class_ "font-mono"] $
+                  forM_ (Map.toList (notes notebook)) $ \(key, _note) ->
+                    div_ [class_ "p-2 border border-gray-300"] $ toHtml key
