@@ -16,23 +16,14 @@ spec = do
               , "- [X] Completed task"
               , "- [ ] Another incomplete task"
               ]
-          testFilePath = "test.md"
 
-      case parseMarkdown testFilePath markdownContent of
+      case parseMarkdown "test.md" markdownContent of
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
-          let tasks = extractTasks testFilePath pandoc
-          length tasks `shouldBe` 3
-
-          let incompleteTasks = filter (not . isCompleted) tasks
-          let completedTasks = filter isCompleted tasks
-
-          length incompleteTasks `shouldBe` 2
-          length completedTasks `shouldBe` 1
-
-          case viaNonEmpty head incompleteTasks of
-            Just task -> taskText task `shouldBe` "Incomplete task"
-            Nothing -> expectationFailure "No incomplete tasks found"
-          case viaNonEmpty head completedTasks of
-            Just task -> taskText task `shouldBe` "Completed task"
-            Nothing -> expectationFailure "No completed tasks found"
+          let tasks = extractTasks "test.md" pandoc
+              expected =
+                [ Task "Incomplete task" "test.md" False
+                , Task "Completed task" "test.md" True
+                , Task "Another incomplete task" "test.md" False
+                ]
+          tasks `shouldBe` expected
