@@ -21,9 +21,10 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "test.md" pandoc
-              expected =
-                [ Task "Incomplete task" "test.md" False
-                , Task "Completed task" "test.md" True
-                , Task "Another incomplete task" "test.md" False
-                ]
-          tasks `shouldBe` expected
+          length tasks `shouldBe` 3
+
+          let taskTexts = map (extractText . description) tasks
+              completions = map isCompleted tasks
+
+          taskTexts `shouldBe` ["Incomplete task", "Completed task", "Another incomplete task"]
+          completions `shouldBe` [False, True, False]

@@ -99,4 +99,5 @@ test-suite ob-test
     , hspec
     , hspec-discover
     , ob
+    , pandoc-types
     , relude

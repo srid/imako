@@ -12,6 +12,7 @@ import Lucid
 import Main.Utf8 qualified as Utf8
 import Ob (Notebook (..), Task (..))
 import Ob qualified
+import Ob.Task (extractText)
 import Options.Applicative (execParser)
 import Web.Scotty qualified as S
 
@@ -41,7 +42,7 @@ main = do
                 h2_ [class_ "text-lg font-semibold mb-2"] "Tasks"
                 div_ $
                   forM_ (tasks notebook) $ \task ->
-                    taskItem (taskText task) (sourceNote task) (isCompleted task)
+                    taskItem (extractText task.description) task.sourceNote task.isCompleted
 
               -- Notes section
               div_ $ do

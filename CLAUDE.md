@@ -2,7 +2,7 @@
 Load this into your context:
 - Read `README.md`'s "Architecture" section
 - We use `Relude` *not* the Haskell `Prelude`.
-- Always use `nix develop -c` to run build commands.
+- Always use `nix develop -c` to run build commands, which is generally: `cabal build all && cabal test all`
 
 # UX Guidelines
 

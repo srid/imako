@@ -1,6 +1,7 @@
 module Ob.Task (
   Task (..),
   extractTasks,
+  extractText,
 )
 where
 
@@ -8,7 +9,7 @@ import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc)
 import Text.Pandoc.Walk (query)
 
 data Task = Task
-  { taskText :: Text
+  { description :: [Inline]
   , sourceNote :: FilePath
   , isCompleted :: Bool
   }
@@ -33,12 +34,12 @@ extractFromItem sourcePath = \case
 extractFromInlines :: FilePath -> [Inline] -> [Task]
 extractFromInlines sourcePath = \case
   -- Handle Unicode checkbox characters (what commonmark outputs)
-  Str "\9744" : Space : rest -> [Task (extractText rest) sourcePath False]
-  Str "\9746" : Space : rest -> [Task (extractText rest) sourcePath True]
+  Str "\9744" : Space : rest -> [Task rest sourcePath False]
+  Str "\9746" : Space : rest -> [Task rest sourcePath True]
   -- Fallback patterns for other possible representations
-  Str "[ ]" : Space : rest -> [Task (extractText rest) sourcePath False]
-  Str "[x]" : Space : rest -> [Task (extractText rest) sourcePath True]
-  Str "[X]" : Space : rest -> [Task (extractText rest) sourcePath True]
+  Str "[ ]" : Space : rest -> [Task rest sourcePath False]
+  Str "[x]" : Space : rest -> [Task rest sourcePath True]
+  Str "[X]" : Space : rest -> [Task rest sourcePath True]
   _ -> []
 
 -- | Extract plain text from inline elements
