@@ -21,3 +21,8 @@ just run
 ## Plan
 
 This will be a monorepo of relevant Haskell libraries to begin with, well before imako development begins.
+
+## Repository architecture
+
+- `packages/ob`: Haskell library for working with Obsidian vaults
+- `packages/imako`: Main Imako application (uses `ob`)
