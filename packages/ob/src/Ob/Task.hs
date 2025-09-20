@@ -6,18 +6,10 @@ module Ob.Task (
 )
 where
 
-import Data.Time (Day, defaultTimeLocale, parseTimeM)
+import Data.Time (Day)
+import Ob.Task.Properties (Priority (..), TaskParseState (..), parseInlineSequence)
 import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc)
 import Text.Pandoc.Walk (query)
-
-data Priority
-  = Highest -- ⏫
-  | High -- 🔺
-  | Medium -- 🔼
-  | Normal -- (no symbol)
-  | Low -- 🔽
-  | Lowest -- ⏬
-  deriving (Show, Eq, Ord)
 
 data Task = Task
   { description :: [Inline]
@@ -66,66 +58,18 @@ extractFromInlines sourcePath = \case
 -- | Parse task with obsidian-tasks metadata
 parseTaskWithMetadata :: [Inline] -> FilePath -> Bool -> Task
 parseTaskWithMetadata taskInlines sourcePath completed =
-  Task
-    { description = filterMetadata taskInlines
-    , inlines = taskInlines
-    , sourceNote = sourcePath
-    , isCompleted = completed
-    , scheduledDate = extractDate "⏳" taskInlines
-    , dueDate = extractDate "📅" taskInlines
-    , completedDate = if completed then extractDate "✅" taskInlines else Nothing
-    , priority = extractPriority taskInlines
-    , tags = extractTags taskInlines
-    }
-
--- | Filter out obsidian-tasks metadata from description
-filterMetadata :: [Inline] -> [Inline]
-filterMetadata = cleanupSpaces . filter (not . isMetadata)
-  where
-    isMetadata (Str s) = s `elem` metadataMarkers
-    isMetadata _ = False
-
-    metadataMarkers =
-      ["⏳", "📅", "✅", "🔺", "⏫", "🔼", "🔽", "⏬"]
-        ++ ["2024-01-15", "2024-01-10", "2024-01-08", "2024-01-20"] -- TODO: better date detection
-        ++ ["#urgent", "#review", "#devops", "#docs"] -- TODO: better tag detection
-
-    -- Remove trailing spaces and collapse multiple spaces
-    cleanupSpaces = reverse . dropWhile isSpace . reverse . collapseSpaces
-
-    isSpace Space = True
-    isSpace _ = False
-
-    collapseSpaces [] = []
-    collapseSpaces (Space : Space : rest) = collapseSpaces (Space : rest)
-    collapseSpaces (x : rest) = x : collapseSpaces rest
-
--- | Extract date after a specific emoji
-extractDate :: Text -> [Inline] -> Maybe Day
-extractDate emoji = go
-  where
-    go [] = Nothing
-    go (Str s : Space : Str dateStr : _)
-      | s == emoji = parseTimeM True defaultTimeLocale "%Y-%m-%d" (toString dateStr)
-    go (_ : rest) = go rest
-
--- | Extract priority indicator
-extractPriority :: [Inline] -> Priority
-extractPriority = go
-  where
-    go [] = Normal
-    go (Str s : _) = case s of
-      "⏫" -> Highest
-      "🔺" -> High
-      "🔼" -> Medium
-      "🔽" -> Low
-      "⏬" -> Lowest
-      _ -> Normal
-    go (_ : rest) = go rest
-
--- | Extract hashtags
-extractTags :: [Inline] -> [Text]
-extractTags _ = [] -- TODO: implement properly
+  let finalState = parseInlineSequence taskInlines
+   in Task
+        { description = cleanInlines finalState
+        , inlines = taskInlines
+        , sourceNote = sourcePath
+        , isCompleted = completed
+        , scheduledDate = tScheduledDate finalState
+        , dueDate = tDueDate finalState
+        , completedDate = if completed then tCompletedDate finalState else Nothing
+        , priority = tPriority finalState
+        , tags = reverse (tTags finalState)
+        }
 
 -- | Extract plain text from inline elements
 extractText :: [Inline] -> Text

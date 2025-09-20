@@ -26,6 +26,7 @@ library
     Ob
     Ob.Markdown
     Ob.Task
+    Ob.Task.Properties
 
   mixins:
     base hiding (Prelude),
@@ -104,3 +105,4 @@ test-suite ob-test
     , ob
     , pandoc-types
     , relude
+    , time
