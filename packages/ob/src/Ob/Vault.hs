@@ -1,14 +1,17 @@
 -- | Vault data types and operations for Obsidian notebooks
 module Ob.Vault (
   Vault (..),
+  getTasks,
 )
 where
 
 import Data.Map.Strict qualified as Map
-import Ob.Note (Note)
+import Ob.Note (Note (..))
 import Ob.Task (Task)
 
-data Vault = Vault
+newtype Vault = Vault
   { notes :: Map.Map FilePath Note
-  , tasks :: [Task]
   }
+
+getTasks :: Vault -> [Task]
+getTasks vault = concatMap tasks (Map.elems vault.notes)

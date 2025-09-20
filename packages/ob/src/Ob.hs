@@ -14,8 +14,8 @@ where
 import Control.Monad.Logger (runStdoutLoggingT)
 import Data.Map.Strict qualified as Map
 import Ob.Note (Note (..), parseNote)
-import Ob.Task (Task (..), extractTasks)
-import Ob.Vault (Vault (..))
+import Ob.Task (Task (..))
+import Ob.Vault (Vault (..), getTasks)
 import System.FilePath ((</>))
 import System.UnionMount qualified as UM
 import UnliftIO.Async (concurrently_)
@@ -25,9 +25,8 @@ getVault :: FilePath -> IO Vault
 getVault path = do
   runStdoutLoggingT $ do
     (notesMap, _) <- UM.mount path (one ((), "*.md")) [] mempty (const $ handleMarkdownFile path)
-    let allTasks = concatMap (\(filePath, note) -> extractTasks filePath (content note)) (Map.toList notesMap)
     liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Map.size notesMap) <> "; sample = " <> show (take 4 $ Map.keys notesMap)
-    pure $ Vault notesMap allTasks
+    pure $ Vault notesMap
 
 {- | Calls `f` with a `TVar` of `Vault` reflecting its current state in real-time.
 
@@ -37,15 +36,13 @@ withLiveVault :: FilePath -> (TVar Vault -> IO ()) -> IO ()
 withLiveVault path f = do
   runStdoutLoggingT $ do
     (notesMap0, modelF) <- UM.mount path (one ((), "*.md")) [] mempty (const $ handleMarkdownFile path)
-    let initialTasks = concatMap (\(filePath, note) -> extractTasks filePath (content note)) (Map.toList notesMap0)
-    let initialVault = Vault notesMap0 initialTasks
+    let initialVault = Vault notesMap0
     liftIO $ putTextLn $ "Model ready; total docs = " <> show (Map.size notesMap0)
     modelVar <- newTVarIO initialVault
     concurrently_ (liftIO $ f modelVar) $ do
       modelF $ \newNotesMap -> do
-        -- FIXME: optimize.
-        let newTasks = concatMap (\(filePath, note) -> extractTasks filePath (content note)) (Map.toList newNotesMap)
-        let newVault = Vault newNotesMap newTasks
+        let newVault = Vault newNotesMap
+        let newTasks = getTasks newVault
         putTextLn $ "Model updated; total docs = " <> show (Map.size newNotesMap) <> "; total tasks = " <> show (length newTasks)
         atomically $ writeTVar modelVar newVault
 

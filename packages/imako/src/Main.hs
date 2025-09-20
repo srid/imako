@@ -11,6 +11,7 @@ import Imako.UI.Components (taskItem, titleBar)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Ob qualified
+import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
 import Web.Scotty qualified as S
 
@@ -30,7 +31,7 @@ main = do
                 "Imako: "
                 small_ $ code_ $ toHtml options.path
               div_ [class_ "text-right text-gray-600"] $
-                toHtml (show (length vault.tasks) :: Text)
+                toHtml (show (length (getTasks vault)) :: Text)
                   <> " tasks, "
                   <> toHtml (show (Map.size vault.notes) :: Text)
                   <> " notes"
@@ -39,7 +40,7 @@ main = do
               div_ $ do
                 h2_ [class_ "text-lg font-semibold mb-2"] "Tasks"
                 div_ $
-                  forM_ vault.tasks $ \task ->
+                  forM_ (getTasks vault) $ \task ->
                     taskItem task
 
               -- Notes section
