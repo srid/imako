@@ -4,23 +4,17 @@
 
 Imako provides journaling and planning based on the principle of [infinitude of space & time](https://srid.ca/this-moment) for your Obsidian (and [Emanote](https://emanote.srid.ca/)) notebook.
 
-WIP: See https://github.com/srid/imako/issues/3
-
-## Usage
-
-TBD
+> [!warning]
+> **WIP**: The author is developing it as he aims to use it. See https://github.com/srid/imako/issues/3
 
 ## Running
 
 In Nix devShell,
 
+```sh
+# Or, `just run` if you are Srid.
+just NOTEBOOK=$HOME/mynotes run
 ```
-just run
-```
-
-## Plan
-
-This will be a monorepo of relevant Haskell libraries to begin with, well before imako development begins.
 
 ## Repository architecture
 
