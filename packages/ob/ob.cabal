@@ -5,7 +5,7 @@ synopsis:        Live in-memory sync of Obsidian Markdown notes
 
 -- description:
 homepage:        https://github.com/srid/imako/tree/master/ob
-license:         BSD-3-Clause
+license:         AGPL-3.0-or-later
 license-file:    LICENSE
 author:          Sridhar Ratnakumar
 maintainer:      srid@srid.ca

@@ -1,5 +1,9 @@
 # Revision history for ob
 
-## 0.1.0.0 -- YYYY-mm-dd
+## Unreleased
 
-* First version. Released on an unsuspecting world.
+- Added `Vault`, `Note`, `Task` (obsidian-tasks plugin) types.
+
+## 0.1.0.0 -- 2025-03-21
+
+- First version. Released on an unsuspecting world.
