@@ -20,7 +20,7 @@ parseNote :: (MonadIO m) => FilePath -> m Note
 parseNote path = do
   s <- decodeUtf8 <$> readFileBS path
   case parseMarkdown path s of
-    Left err -> die $ show err
+    Left err -> die $ "Error parsing " <> path <> ": " <> show err
     Right (meta, content) -> do
       let noteTasks = extractTasks path content
       pure $ Note meta content noteTasks
