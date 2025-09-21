@@ -1,7 +1,7 @@
 module Ob.Task.Properties (
   Priority (..),
-  TaskParseState (..),
-  initialParseState,
+  TaskProperties (..),
+  initialTaskProperties,
   parseInlineSequence,
   parsePriority,
   parseTag,
@@ -23,33 +23,34 @@ data Priority
   deriving (Show, Eq, Ord)
 
 -- | State for collecting task properties while parsing
-data TaskParseState = TaskParseState
+data TaskProperties = TaskProperties
   { cleanInlines :: [Inline]
-  , tStartDate :: Maybe Day
-  , tScheduledDate :: Maybe Day
-  , tDueDate :: Maybe Day
-  , tCompletedDate :: Maybe Day
-  , tPriority :: Priority
-  , tTags :: [Text]
+  , startDate :: Maybe Day
+  , scheduledDate :: Maybe Day
+  , dueDate :: Maybe Day
+  , completedDate :: Maybe Day
+  , priority :: Priority
+  , tags :: [Text]
   }
+  deriving (Show, Eq)
 
--- | Initial parsing state
-initialParseState :: TaskParseState
-initialParseState =
-  TaskParseState
+-- | Initial task properties
+initialTaskProperties :: TaskProperties
+initialTaskProperties =
+  TaskProperties
     { cleanInlines = []
-    , tStartDate = Nothing
-    , tScheduledDate = Nothing
-    , tDueDate = Nothing
-    , tCompletedDate = Nothing
-    , tPriority = Normal
-    , tTags = []
+    , startDate = Nothing
+    , scheduledDate = Nothing
+    , dueDate = Nothing
+    , completedDate = Nothing
+    , priority = Normal
+    , tags = []
     }
 
 -- | Process inline elements, extracting metadata and building clean description
-parseInlineSequence :: [Inline] -> TaskParseState
+parseInlineSequence :: [Inline] -> TaskProperties
 parseInlineSequence inlines =
-  let result = go inlines initialParseState
+  let result = go inlines initialTaskProperties
    in result {cleanInlines = cleanupSpaces (reverse (cleanInlines result))}
   where
     go [] st = st
@@ -57,10 +58,10 @@ parseInlineSequence inlines =
       case parseDateWithEmoji s dateStr of
         Just (dateType, date) ->
           let newState = case dateType of
-                "🛫" -> st {tStartDate = Just date}
-                "⏳" -> st {tScheduledDate = Just date}
-                "📅" -> st {tDueDate = Just date}
-                "✅" -> st {tCompletedDate = Just date}
+                "🛫" -> st {startDate = Just date}
+                "⏳" -> st {scheduledDate = Just date}
+                "📅" -> st {dueDate = Just date}
+                "✅" -> st {completedDate = Just date}
                 _ -> st
            in go rest newState
         Nothing -> go (Space : Str dateStr : rest) (processRegularInline (Str s) st)
@@ -68,9 +69,9 @@ parseInlineSequence inlines =
 
     processRegularInline inline st = case inline of
       Str s -> case parsePriority s of
-        Just p -> st {tPriority = p}
+        Just p -> st {priority = p}
         Nothing -> case parseTag s of
-          Just tag -> st {tTags = tag : tTags st}
+          Just tag -> st {tags = tag : tags st}
           Nothing -> st {cleanInlines = inline : cleanInlines st}
       _ -> st {cleanInlines = inline : cleanInlines st}
 

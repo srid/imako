@@ -5,6 +5,7 @@ module Ob.TaskSpec where
 import Data.Time (fromGregorian)
 import Ob.Markdown (parseMarkdown)
 import Ob.Task
+import Ob.Task.Properties (TaskProperties (..))
 import Test.Hspec
 
 spec :: Spec
@@ -71,27 +72,27 @@ spec = do
               -- Test first task properties
               extractText task1.description `shouldBe` "Review pull request"
               task1.isCompleted `shouldBe` False
-              task1.scheduledDate `shouldBe` Just (fromGregorian 2024 1 10)
-              task1.dueDate `shouldBe` Just (fromGregorian 2024 1 15)
-              task1.completedDate `shouldBe` Nothing
-              task1.priority `shouldBe` Normal
-              task1.tags `shouldBe` ["urgent", "review"]
+              task1.properties.scheduledDate `shouldBe` Just (fromGregorian 2024 1 10)
+              task1.properties.dueDate `shouldBe` Just (fromGregorian 2024 1 15)
+              task1.properties.completedDate `shouldBe` Nothing
+              task1.properties.priority `shouldBe` Normal
+              task1.properties.tags `shouldBe` ["urgent", "review"]
 
               -- Test second task properties
               extractText task2.description `shouldBe` "Setup CI pipeline"
               task2.isCompleted `shouldBe` True
-              task2.scheduledDate `shouldBe` Nothing
-              task2.dueDate `shouldBe` Nothing
-              task2.completedDate `shouldBe` Just (fromGregorian 2024 1 8)
-              task2.priority `shouldBe` High
-              task2.tags `shouldBe` ["devops"]
+              task2.properties.scheduledDate `shouldBe` Nothing
+              task2.properties.dueDate `shouldBe` Nothing
+              task2.properties.completedDate `shouldBe` Just (fromGregorian 2024 1 8)
+              task2.properties.priority `shouldBe` High
+              task2.properties.tags `shouldBe` ["devops"]
 
               -- Test third task properties
               extractText task3.description `shouldBe` "Write documentation"
               task3.isCompleted `shouldBe` False
-              task3.scheduledDate `shouldBe` Nothing
-              task3.dueDate `shouldBe` Just (fromGregorian 2024 1 20)
-              task3.completedDate `shouldBe` Nothing
-              task3.priority `shouldBe` Lowest
-              task3.tags `shouldBe` ["docs"]
+              task3.properties.scheduledDate `shouldBe` Nothing
+              task3.properties.dueDate `shouldBe` Just (fromGregorian 2024 1 20)
+              task3.properties.completedDate `shouldBe` Nothing
+              task3.properties.priority `shouldBe` Lowest
+              task3.properties.tags `shouldBe` ["docs"]
             _ -> expectationFailure "Expected exactly 3 tasks"

@@ -6,8 +6,7 @@ module Ob.Task (
 )
 where
 
-import Data.Time (Day)
-import Ob.Task.Properties (Priority (..), TaskParseState (..), parseInlineSequence)
+import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
 import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc)
 import Text.Pandoc.Walk (query)
 
@@ -16,12 +15,7 @@ data Task = Task
   , inlines :: [Inline]
   , sourceNote :: FilePath
   , isCompleted :: Bool
-  , startDate :: Maybe Day
-  , scheduledDate :: Maybe Day
-  , dueDate :: Maybe Day
-  , completedDate :: Maybe Day
-  , priority :: Priority
-  , tags :: [Text]
+  , properties :: TaskProperties
   }
   deriving (Show, Eq)
 
@@ -59,18 +53,17 @@ extractFromInlines sourcePath = \case
 -- | Parse task with obsidian-tasks metadata
 parseTaskWithMetadata :: [Inline] -> FilePath -> Bool -> Task
 parseTaskWithMetadata taskInlines sourcePath completed =
-  let finalState = parseInlineSequence taskInlines
+  let props = parseInlineSequence taskInlines
    in Task
-        { description = cleanInlines finalState
+        { description = cleanInlines props
         , inlines = taskInlines
         , sourceNote = sourcePath
         , isCompleted = completed
-        , startDate = tStartDate finalState
-        , scheduledDate = tScheduledDate finalState
-        , dueDate = tDueDate finalState
-        , completedDate = if completed then tCompletedDate finalState else Nothing
-        , priority = tPriority finalState
-        , tags = reverse (tTags finalState)
+        , properties =
+            props
+              { completedDate = if completed then completedDate props else Nothing
+              , tags = reverse (tags props)
+              }
         }
 
 -- | Extract plain text from inline elements

@@ -5,6 +5,7 @@ module Imako.UI.Components where
 import Data.Time (defaultTimeLocale, formatTime)
 import Lucid
 import Ob.Task (Priority (..), Task (..), extractText)
+import Ob.Task.Properties (TaskProperties (..))
 
 -- | Site title bar component
 titleBar :: Html () -> Html ()
@@ -30,42 +31,42 @@ taskItem task =
         -- Properties section
         div_ [class_ "mt-2 flex flex-wrap gap-2 text-xs"] $ do
           -- Priority
-          case task.priority of
+          case task.properties.priority of
             Normal -> mempty
             p ->
               span_ [class_ "px-2 py-1 bg-yellow-100 text-yellow-800 rounded"] $
                 toHtml (priorityText p)
 
           -- Start date
-          case task.startDate of
+          case task.properties.startDate of
             Nothing -> mempty
             Just date ->
               span_ [class_ "px-2 py-1 bg-purple-100 text-purple-800 rounded"] $
                 "🛫 " <> toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
 
           -- Scheduled date
-          case task.scheduledDate of
+          case task.properties.scheduledDate of
             Nothing -> mempty
             Just date ->
               span_ [class_ "px-2 py-1 bg-blue-100 text-blue-800 rounded"] $
                 "⏳ " <> toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
 
           -- Due date
-          case task.dueDate of
+          case task.properties.dueDate of
             Nothing -> mempty
             Just date ->
               span_ [class_ "px-2 py-1 bg-red-100 text-red-800 rounded"] $
                 "📅 " <> toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
 
           -- Completed date
-          case task.completedDate of
+          case task.properties.completedDate of
             Nothing -> mempty
             Just date ->
               span_ [class_ "px-2 py-1 bg-green-100 text-green-800 rounded"] $
                 "✅ " <> toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
 
           -- Tags
-          forM_ task.tags $ \tag ->
+          forM_ task.properties.tags $ \tag ->
             span_ [class_ "px-2 py-1 bg-gray-200 text-gray-700 rounded"] $
               toHtml tag
 
