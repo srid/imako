@@ -30,9 +30,12 @@ extractTasks sourcePath = query extractFromBlock
 
 -- | Extract task from a list item
 extractFromItem :: FilePath -> [Block] -> [Task]
-extractFromItem sourcePath = \case
-  [Plain inlines] -> extractFromInlines sourcePath inlines
-  _ -> []
+extractFromItem sourcePath = concatMap extractFromBlock
+  where
+    extractFromBlock = \case
+      Plain inlines -> extractFromInlines sourcePath inlines
+      -- Don't recursively process nested lists here - let the top-level query handle them
+      _ -> []
 
 -- | Extract task from inline elements
 extractFromInlines :: FilePath -> [Inline] -> [Task]

@@ -1,7 +1,7 @@
 
 Load this into your context:
 - Read `README.md`'s "Architecture" section
-- To build, use `/fastci` command.
+- To build, use `/fastci` Claude Code command. For fast build, run `cabal build` in Nix devshell.
 - Coding guidelines:
   - We use `Relude` *not* the Haskell `Prelude`.
   - Use functions to de-complect logic from UI code

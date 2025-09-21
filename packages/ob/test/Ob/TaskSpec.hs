@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Ob.TaskSpec where
 
 import Data.Time (fromGregorian)
+import NeatInterpolation (text)
 import Ob.Markdown (parseMarkdown)
 import Ob.Task
 import Ob.Task.Properties (TaskProperties (..))
@@ -13,13 +15,13 @@ spec = do
   describe "extractTasks" $ do
     it "parses task lists from markdown" $ do
       let markdownContent =
-            unlines
-              [ "# Sample Tasks"
-              , ""
-              , "- [ ] Incomplete task"
-              , "- [X] Completed task"
-              , "- [ ] Another incomplete task"
-              ]
+            [text|
+        # Sample Tasks
+
+        - [ ] Incomplete task
+        - [X] Completed task
+        - [ ] Another incomplete task
+        |]
 
       case parseMarkdown "test.md" markdownContent of
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
@@ -33,13 +35,13 @@ spec = do
 
     it "parses obsidian-tasks plugin format with metadata" $ do
       let markdownContent =
-            unlines
-              [ "# Project Tasks"
-              , ""
-              , "- [ ] Review pull request 📅 2024-01-15 ⏳ 2024-01-10 #urgent #review"
-              , "- [x] Setup CI pipeline 🔺 ✅ 2024-01-08 #devops"
-              , "- [ ] Write documentation 📅 2024-01-20 #docs"
-              ]
+            [text|
+        # Project Tasks
+
+        - [ ] Review pull request 📅 2024-01-15 ⏳ 2024-01-10 #urgent #review
+        - [x] Setup CI pipeline 🔺 ✅ 2024-01-08 #devops
+        - [ ] Write documentation 📅 2024-01-20 #docs
+        |]
 
       case parseMarkdown "project.md" markdownContent of
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
@@ -53,13 +55,13 @@ spec = do
 
     it "extracts obsidian-tasks properties correctly" $ do
       let markdownContent =
-            unlines
-              [ "# Project Tasks"
-              , ""
-              , "- [ ] Review pull request 📅 2024-01-15 ⏳ 2024-01-10 #urgent #review"
-              , "- [x] Setup CI pipeline 🔺 ✅ 2024-01-08 #devops"
-              , "- [ ] Write documentation 📅 2024-01-20 ⏬ #docs"
-              ]
+            [text|
+        # Project Tasks
+
+        - [ ] Review pull request 📅 2024-01-15 ⏳ 2024-01-10 #urgent #review
+        - [x] Setup CI pipeline 🔺 ✅ 2024-01-08 #devops
+        - [ ] Write documentation 📅 2024-01-20 ⏬ #docs
+        |]
 
       case parseMarkdown "project.md" markdownContent of
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
@@ -96,3 +98,27 @@ spec = do
               task3.properties.priority `shouldBe` Lowest
               task3.properties.tags `shouldBe` ["docs"]
             _ -> expectationFailure "Expected exactly 3 tasks"
+
+    it "extracts nested task lists" $ do
+      let markdownContent =
+            [text|
+        # Project Tasks
+
+        - [ ] Main task
+          - [ ] Subtask 1
+          - [x] Subtask 2
+        - [ ] Another main task
+          - [ ] Another subtask
+        |]
+
+      case parseMarkdown "nested.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "nested.md" pandoc
+          map (\t -> (extractText t.description, t.isCompleted)) tasks
+            `shouldBe` [ ("Main task", False)
+                       , ("Another main task", False)
+                       , ("Subtask 1", False)
+                       , ("Subtask 2", True)
+                       , ("Another subtask", False)
+                       ]
