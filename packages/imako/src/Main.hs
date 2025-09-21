@@ -5,6 +5,7 @@
 
 module Main where
 
+import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Imako.CLI qualified as CLI
 import Imako.UI.Components (taskGroup, titleBar)
@@ -14,14 +15,13 @@ import Ob qualified
 import Ob.Task (Task (..))
 import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
-import Relude.Extra.Group (groupBy)
 import Web.Scotty qualified as S
 
 processTasksForUI :: [Task] -> (Int, Int, Map FilePath [Task])
 processTasksForUI tasks =
   let incomplete = filter (not . (.isCompleted)) tasks
       completed = length tasks - length incomplete
-      grouped = fmap toList . groupBy (.sourceNote) $ incomplete
+      grouped = List.foldl (\acc task -> Map.insertWith (flip (++)) task.sourceNote [task] acc) Map.empty incomplete
    in (length incomplete, completed, grouped)
 
 main :: IO ()
