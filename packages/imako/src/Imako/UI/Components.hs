@@ -21,12 +21,8 @@ taskItem task =
       span_ [class_ "text-lg mt-1"] $ if task.isCompleted then "☑" else "☐"
       div_ [class_ "flex-1"] $ do
         -- Main description
-        span_ [class_ (if task.isCompleted then "line-through text-gray-500" else "")] $
+        span_ [title_ (extractText task.inlines), class_ (if task.isCompleted then "line-through text-gray-500" else "")] $
           toHtml (extractText task.description)
-
-        -- Debug: Full inlines in gray
-        div_ [class_ "mt-1 text-sm text-gray-400 font-mono"] $ do
-          "Debug: " <> toHtml (extractText task.inlines)
 
         -- Properties section
         div_ [class_ "mt-2 flex flex-wrap gap-2 text-xs"] $ do
