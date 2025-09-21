@@ -7,13 +7,22 @@ module Main where
 
 import Data.Map.Strict qualified as Map
 import Imako.CLI qualified as CLI
-import Imako.UI.Components (taskItem, titleBar)
+import Imako.UI.Components (taskGroup, titleBar)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Ob qualified
+import Ob.Task (Task (..))
 import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
+import Relude.Extra.Group (groupBy)
 import Web.Scotty qualified as S
+
+processTasksForUI :: [Task] -> (Int, Int, Map FilePath [Task])
+processTasksForUI tasks =
+  let incomplete = filter (not . (.isCompleted)) tasks
+      completed = length tasks - length incomplete
+      grouped = fmap toList . groupBy (.sourceNote) $ incomplete
+   in (length incomplete, completed, grouped)
 
 main :: IO ()
 main = do
@@ -30,18 +39,19 @@ main = do
               titleBar $ do
                 "Imako: "
                 small_ $ code_ $ toHtml options.path
+              let (pendingCount, completedCount, groupedTasks) = processTasksForUI (getTasks vault)
               div_ [class_ "text-right text-gray-600"] $
-                toHtml (show (length (getTasks vault)) :: Text)
-                  <> " tasks, "
+                toHtml (show pendingCount :: Text)
+                  <> " pending, "
+                  <> toHtml (show completedCount :: Text)
+                  <> " completed, "
                   <> toHtml (show (Map.size vault.notes) :: Text)
                   <> " notes"
 
               -- Tasks section (displayed first)
               div_ $ do
                 h2_ [class_ "text-lg font-semibold mb-2"] "Tasks"
-                div_ $
-                  forM_ (getTasks vault) $ \task ->
-                    taskItem task
+                forM_ (Map.toList groupedTasks) $ uncurry taskGroup
 
               -- Notes section
               div_ $ do

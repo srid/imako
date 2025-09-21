@@ -62,10 +62,14 @@ taskItem task =
             span_ [class_ "px-2 py-1 bg-gray-200 text-gray-700 rounded"] $
               toHtml tag
 
-        -- Source note
-        div_ [class_ "mt-2"] $
-          small_ [class_ "text-gray-400 font-mono"] $
-            "from " <> toHtml task.sourceNote
+-- | Task group component - displays tasks for a source file
+taskGroup :: FilePath -> [Task] -> Html ()
+taskGroup sourceFile tasks = do
+  h3_ [class_ "text-md font-medium mt-4 mb-2 text-gray-700"] $
+    toHtml sourceFile
+  div_ [class_ "ml-4"] $
+    forM_ tasks $ \task ->
+      taskItem task
 
 priorityText :: Priority -> Text
 priorityText = \case

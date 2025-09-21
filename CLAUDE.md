@@ -1,8 +1,11 @@
 
 Load this into your context:
 - Read `README.md`'s "Architecture" section
-- We use `Relude` *not* the Haskell `Prelude`.
-- Always use `nix develop -c` to run build commands, which is generally: `cabal build all && cabal test all`
+- To build, use `/fastci` command.
+- Coding guidelines:
+  - We use `Relude` *not* the Haskell `Prelude`.
+  - Use functions to de-complect logic from UI code
+  - Use `flip` if and only if it makes code legible but *not* complicate it.
 
 # UX Guidelines
 
