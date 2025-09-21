@@ -36,6 +36,13 @@ taskItem task =
               span_ [class_ "px-2 py-1 bg-yellow-100 text-yellow-800 rounded"] $
                 toHtml (priorityText p)
 
+          -- Start date
+          case task.startDate of
+            Nothing -> mempty
+            Just date ->
+              span_ [class_ "px-2 py-1 bg-purple-100 text-purple-800 rounded"] $
+                "🛫 " <> toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
+
           -- Scheduled date
           case task.scheduledDate of
             Nothing -> mempty

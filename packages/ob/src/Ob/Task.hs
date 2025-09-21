@@ -16,6 +16,7 @@ data Task = Task
   , inlines :: [Inline]
   , sourceNote :: FilePath
   , isCompleted :: Bool
+  , startDate :: Maybe Day
   , scheduledDate :: Maybe Day
   , dueDate :: Maybe Day
   , completedDate :: Maybe Day
@@ -64,6 +65,7 @@ parseTaskWithMetadata taskInlines sourcePath completed =
         , inlines = taskInlines
         , sourceNote = sourcePath
         , isCompleted = completed
+        , startDate = tStartDate finalState
         , scheduledDate = tScheduledDate finalState
         , dueDate = tDueDate finalState
         , completedDate = if completed then tCompletedDate finalState else Nothing

@@ -25,6 +25,7 @@ data Priority
 -- | State for collecting task properties while parsing
 data TaskParseState = TaskParseState
   { cleanInlines :: [Inline]
+  , tStartDate :: Maybe Day
   , tScheduledDate :: Maybe Day
   , tDueDate :: Maybe Day
   , tCompletedDate :: Maybe Day
@@ -37,6 +38,7 @@ initialParseState :: TaskParseState
 initialParseState =
   TaskParseState
     { cleanInlines = []
+    , tStartDate = Nothing
     , tScheduledDate = Nothing
     , tDueDate = Nothing
     , tCompletedDate = Nothing
@@ -55,6 +57,7 @@ parseInlineSequence inlines =
       case parseDateWithEmoji s dateStr of
         Just (dateType, date) ->
           let newState = case dateType of
+                "🛫" -> st {tStartDate = Just date}
                 "⏳" -> st {tScheduledDate = Just date}
                 "📅" -> st {tDueDate = Just date}
                 "✅" -> st {tCompletedDate = Just date}
@@ -92,6 +95,7 @@ parseDateWithEmoji :: Text -> Text -> Maybe (Text, Day)
 parseDateWithEmoji emoji dateStr = do
   date <- parseTimeM True defaultTimeLocale "%Y-%m-%d" (toString dateStr)
   case emoji of
+    "🛫" -> Just ("🛫", date)
     "⏳" -> Just ("⏳", date)
     "📅" -> Just ("📅", date)
     "✅" -> Just ("✅", date)
