@@ -35,7 +35,7 @@ main = do
           vault <- liftIO $ readTVarIO vaultVar
           S.html $ renderText $ html_ $ do
             head_ $ script_ [src_ "https://cdn.tailwindcss.com"] ("" :: Text)
-            body_ [class_ "p-2 grid gap-2"] $ do
+            body_ [class_ "p-2 grid gap-2 max-w-4xl mx-auto"] $ do
               titleBar $ do
                 "Imako: "
                 small_ $ code_ $ toHtml options.path
@@ -52,10 +52,3 @@ main = do
               div_ $ do
                 h2_ [class_ "text-lg font-semibold mb-2"] "Tasks"
                 forM_ (Map.toList groupedTasks) $ uncurry taskGroup
-
-              -- Notes section
-              div_ $ do
-                h2_ [class_ "text-lg font-semibold mb-2"] "Notes"
-                div_ [class_ "font-mono"] $
-                  forM_ (Map.toList vault.notes) $ \(key, _note) ->
-                    div_ [class_ "p-2 border border-gray-300"] $ toHtml key
