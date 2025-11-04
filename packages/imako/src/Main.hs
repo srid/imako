@@ -38,19 +38,32 @@ main = do
               title_ "Imako"
               link_ [rel_ "icon", href_ "https://fav.farm/🌌"]
               script_ [src_ "https://cdn.tailwindcss.com"] ("" :: Text)
-            body_ [class_ "p-2 grid gap-2 max-w-4xl mx-auto"] $ do
+            body_ [class_ "min-h-screen bg-gray-100"] $ do
               titleBar $ do
                 "Imako: "
-                small_ $ code_ $ toHtml options.path
-              let (pendingCount, completedCount, groupedTasks) = processTasksForUI (getTasks vault)
-              div_ [class_ "text-right text-gray-600"] $
-                toHtml (show pendingCount :: Text)
-                  <> " pending, "
-                  <> toHtml (show completedCount :: Text)
-                  <> " completed, "
-                  <> toHtml (show (Map.size vault.notes) :: Text)
-                  <> " notes"
+                small_ [class_ "font-mono text-sm text-gray-500"] $ toHtml options.path
 
-              -- Tasks section (displayed first)
-              div_ $ do
-                forM_ (Map.toList groupedTasks) $ uncurry taskGroup
+              -- Main content area
+              div_ [class_ "max-w-5xl mx-auto p-6"] $ do
+                let (pendingCount, completedCount, groupedTasks) = processTasksForUI (getTasks vault)
+
+                -- Stats overview section (bird's eye view)
+                div_ [class_ "grid grid-cols-3 gap-4 mb-8"] $ do
+                  -- Pending tasks card
+                  div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
+                    div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Pending"
+                    div_ [class_ "text-3xl font-bold text-indigo-600"] $ toHtml (show pendingCount :: Text)
+
+                  -- Completed tasks card
+                  div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
+                    div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Completed"
+                    div_ [class_ "text-3xl font-bold text-green-600"] $ toHtml (show completedCount :: Text)
+
+                  -- Notes card
+                  div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
+                    div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Notes"
+                    div_ [class_ "text-3xl font-bold text-gray-900"] $ toHtml (show (Map.size vault.notes) :: Text)
+
+                -- Tasks section
+                div_ $ do
+                  forM_ (Map.toList groupedTasks) $ uncurry taskGroup

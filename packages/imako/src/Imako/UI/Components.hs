@@ -6,98 +6,80 @@ import Data.Time (defaultTimeLocale, formatTime)
 import Lucid
 import Ob.Task (Priority (..), Task (..), extractText)
 import Ob.Task.Properties (TaskProperties (..))
+import System.FilePath (takeFileName)
 
 -- | Site title bar component
 titleBar :: Html () -> Html ()
 titleBar content =
-  header_ [class_ "bg-gray-900 text-white p-4 border-b"] $
-    h1_ [class_ "text-xl font-semibold"] content
+  header_ [class_ "bg-white border-b border-gray-200 p-6 shadow-sm"] $
+    h1_ [class_ "text-2xl font-bold text-gray-900"] content
 
 -- | Task item component - displays a single task with checkbox and source
 taskItem :: Task -> Html ()
 taskItem task =
-  div_ [class_ "p-3 mb-2 bg-gray-50 rounded border"] $ do
-    div_ [class_ "flex items-center gap-3"] $ do
-      span_ [class_ "text-lg"] $ if task.isCompleted then "☑" else "☐"
+  div_ [class_ "py-3 px-4 mb-1 bg-white hover:bg-gray-50 border-l-2 border-transparent hover:border-indigo-400 transition-colors"] $ do
+    div_ [class_ "flex items-start gap-4"] $ do
+      -- Checkbox (larger, cleaner)
+      span_ [class_ "text-2xl leading-none mt-0.5"] $ if task.isCompleted then "☑" else "☐"
 
-      -- Main task text
-      span_ [title_ (extractText task.inlines), class_ (if task.isCompleted then "line-through text-gray-500" else "")] $
-        toHtml (extractText task.description)
+      -- Main task text (larger, more prominent)
+      div_ [class_ "flex-1 min-w-0"] $
+        p_ [title_ (extractText task.inlines), class_ ("text-base " <> if task.isCompleted then "line-through text-gray-400" else "text-gray-900")] $
+          toHtml (extractText task.description)
 
-      -- Metadata pills aligned to the right
-      div_ [class_ "flex items-center gap-2 ml-auto"] $ do
-        -- Priority pill
+      -- Metadata pills (simplified, icon-only or minimal)
+      div_ [class_ "flex items-center gap-1.5 flex-shrink-0"] $ do
+        -- Priority indicator (icon only, no text)
         case task.properties.priority of
           Normal -> mempty
           Highest ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-800 text-amber-200"] $ do
-              -- Flame icon (SVG)
-              span_ [class_ "w-3 h-3"] "🔥"
-              "Highest"
+            span_ [title_ "Highest priority", class_ "text-base"] "🔥"
           High ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-orange-800 text-orange-200"] $ do
-              span_ [class_ "w-3 h-3"] "🔺"
-              "High"
+            span_ [title_ "High priority", class_ "text-base"] "🔺"
           Medium ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-800 text-yellow-200"] $ do
-              span_ [class_ "w-3 h-3"] "🔼"
-              "Medium"
+            span_ [title_ "Medium priority", class_ "text-base"] "🔼"
           Low ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-800 text-blue-200"] $ do
-              span_ [class_ "w-3 h-3"] "🔽"
-              "Low"
+            span_ [title_ "Low priority", class_ "text-base"] "🔽"
           Lowest ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-gray-200"] $ do
-              span_ [class_ "w-3 h-3"] "⏬"
-              "Lowest"
+            span_ [title_ "Lowest priority", class_ "text-base"] "⏬"
 
-        -- Date pills (show all dates that exist)
-        -- Start date
-        case task.properties.startDate of
-          Nothing -> mempty
-          Just date ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-purple-900 text-purple-300"] $ do
-              span_ [class_ "w-3 h-3"] "🛫"
-              toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
-
-        -- Scheduled date
-        case task.properties.scheduledDate of
-          Nothing -> mempty
-          Just date ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-900 text-blue-300"] $ do
-              span_ [class_ "w-3 h-3"] "⏳"
-              toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
-
-        -- Due date
+        -- Dates (compact pill with icon + date)
         case task.properties.dueDate of
           Nothing -> mempty
           Just date ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-red-900 text-red-300"] $ do
-              span_ [class_ "w-3 h-3"] "📅"
-              toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
+            span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200"] $
+              toHtml (formatTime defaultTimeLocale "%b %d" date)
 
-        -- Completed date
-        case task.properties.completedDate of
+        case task.properties.scheduledDate of
           Nothing -> mempty
           Just date ->
-            span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-green-900 text-green-300"] $ do
-              span_ [class_ "w-3 h-3"] "✅"
-              toHtml (formatTime defaultTimeLocale "%Y-%m-%d" date)
+            span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200"] $
+              toHtml (formatTime defaultTimeLocale "%b %d" date)
 
-        -- Tags as generic pills
-        forM_ task.properties.tags $ \tag ->
-          span_ [class_ "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-gray-700 text-gray-300"] $ do
-            span_ [class_ "w-3 h-3"] "🏷️"
-            toHtml tag
+        case task.properties.startDate of
+          Nothing -> mempty
+          Just date ->
+            span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200"] $
+              toHtml (formatTime defaultTimeLocale "%b %d" date)
+
+        -- Tags (subtle, icon only with count if multiple)
+        unless (null task.properties.tags) $
+          span_ [title_ (show task.properties.tags), class_ "text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600"] $
+            case task.properties.tags of
+              [tag] -> toHtml tag
+              tags -> toHtml (show (length tags) <> (" tags" :: Text))
 
 -- | Task group component - displays tasks for a source file
 taskGroup :: FilePath -> [Task] -> Html ()
 taskGroup sourceFile tasks = do
-  h3_ [class_ "text-sm font-mono text-gray-400 mt-6 pb-2 border-b border-gray-700"] $
-    toHtml sourceFile
-  div_ [class_ "ml-4"] $
-    forM_ tasks $ \task ->
-      taskItem task
+  div_ [class_ "mt-8 first:mt-0"] $ do
+    -- File header with better spacing
+    h3_ [class_ "text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 px-4"] $
+      strong_ $
+        toHtml (takeFileName sourceFile)
+    -- Tasks with subtle background
+    div_ [class_ "bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-100"] $
+      forM_ tasks taskItem
 
 priorityText :: Priority -> Text
 priorityText = \case
