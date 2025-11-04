@@ -29,15 +29,6 @@
         servant-event-stream.source = inputs.servant-event-stream;
       };
 
-      # Add your package overrides here
-      settings = {
-        imako = {
-          stan = true;
-        };
-
-
-      };
-
       # Development shell configuration
       devShell = {
         hlsCheck.enable = false;
