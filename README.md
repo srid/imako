@@ -5,7 +5,7 @@
 Imako provides journaling and planning based on the principle of [infinitude of space & time](https://srid.ca/this-moment) for your Obsidian (and [Emanote](https://emanote.srid.ca/)) notebook.
 
 > [!warning]
-> **WIP**: The author is developing it as he aims to use it. See https://github.com/srid/imako/issues/3
+> **WIP**: The author is developing Imako as he figures out what he needs. See https://github.com/srid/imako/issues/3
 
 ## Running
 

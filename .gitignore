@@ -8,7 +8,10 @@ cabal.project.local~
 result
 result-*
 
+/ghcid.log
+
 # direnv
 .direnv
 
 /.pre-commit-config.yaml
+.claude/settings.local.json
