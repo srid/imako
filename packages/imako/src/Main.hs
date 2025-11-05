@@ -8,20 +8,29 @@ module Main where
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Imako.CLI qualified as CLI
-import Imako.UI.Components (taskGroup, titleBar)
+import Imako.UI.Components (titleBar)
+import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Ob qualified
 import Ob.Task (Task (..))
 import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
+import System.FilePath (makeRelative)
 import Web.Scotty qualified as S
 
-processTasksForUI :: [Task] -> (Int, Int, Map FilePath [Task])
-processTasksForUI tasks =
+processTasksForUI :: FilePath -> [Task] -> (Int, Int, Map FilePath [Task])
+processTasksForUI vaultPath tasks =
   let incomplete = filter (not . (.isCompleted)) tasks
       completed = length tasks - length incomplete
-      grouped = List.foldl (\acc task -> Map.insertWith (flip (++)) task.sourceNote [task] acc) Map.empty incomplete
+      grouped =
+        List.foldl
+          ( \acc task ->
+              let relativePath = makeRelative vaultPath task.sourceNote
+               in Map.insertWith (flip (++)) relativePath [task] acc
+          )
+          Map.empty
+          incomplete
    in (length incomplete, completed, grouped)
 
 main :: IO ()
@@ -45,7 +54,7 @@ main = do
 
               -- Main content area
               div_ [class_ "max-w-5xl mx-auto p-6"] $ do
-                let (pendingCount, completedCount, groupedTasks) = processTasksForUI (getTasks vault)
+                let (pendingCount, completedCount, groupedTasks) = processTasksForUI options.path (getTasks vault)
 
                 -- Stats overview section (bird's eye view)
                 div_ [class_ "grid grid-cols-3 gap-4 mb-8"] $ do
@@ -64,6 +73,7 @@ main = do
                     div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Notes"
                     div_ [class_ "text-3xl font-bold text-gray-900"] $ toHtml (show (Map.size vault.notes) :: Text)
 
-                -- Tasks section
+                -- Tasks section with hierarchical folder structure
                 div_ $ do
-                  forM_ (Map.toList groupedTasks) $ uncurry taskGroup
+                  let folderTree = buildFolderTree groupedTasks
+                  renderFolderTree folderTree

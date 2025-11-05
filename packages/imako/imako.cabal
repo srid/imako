@@ -89,3 +89,4 @@ executable imako
   other-modules:
     Imako.CLI
     Imako.UI.Components
+    Imako.UI.FolderTree
