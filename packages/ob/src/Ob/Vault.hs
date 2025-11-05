@@ -9,6 +9,7 @@ import Data.Map.Strict qualified as Map
 import Ob.Note (Note (..))
 import Ob.Task (Task)
 
+-- | An Obsidian vault folder
 newtype Vault = Vault
   { notes :: Map.Map FilePath Note
   }

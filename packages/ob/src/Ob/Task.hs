@@ -1,3 +1,4 @@
+-- | Module for working with obsidian-tasks
 module Ob.Task (
   Task (..),
   Priority (..),
