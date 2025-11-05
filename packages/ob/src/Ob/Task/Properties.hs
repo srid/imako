@@ -67,6 +67,8 @@ parseInlineSequence inlines =
         Nothing -> go (Space : Str dateStr : rest) (processRegularInline (Str s) st)
     go (inline : rest) st = go rest (processRegularInline inline st)
 
+    -- | Process a regular inline element that's not part of a date sequence
+    processRegularInline :: Inline -> TaskProperties -> TaskProperties
     processRegularInline inline st = case inline of
       Str s -> case parsePriority s of
         Just p -> st {priority = p}

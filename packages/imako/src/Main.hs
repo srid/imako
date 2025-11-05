@@ -4,7 +4,20 @@
 {-# HLINT ignore "Use if" #-}
 {-# HLINT ignore "Use infinitely" #-}
 
-module Main where
+{-|
+Module      : Main
+Description : Main entry point for Imako web server
+Copyright   : (c) 2024 Sridhar Ratnakumar
+License     : AGPL-3.0-or-later
+Maintainer  : srid@srid.ca
+
+This module contains the main entry point for the Imako web server,
+which provides a web-based interface for viewing and managing tasks
+in an Obsidian notebook.
+-}
+module Main (
+  main,
+) where
 
 import Data.ByteString.Builder (lazyByteString)
 import Data.LVar qualified as LVar
@@ -25,6 +38,21 @@ import Options.Applicative (execParser)
 import System.FilePath (makeRelative)
 import Web.Scotty qualified as S
 
+-- | Process tasks for UI display.
+-- Groups incomplete tasks by their source file and counts completed tasks.
+--
+-- ==== __Parameters__
+--
+-- * @vaultPath@ - The root path of the vault to compute relative paths
+-- * @tasks@ - List of all tasks from the vault
+--
+-- ==== __Returns__
+--
+-- A tuple containing:
+--
+-- * Number of incomplete tasks
+-- * Number of completed tasks
+-- * Map from relative file paths to their incomplete tasks
 processTasksForUI :: FilePath -> [Task] -> (Int, Int, Map FilePath [Task])
 processTasksForUI vaultPath tasks =
   let incomplete = filter (not . (.isCompleted)) tasks
