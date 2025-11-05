@@ -8,7 +8,7 @@ module Main where
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Imako.CLI qualified as CLI
-import Imako.UI.Components (titleBar)
+import Imako.UI.Components (taskItem, titleBar)
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Lucid
 import Main.Utf8 qualified as Utf8
@@ -76,4 +76,4 @@ main = do
                 -- Tasks section with hierarchical folder structure
                 div_ $ do
                   let folderTree = buildFolderTree groupedTasks
-                  renderFolderTree folderTree
+                  renderFolderTree (`forM_` taskItem) folderTree
