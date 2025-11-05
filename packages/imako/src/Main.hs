@@ -42,14 +42,14 @@ processTasksForUI vaultPath tasks =
 birdsEyeView :: Int -> Int -> Int -> Html ()
 birdsEyeView pendingCount completedCount notesCount =
   div_ [class_ "grid grid-cols-3 gap-4 mb-8"] $ do
-    card "Pending" "text-indigo-600" pendingCount
-    card "Completed" "text-green-600" completedCount
-    card "Notes" "text-gray-900" notesCount
+    card "Pending" "text-indigo-600 dark:text-indigo-400" pendingCount
+    card "Completed" "text-green-600 dark:text-green-400" completedCount
+    card "Notes" "text-gray-900 dark:text-gray-100" notesCount
   where
     card :: Text -> Text -> Int -> Html ()
     card label colorClass count =
-      div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
-        div_ [class_ "text-sm font-medium text-gray-500 mb-1"] $ toHtml label
+      div_ [class_ "bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 shadow-sm"] $ do
+        div_ [class_ "text-sm font-medium text-gray-500 dark:text-gray-400 mb-1"] $ toHtml label
         div_ [class_ ("text-3xl font-bold " <> colorClass)] $ toHtml (show count :: Text)
 
 renderMainContent :: FilePath -> Ob.Vault -> Html ()
