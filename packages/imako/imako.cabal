@@ -59,6 +59,7 @@ common shared
     , htmx-servant
     , http-types
     , lucid2
+    , lvar                   >=0.2
     , monad-logger
     , mtl
     , ob
@@ -73,6 +74,7 @@ common shared
     , servant-event-stream
     , servant-server
     , shower
+    , text
     , time
     , unionmount             >=0.3
     , unliftio-core

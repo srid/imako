@@ -12,6 +12,8 @@ module Ob (
 where
 
 import Control.Monad.Logger (MonadLogger, runStdoutLoggingT)
+import Data.LVar (LVar)
+import Data.LVar qualified as LVar
 import Data.Map.Strict qualified as Map
 import Ob.Note (Note (..), parseNote)
 import Ob.Task (Task (..))
@@ -29,23 +31,23 @@ getVault path = do
     liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Map.size notesMap) <> "; sample = " <> show (take 4 $ Map.keys notesMap)
     pure $ Vault notesMap
 
-{- | Calls `f` with a `TVar` of `Vault` reflecting its current state in real-time.
+{- | Calls `f` with a `LVar` of `Vault` reflecting its current state in real-time.
 
 Uses `System.UnionMount` to monitor the filesystem for changes.
 -}
-withLiveVault :: FilePath -> (TVar Vault -> IO ()) -> IO ()
+withLiveVault :: FilePath -> (LVar Vault -> IO ()) -> IO ()
 withLiveVault path f = do
   runStdoutLoggingT $ do
     (notesMap0, modelF) <- mountVault path
     let initialVault = Vault notesMap0
     liftIO $ putTextLn $ "Model ready; total docs = " <> show (Map.size notesMap0)
-    modelVar <- newTVarIO initialVault
+    modelVar <- LVar.new initialVault
     concurrently_ (liftIO $ f modelVar) $ do
       modelF $ \newNotesMap -> do
         let newVault = Vault newNotesMap
         let newTasks = getTasks newVault
         putTextLn $ "Model updated; total docs = " <> show (Map.size newNotesMap) <> "; total tasks = " <> show (length newTasks)
-        atomically $ writeTVar modelVar newVault
+        LVar.set modelVar newVault
 
 mountVault ::
   (MonadUnliftIO m, MonadLogger m) =>
