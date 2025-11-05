@@ -7,4 +7,8 @@
 
 # UX Guidelines
 
-UX should be simple & direct for uses of Obsidian, who are already familiar with taking notes in Markdown files, as well as the use of plugins like obsidian-tasks (tasks defined in Markdown).t is 
+UX should be simple & direct for uses of Obsidian, who are already familiar with taking notes in Markdown files, as well as the use of plugins like obsidian-tasks (tasks defined in Markdown).
+
+## Dark Mode
+
+The UI supports dark mode via Tailwind CSS. It automatically follows the system preference (using `prefers-color-scheme` media query). All UI components have both light and dark variants defined.

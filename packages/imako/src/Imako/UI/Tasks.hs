@@ -15,14 +15,14 @@ import System.FilePath (takeFileName)
 -- | Task item component - displays a single task with checkbox and source
 taskItem :: Task -> Html ()
 taskItem task =
-  div_ [class_ "py-3 px-4 mb-1 bg-white hover:bg-gray-50 border-l-2 border-transparent hover:border-indigo-400 transition-colors"] $ do
+  div_ [class_ "py-3 px-4 mb-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"] $ do
     div_ [class_ "flex items-start gap-4"] $ do
       -- Checkbox (larger, cleaner)
       span_ [class_ "text-xl leading-none mt-0.5"] $ if task.isCompleted then "☑" else "☐"
 
       -- Main task text (larger, more prominent)
       div_ [class_ "flex-1 min-w-0"] $
-        p_ [title_ (extractText task.inlines), class_ ("text-sm " <> if task.isCompleted then "line-through text-gray-400" else "text-gray-900")] $
+        p_ [title_ (extractText task.inlines), class_ ("text-sm " <> if task.isCompleted then "line-through text-gray-400 dark:text-gray-500" else "text-gray-900 dark:text-gray-100")] $
           toHtml (extractText task.description)
 
       -- Metadata pills (simplified, icon-only or minimal)
@@ -45,24 +45,24 @@ taskItem task =
         case task.properties.dueDate of
           Nothing -> mempty
           Just date ->
-            span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200"] $
+            span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"] $
               toHtml (formatTime defaultTimeLocale "%b %d" date)
 
         case task.properties.scheduledDate of
           Nothing -> mempty
           Just date ->
-            span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200"] $
+            span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"] $
               toHtml (formatTime defaultTimeLocale "%b %d" date)
 
         case task.properties.startDate of
           Nothing -> mempty
           Just date ->
-            span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200"] $
+            span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $
               toHtml (formatTime defaultTimeLocale "%b %d" date)
 
         -- Tags (subtle, icon only with count if multiple)
         unless (null task.properties.tags) $
-          span_ [title_ (show task.properties.tags), class_ "text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600"] $
+          span_ [title_ (show task.properties.tags), class_ "text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"] $
             case task.properties.tags of
               [tag] -> toHtml tag
               tags -> toHtml (show (length tags) <> (" tags" :: Text))
@@ -72,11 +72,11 @@ taskGroup :: FilePath -> [Task] -> Html ()
 taskGroup sourceFile tasks = do
   div_ [class_ "mt-8 first:mt-0"] $ do
     -- File header with better spacing
-    h3_ [class_ "text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 px-4"] $
+    h3_ [class_ "text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 px-4"] $
       strong_ $
         toHtml (takeFileName sourceFile)
     -- Tasks with subtle background
-    div_ [class_ "bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-100"] $
+    div_ [class_ "bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700"] $
       forM_ tasks taskItem
 
 priorityText :: Priority -> Text
