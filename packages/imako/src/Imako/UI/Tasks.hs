@@ -19,7 +19,7 @@ taskItem task =
   div_ [class_ "py-3 px-4 mb-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"] $ do
     div_ [class_ "flex items-start gap-4"] $ do
       -- Checkbox (larger, cleaner)
-      span_ [class_ "w-5 h-5 mt-0.5 flex-shrink-0 inline-block"] $ toHtmlRaw $ if task.isCompleted then Icon.square_check else Icon.square
+      div_ [class_ "w-5 h-5 flex-shrink-0 flex items-center justify-center"] $ toHtmlRaw $ if task.isCompleted then Icon.square_check else Icon.square
 
       -- Main task text (larger, more prominent)
       div_ [class_ "flex-1 min-w-0"] $
@@ -32,15 +32,15 @@ taskItem task =
         case task.properties.priority of
           Normal -> mempty
           Highest ->
-            span_ [title_ "Highest priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-red-500 dark:text-red-400"] $ toHtmlRaw Icon.flame
+            div_ [title_ "Highest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-red-500 dark:text-red-400"] $ toHtmlRaw Icon.flame
           High ->
-            span_ [title_ "High priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-orange-500 dark:text-orange-400"] $ toHtmlRaw Icon.arrow_up
+            div_ [title_ "High priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-orange-500 dark:text-orange-400"] $ toHtmlRaw Icon.arrow_up
           Medium ->
-            span_ [title_ "Medium priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-yellow-500 dark:text-yellow-400"] $ toHtmlRaw Icon.chevron_up
+            div_ [title_ "Medium priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-yellow-500 dark:text-yellow-400"] $ toHtmlRaw Icon.chevron_up
           Low ->
-            span_ [title_ "Low priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-blue-500 dark:text-blue-400"] $ toHtmlRaw Icon.chevron_down
+            div_ [title_ "Low priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-blue-500 dark:text-blue-400"] $ toHtmlRaw Icon.chevron_down
           Lowest ->
-            span_ [title_ "Lowest priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-gray-500 dark:text-gray-400"] $ toHtmlRaw Icon.arrow_down
+            div_ [title_ "Lowest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-gray-500 dark:text-gray-400"] $ toHtmlRaw Icon.arrow_down
 
         -- Dates (compact pill with icon + date)
         case task.properties.dueDate of
@@ -73,7 +73,7 @@ taskGroup :: FilePath -> [Task] -> Html ()
 taskGroup sourceFile tasks = do
   div_ [class_ "mt-8 first:mt-0"] $ do
     -- File header with better spacing
-    h3_ [class_ "text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 px-4"] $
+    h3_ [class_ "text-sm font-semibold text-gray-600 dark:text-gray-300 mb-3 px-4"] $
       strong_ $
         toHtml (takeFileName sourceFile)
     -- Tasks with subtle background
