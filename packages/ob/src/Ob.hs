@@ -57,7 +57,7 @@ mountVault ::
     , (Map FilePath Note -> m ()) -> m ()
     )
 mountVault path =
-  UM.mount path (one ((), "**/*.md")) ["**/.*/**"] mempty (const $ handleMarkdownFile path)
+  UM.mount path (one ((), "**/*.md")) ["**/.*/**", ".git/**"] mempty (const $ handleMarkdownFile path)
 
 handleMarkdownFile :: (MonadIO m) => FilePath -> FilePath -> UM.FileAction () -> m (Map FilePath Note -> Map FilePath Note)
 handleMarkdownFile baseDir path = \case
