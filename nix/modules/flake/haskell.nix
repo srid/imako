@@ -20,6 +20,7 @@
 
       packages = {
         unionmount.source = inputs.unionmount;
+        lvar.source = inputs.lvar;
         commonmark-simple.source = inputs.commonmark-simple;
         commonmark-wikilink.source = inputs.commonmark-wikilink;
 
@@ -27,6 +28,10 @@
         htmx-lucid.source = inputs.htmx + /htmx-lucid;
         htmx-servant.source = inputs.htmx + /htmx-servant;
         servant-event-stream.source = inputs.servant-event-stream;
+      };
+
+      settings = {
+        unionmount.jailbreak = true;
       };
 
       # Development shell configuration

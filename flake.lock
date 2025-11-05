@@ -249,6 +249,22 @@
         "type": "github"
       }
     },
+    "lvar": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1756579735,
+        "narHash": "sha256-ApkFfqFFOL5NlqrIJQXYHQp7oNL9jl+bOKLBVotTW2I=",
+        "owner": "srid",
+        "repo": "lvar",
+        "rev": "c35ed20233b169187e0543406e4a372444ee0db4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "lvar",
+        "type": "github"
+      }
+    },
     "nixos-unified": {
       "locked": {
         "lastModified": 1754753812,
@@ -330,6 +346,7 @@
         "haskell-flake": "haskell-flake_2",
         "htmx": "htmx",
         "htmx-extensions": "htmx-extensions",
+        "lvar": "lvar",
         "nixos-unified": "nixos-unified",
         "nixpkgs": "nixpkgs_2",
         "servant-event-stream": "servant-event-stream",

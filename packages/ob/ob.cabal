@@ -59,6 +59,7 @@ library
     , commonmark-wikilink
     , containers
     , filepath
+    , lvar                 >=0.2
     , monad-logger
     , pandoc
     , pandoc-types
