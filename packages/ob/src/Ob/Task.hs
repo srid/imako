@@ -82,4 +82,7 @@ extractText = mconcat . map go
       Emph inlines -> extractText inlines
       Strong inlines -> extractText inlines
       Code _ s -> s
+      Link _ inlines (url, _) ->
+        let linkText = extractText inlines
+         in if linkText == "" then url else linkText
       _ -> ""

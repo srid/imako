@@ -99,6 +99,26 @@ spec = do
               task3.properties.tags `shouldBe` ["docs"]
             _ -> expectationFailure "Expected exactly 3 tasks"
 
+    it "parses tasks with links" $ do
+      let markdownContent =
+            [text|
+        # Tasks with Links
+
+        - [ ] Check out [this article](https://example.com)
+        - [ ] https://github.com/some/repo
+        - [ ] Visit [GitHub](https://github.com) and [GitLab](https://gitlab.com)
+        |]
+
+      case parseMarkdown "links.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "links.md" pandoc
+          map (extractText . description) tasks
+            `shouldBe` [ "Check out this article"
+                       , "https://github.com/some/repo"
+                       , "Visit GitHub and GitLab"
+                       ]
+
     it "extracts nested task lists" $ do
       let markdownContent =
             [text|
