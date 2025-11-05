@@ -11,6 +11,7 @@ import Lucid
 import Ob.Task (Priority (..), Task (..), extractText)
 import Ob.Task.Properties (TaskProperties (..))
 import System.FilePath (takeFileName)
+import Web.TablerIcons.Outline qualified as Icon
 
 -- | Task item component - displays a single task with checkbox and source
 taskItem :: Task -> Html ()
@@ -18,7 +19,7 @@ taskItem task =
   div_ [class_ "py-3 px-4 mb-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"] $ do
     div_ [class_ "flex items-start gap-4"] $ do
       -- Checkbox (larger, cleaner)
-      span_ [class_ "text-xl leading-none mt-0.5"] $ if task.isCompleted then "☑" else "☐"
+      span_ [class_ "w-5 h-5 mt-0.5 flex-shrink-0 inline-block"] $ toHtmlRaw $ if task.isCompleted then Icon.square_check else Icon.square
 
       -- Main task text (larger, more prominent)
       div_ [class_ "flex-1 min-w-0"] $
@@ -31,15 +32,15 @@ taskItem task =
         case task.properties.priority of
           Normal -> mempty
           Highest ->
-            span_ [title_ "Highest priority", class_ "text-sm"] "🔥"
+            span_ [title_ "Highest priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-red-500 dark:text-red-400"] $ toHtmlRaw Icon.flame
           High ->
-            span_ [title_ "High priority", class_ "text-sm"] "🔺"
+            span_ [title_ "High priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-orange-500 dark:text-orange-400"] $ toHtmlRaw Icon.arrow_up
           Medium ->
-            span_ [title_ "Medium priority", class_ "text-sm"] "🔼"
+            span_ [title_ "Medium priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-yellow-500 dark:text-yellow-400"] $ toHtmlRaw Icon.chevron_up
           Low ->
-            span_ [title_ "Low priority", class_ "text-sm"] "🔽"
+            span_ [title_ "Low priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-blue-500 dark:text-blue-400"] $ toHtmlRaw Icon.chevron_down
           Lowest ->
-            span_ [title_ "Lowest priority", class_ "text-sm"] "⏬"
+            span_ [title_ "Lowest priority", class_ "w-4 h-4 flex-shrink-0 inline-block text-gray-500 dark:text-gray-400"] $ toHtmlRaw Icon.arrow_down
 
         -- Dates (compact pill with icon + date)
         case task.properties.dueDate of
