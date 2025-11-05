@@ -58,8 +58,8 @@ renderFolderNode renderItem _path node = do
 renderFolder :: (a -> Html ()) -> Text -> FolderNode a -> Html ()
 renderFolder renderItem folderName node = do
   details_ [class_ "mt-4 first:mt-0", open_ ""] $ do
-    summary_ [class_ "cursor-pointer text-sm font-semibold text-gray-700 mb-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 flex items-center gap-2"] $ do
-      span_ [class_ "text-base"] "📁"
+    summary_ [class_ "cursor-pointer text-xs font-semibold text-gray-700 mb-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-300 flex items-center gap-2"] $ do
+      span_ [class_ "text-sm"] "📁"
       toHtml folderName
     -- Contents indented
     div_ [class_ "ml-4 mt-2"] $
@@ -71,7 +71,7 @@ renderFileGroup renderItem filename item = do
   div_ [class_ "mt-4 first:mt-0"] $ do
     -- File header
     h3_ [class_ "text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 px-4 flex items-center gap-2"] $ do
-      span_ [class_ "text-sm"] "📄"
+      span_ [class_ "text-xs"] "📄"
       strong_ $ toHtml filename
     -- Item content
     div_ [class_ "bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-100"] $

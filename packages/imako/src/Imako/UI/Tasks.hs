@@ -18,11 +18,11 @@ taskItem task =
   div_ [class_ "py-3 px-4 mb-1 bg-white hover:bg-gray-50 border-l-2 border-transparent hover:border-indigo-400 transition-colors"] $ do
     div_ [class_ "flex items-start gap-4"] $ do
       -- Checkbox (larger, cleaner)
-      span_ [class_ "text-2xl leading-none mt-0.5"] $ if task.isCompleted then "☑" else "☐"
+      span_ [class_ "text-xl leading-none mt-0.5"] $ if task.isCompleted then "☑" else "☐"
 
       -- Main task text (larger, more prominent)
       div_ [class_ "flex-1 min-w-0"] $
-        p_ [title_ (extractText task.inlines), class_ ("text-base " <> if task.isCompleted then "line-through text-gray-400" else "text-gray-900")] $
+        p_ [title_ (extractText task.inlines), class_ ("text-sm " <> if task.isCompleted then "line-through text-gray-400" else "text-gray-900")] $
           toHtml (extractText task.description)
 
       -- Metadata pills (simplified, icon-only or minimal)
@@ -31,15 +31,15 @@ taskItem task =
         case task.properties.priority of
           Normal -> mempty
           Highest ->
-            span_ [title_ "Highest priority", class_ "text-base"] "🔥"
+            span_ [title_ "Highest priority", class_ "text-sm"] "🔥"
           High ->
-            span_ [title_ "High priority", class_ "text-base"] "🔺"
+            span_ [title_ "High priority", class_ "text-sm"] "🔺"
           Medium ->
-            span_ [title_ "Medium priority", class_ "text-base"] "🔼"
+            span_ [title_ "Medium priority", class_ "text-sm"] "🔼"
           Low ->
-            span_ [title_ "Low priority", class_ "text-base"] "🔽"
+            span_ [title_ "Low priority", class_ "text-sm"] "🔽"
           Lowest ->
-            span_ [title_ "Lowest priority", class_ "text-base"] "⏬"
+            span_ [title_ "Lowest priority", class_ "text-sm"] "⏬"
 
         -- Dates (compact pill with icon + date)
         case task.properties.dueDate of
