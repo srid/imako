@@ -8,8 +8,9 @@ module Main where
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Imako.CLI qualified as CLI
-import Imako.UI.Components (taskItem, titleBar)
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
+import Imako.UI.Layout (titleBar)
+import Imako.UI.Tasks (taskItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Ob qualified
@@ -32,6 +33,24 @@ processTasksForUI vaultPath tasks =
           Map.empty
           incomplete
    in (length incomplete, completed, grouped)
+
+birdsEyeView :: Int -> Int -> Int -> Html ()
+birdsEyeView pendingCount completedCount notesCount =
+  div_ [class_ "grid grid-cols-3 gap-4 mb-8"] $ do
+    -- Pending tasks card
+    div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
+      div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Pending"
+      div_ [class_ "text-3xl font-bold text-indigo-600"] $ toHtml (show pendingCount :: Text)
+
+    -- Completed tasks card
+    div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
+      div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Completed"
+      div_ [class_ "text-3xl font-bold text-green-600"] $ toHtml (show completedCount :: Text)
+
+    -- Notes card
+    div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
+      div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Notes"
+      div_ [class_ "text-3xl font-bold text-gray-900"] $ toHtml (show notesCount :: Text)
 
 main :: IO ()
 main = do
@@ -56,22 +75,8 @@ main = do
               div_ [class_ "max-w-5xl mx-auto p-6"] $ do
                 let (pendingCount, completedCount, groupedTasks) = processTasksForUI options.path (getTasks vault)
 
-                -- Stats overview section (bird's eye view)
-                div_ [class_ "grid grid-cols-3 gap-4 mb-8"] $ do
-                  -- Pending tasks card
-                  div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
-                    div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Pending"
-                    div_ [class_ "text-3xl font-bold text-indigo-600"] $ toHtml (show pendingCount :: Text)
-
-                  -- Completed tasks card
-                  div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
-                    div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Completed"
-                    div_ [class_ "text-3xl font-bold text-green-600"] $ toHtml (show completedCount :: Text)
-
-                  -- Notes card
-                  div_ [class_ "bg-white rounded-lg border border-gray-200 p-5 shadow-sm"] $ do
-                    div_ [class_ "text-sm font-medium text-gray-500 mb-1"] "Notes"
-                    div_ [class_ "text-3xl font-bold text-gray-900"] $ toHtml (show (Map.size vault.notes) :: Text)
+                -- Stats overview section
+                birdsEyeView pendingCount completedCount (Map.size vault.notes)
 
                 -- Tasks section with hierarchical folder structure
                 div_ $ do
