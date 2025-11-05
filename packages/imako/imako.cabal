@@ -74,6 +74,7 @@ common shared
     , servant-event-stream
     , servant-server
     , shower
+    , tabler-icons
     , text
     , time
     , unionmount             >=0.3

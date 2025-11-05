@@ -350,6 +350,7 @@
         "nixos-unified": "nixos-unified",
         "nixpkgs": "nixpkgs_2",
         "servant-event-stream": "servant-event-stream",
+        "tabler-icons": "tabler-icons",
         "unionmount": "unionmount"
       }
     },
@@ -366,6 +367,22 @@
       "original": {
         "owner": "bflyblue",
         "repo": "servant-event-stream",
+        "type": "github"
+      }
+    },
+    "tabler-icons": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1756335210,
+        "narHash": "sha256-NVOfzoJ792fE6NOlmkbOVRBaEInyujA3dl8sEiydUbg=",
+        "owner": "juspay",
+        "repo": "tabler-icons-hs",
+        "rev": "405c85321d4a9de87f0cea218aa75c5fe5969116",
+        "type": "github"
+      },
+      "original": {
+        "owner": "juspay",
+        "repo": "tabler-icons-hs",
         "type": "github"
       }
     },

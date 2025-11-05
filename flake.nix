@@ -28,6 +28,8 @@
     # https://github.com/bflyblue/servant-event-stream/pull/13
     servant-event-stream.url = "github:bflyblue/servant-event-stream";
     servant-event-stream.flake = false;
+    tabler-icons.url = "github:juspay/tabler-icons-hs";
+    tabler-icons.flake = false;
   };
 
   outputs = inputs:
