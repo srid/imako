@@ -11,6 +11,7 @@ import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Text.Lazy.Encoding qualified as TL
+import Data.Time (Day, UTCTime (..), addDays, getCurrentTime)
 import Imako.CLI qualified as CLI
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Layout (layout)
@@ -21,14 +22,21 @@ import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
 import Ob qualified
 import Ob.Task (Task (..))
+import Ob.Task.Properties (TaskProperties (..))
 import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
 import System.FilePath (makeRelative)
 import Web.Scotty qualified as S
 
-processTasksForUI :: FilePath -> [Task] -> (Int, Int, Map FilePath [Task])
-processTasksForUI vaultPath tasks =
-  let incomplete = filter (not . (.isCompleted)) tasks
+processTasksForUI :: Day -> FilePath -> [Task] -> (Int, Int, Int, Map FilePath [Task])
+processTasksForUI today vaultPath tasks =
+  let twoDaysFromNow = addDays 2 today
+      isNotFarFuture task = case task.properties.startDate of
+        Nothing -> True
+        Just startDate -> startDate < twoDaysFromNow
+      incomplete = filter (not . (.isCompleted)) tasks
+      incompleteNotFuture = filter isNotFarFuture incomplete
+      filtered = length incomplete - length incompleteNotFuture
       completed = length tasks - length incomplete
       grouped =
         List.foldl
@@ -37,8 +45,8 @@ processTasksForUI vaultPath tasks =
                in Map.insertWith (flip (++)) relativePath [task] acc
           )
           Map.empty
-          incomplete
-   in (length incomplete, completed, grouped)
+          incompleteNotFuture
+   in (length incompleteNotFuture, completed, filtered, grouped)
 
 birdsEyeView :: Int -> Int -> Int -> Html ()
 birdsEyeView pendingCount completedCount notesCount =
@@ -53,9 +61,15 @@ birdsEyeView pendingCount completedCount notesCount =
         div_ [class_ "text-sm font-medium text-gray-500 dark:text-gray-400 mb-1"] $ toHtml label
         div_ [class_ ("text-3xl font-bold " <> colorClass)] $ toHtml (show count :: Text)
 
-renderMainContent :: FilePath -> Ob.Vault -> Html ()
-renderMainContent vaultPath vault = do
-  let (pendingCount, completedCount, groupedTasks) = processTasksForUI vaultPath (getTasks vault)
+renderMainContent :: Day -> FilePath -> Ob.Vault -> Html ()
+renderMainContent today vaultPath vault = do
+  let (pendingCount, completedCount, filteredCount, groupedTasks) = processTasksForUI today vaultPath (getTasks vault)
+
+  -- Show filtered tasks message if any
+  when (filteredCount > 0) $
+    div_ [class_ "mb-4 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg"] $
+      p_ [class_ "text-sm text-blue-700 dark:text-blue-300"] $
+        toHtml ("Hiding " <> show filteredCount <> " task" <> (if filteredCount == 1 then "" else "s" :: Text) <> " with start date 2+ days in future")
 
   -- Stats overview section
   birdsEyeView pendingCount completedCount (Map.size vault.notes)
@@ -73,6 +87,7 @@ main = do
     Ob.withLiveVault options.path $ \vaultVar -> do
       S.scotty 4009 $ do
         S.get "/" $ do
+          today <- liftIO $ utctDay <$> getCurrentTime
           vault <- liftIO $ LVar.get vaultVar
           S.html $
             renderText $
@@ -81,7 +96,7 @@ main = do
                     "Imako: "
                     small_ [class_ "font-mono text-sm text-gray-500"] $ toHtml options.path
                 )
-                (renderMainContent options.path vault)
+                (renderMainContent today options.path vault)
 
         S.get "/manifest.json" $ do
           S.setHeader "Content-Type" "application/json"
@@ -93,8 +108,9 @@ main = do
           S.setHeader "Connection" "keep-alive"
           S.status status200
           S.stream $ \write flush -> forever $ do
+            today <- utctDay <$> getCurrentTime
             vault <- LVar.listenNext vaultVar
-            let html = renderText $ renderMainContent options.path vault
+            let html = renderText $ renderMainContent today options.path vault
             let sseData = "data: " <> html <> "\n\n"
             write $ lazyByteString $ TL.encodeUtf8 sseData
             flush
