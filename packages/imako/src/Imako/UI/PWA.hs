@@ -3,9 +3,11 @@
 module Imako.UI.PWA (
   Manifest,
   imakoManifest,
+  pwaMeta,
 ) where
 
 import Data.Aeson (ToJSON)
+import Lucid hiding (type_)
 
 -- | PWA manifest icon
 data ManifestIcon = ManifestIcon
@@ -43,3 +45,14 @@ imakoManifest =
     , theme_color = "#4F46E5"
     , icons = [ManifestIcon {src = "https://fav.farm/🌌", sizes = "any", type_ = "image/svg+xml"}]
     }
+
+-- | PWA meta tags for HTML head
+pwaMeta :: Html ()
+pwaMeta = do
+  meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1"]
+  meta_ [name_ "theme-color", content_ "#4F46E5"]
+  meta_ [name_ "apple-mobile-web-app-capable", content_ "yes"]
+  meta_ [name_ "apple-mobile-web-app-status-bar-style", content_ "black-translucent"]
+  meta_ [name_ "apple-mobile-web-app-title", content_ "Imako"]
+  link_ [rel_ "apple-touch-icon", href_ "https://fav.farm/🌌"]
+  link_ [rel_ "manifest", href_ "/manifest.json"]
