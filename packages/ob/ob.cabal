@@ -62,6 +62,7 @@ library
     , filepath
     , lucid2
     , lvar                 >=0.2
+    , megaparsec
     , monad-logger
     , pandoc
     , pandoc-types

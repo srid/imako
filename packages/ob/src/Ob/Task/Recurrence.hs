@@ -14,6 +14,9 @@ module Ob.Task.Recurrence (
 ) where
 
 import Data.Text qualified as T
+import Text.Megaparsec
+import Text.Megaparsec.Char
+import Text.Megaparsec.Char.Lexer qualified as L
 
 -- | Represents a task recurrence rule
 data Recurrence = Recurrence
@@ -64,132 +67,217 @@ data DayOfWeek = Mon | Tue | Wed | Thu | Fri | Sat | Sun
 data Month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec
   deriving (Show, Eq)
 
+type Parser = Parsec Void Text
+
 -- | Parse recurrence rule from text after 🔁 emoji
 parseRecurrence :: Text -> Maybe Recurrence
-parseRecurrence input =
-  let (ruleText, whenDoneFlag) = extractWhenDone input
-      normalizedRule = T.strip ruleText
-   in case parseRule normalizedRule of
-        Just r -> Just $ Recurrence r whenDoneFlag
-        Nothing -> Nothing
+parseRecurrence = parseMaybe recurrenceP
+
+-- | Main recurrence parser
+recurrenceP :: Parser Recurrence
+recurrenceP = do
+  r <- ruleP
+  whenDoneFlag <- option False (space1 *> whenDoneP)
+  space
+  eof
+  pure $ Recurrence r whenDoneFlag
+
+-- | Parse "when done" modifier
+whenDoneP :: Parser Bool
+whenDoneP = string' "when" *> space1 *> string' "done" $> True
+
+-- | Parse recurrence rule (starts with "every")
+ruleP :: Parser RecurrenceRule
+ruleP =
+  string' "every"
+    *> space1
+    *> choice
+      [ try weekdayP
+      , try yearP
+      , try nDaysP
+      , try nWeeksP
+      , try weekP
+      , try nMonthsP
+      , try monthP
+      , try dayOfWeekShorthandP
+      , monthsInYearP
+      ]
+
+-- | Parse "every weekday"
+weekdayP :: Parser RecurrenceRule
+weekdayP = string' "weekday" $> EveryWeekday
+
+-- | Parse "every year"
+yearP :: Parser RecurrenceRule
+yearP = string' "year" $> EveryYear
+
+-- | Parse "every N day(s)"
+nDaysP :: Parser RecurrenceRule
+nDaysP = do
+  n <- L.decimal
+  space1
+  void $ string' "day" <* optional (char' 's')
+  pure $ EveryNDays n
+
+-- | Parse "every week [on DayOfWeek(s)]"
+weekP :: Parser RecurrenceRule
+weekP = do
+  void $ string' "week"
+  days <- optional (try $ space1 *> onP *> space1 *> dayListP)
+  pure $ EveryWeek days
+
+-- | Parse "every N weeks [on DayOfWeek(s)]"
+nWeeksP :: Parser RecurrenceRule
+nWeeksP = do
+  n <- L.decimal
+  space1
+  void $ string' "week" <* char' 's'
+  days <- optional (try $ space1 *> onP *> space1 *> dayListP)
+  pure $ EveryNWeeks n days
+
+-- | Parse "every month [on constraint]"
+monthP :: Parser RecurrenceRule
+monthP = do
+  void $ string' "month"
+  constraint <- optional (try $ space1 *> onP *> space1 *> monthConstraintP)
+  pure $ EveryMonth constraint
+
+-- | Parse "every N months [on constraint]"
+nMonthsP :: Parser RecurrenceRule
+nMonthsP = do
+  n <- L.decimal
+  space1
+  void $ string' "month" <* char' 's'
+  constraint <- optional (try $ space1 *> onP *> space1 *> monthConstraintP)
+  pure $ EveryNMonths n constraint
+
+-- | Parse "every DayOfWeek" as shorthand for "every week on DayOfWeek"
+dayOfWeekShorthandP :: Parser RecurrenceRule
+dayOfWeekShorthandP = do
+  dow <- dayOfWeekP
+  pure $ EveryWeek (Just [dow])
+
+-- | Parse "every Month(s) [on constraint]"
+monthsInYearP :: Parser RecurrenceRule
+monthsInYearP = do
+  months <- monthListP
+  constraint <- optional (try $ space1 *> onP *> space1 *> monthConstraintP)
+  pure $ EveryMonthsInYear months constraint
+
+-- | Parse "on" keyword
+onP :: Parser ()
+onP = void $ string' "on"
+
+-- | Parse comma/and-separated list of days of week
+dayListP :: Parser [DayOfWeek]
+dayListP = dayOfWeekP `sepBy1` separator
   where
-    extractWhenDone :: Text -> (Text, Bool)
-    extractWhenDone txt =
-      if "when done" `T.isSuffixOf` T.toLower txt
-        then (T.strip $ T.dropEnd 9 txt, True)
-        else (txt, False)
+    separator = try (space *> char' ',' *> space) <|> (space1 *> string' "and" *> space1)
 
--- | Parse the core recurrence rule
-parseRule :: Text -> Maybe RecurrenceRule
-parseRule txt
-  | not ("every" `T.isPrefixOf` T.toLower txt) = Nothing
-  | otherwise = parseEvery (T.strip $ T.drop 5 txt)
+-- | Parse comma/and-separated list of months
+monthListP :: Parser [Month]
+monthListP = monthNameP `sepBy1` separator
   where
-    parseEvery :: Text -> Maybe RecurrenceRule
-    parseEvery rest = case words rest of
-      -- every weekday
-      ["weekday"] -> Just EveryWeekday
-      -- every year
-      ["year"] -> Just EveryYear
-      -- every N days
-      [n, "days"] -> EveryNDays <$> readMaybeInt n
-      [n, "day"] -> EveryNDays <$> readMaybeInt n
-      -- every week [on DayOfWeek[, DayOfWeek]*]
-      ("week" : daysRest) -> Just $ EveryWeek (parseDaysOfWeek daysRest)
-      -- every N weeks [on DayOfWeek[, DayOfWeek]*]
-      (n : "weeks" : daysRest) -> do
-        num <- readMaybeInt n
-        pure $ EveryNWeeks num (parseDaysOfWeek daysRest)
-      -- every month [on constraint]
-      ("month" : constraintRest) -> Just $ EveryMonth (parseMonthConstraint constraintRest)
-      -- every N months [on constraint]
-      (n : "months" : constraintRest) -> do
-        num <- readMaybeInt n
-        pure $ EveryNMonths num (parseMonthConstraint constraintRest)
-      -- every DayOfWeek (shorthand for every week on DayOfWeek)
-      [day] -> case parseDayOfWeek day of
-        Just dow -> Just $ EveryWeek (Just [dow])
-        Nothing -> parseMonthsInYear [day]
-      -- every Month [and Month]* [on constraint]
-      ws -> parseMonthsInYear ws
+    separator = try (space *> char' ',' *> space) <|> (space1 *> string' "and" *> space1)
 
-    parseDaysOfWeek :: [Text] -> Maybe [DayOfWeek]
-    parseDaysOfWeek [] = Nothing
-    parseDaysOfWeek ("on" : rest) = parseDaysOfWeek rest
-    parseDaysOfWeek ws =
-      let days = mapMaybe parseDayOfWeek (splitOnComma ws)
-       in if null days then Nothing else Just days
+-- | Parse a day of week
+dayOfWeekP :: Parser DayOfWeek
+dayOfWeekP =
+  choice
+    [ string' "monday" $> Mon
+    , string' "tuesday" $> Tue
+    , string' "wednesday" $> Wed
+    , string' "thursday" $> Thu
+    , string' "friday" $> Fri
+    , string' "saturday" $> Sat
+    , string' "sunday" $> Sun
+    ]
 
-    parseMonthConstraint :: [Text] -> Maybe MonthConstraint
-    parseMonthConstraint [] = Nothing
-    parseMonthConstraint ("on" : rest) = parseMonthConstraint rest
-    parseMonthConstraint ["the", "last"] = Just OnTheLast
-    parseMonthConstraint ["the", "last", day] = OnTheDayOfWeek . LastDayOfWeek <$> parseDayOfWeek day
-    parseMonthConstraint ["the", nth, "last", day] = do
-      n <- parseOrdinal nth
-      dow <- parseDayOfWeek day
-      pure $ OnTheDayOfWeek (NthLastDayOfWeek n dow)
-    parseMonthConstraint ["the", nth] = OnThe <$> parseOrdinal nth
-    parseMonthConstraint ["the", nth, day] = do
-      n <- parseOrdinal nth
-      dow <- parseDayOfWeek day
-      pure $ OnTheDayOfWeek (NthDayOfWeek n dow)
-    parseMonthConstraint ws =
-      let days = mapMaybe parseOrdinal (filter (/= "and") $ splitOnComma ws)
-       in if null days then Nothing else Just (OnTheDays days)
+-- | Parse a month name
+monthNameP :: Parser Month
+monthNameP =
+  choice
+    [ string' "january" $> Jan
+    , string' "february" $> Feb
+    , string' "march" $> Mar
+    , string' "april" $> Apr
+    , string' "may" $> May
+    , string' "june" $> Jun
+    , string' "july" $> Jul
+    , string' "august" $> Aug
+    , string' "september" $> Sep
+    , string' "october" $> Oct
+    , string' "november" $> Nov
+    , string' "december" $> Dec
+    ]
 
-    parseMonthsInYear :: [Text] -> Maybe RecurrenceRule
-    parseMonthsInYear ws =
-      let (monthWords, constraintWords) = span (\w -> T.toLower w /= "on") ws
-          months = mapMaybe parseMonth (splitOnComma monthWords)
-          constraint = if null constraintWords then Nothing else parseMonthConstraint constraintWords
-       in if null months
-            then Nothing
-            else Just $ EveryMonthsInYear months constraint
+-- | Parse month constraints
+monthConstraintP :: Parser MonthConstraint
+monthConstraintP =
+  choice
+    [ try onTheLastDayOfWeekP
+    , try onTheNthLastDayOfWeekP
+    , try onTheNthDayOfWeekP
+    , try onTheLastP
+    , try onTheNthP
+    , onTheDaysP
+    ]
 
-    parseDayOfWeek :: Text -> Maybe DayOfWeek
-    parseDayOfWeek w = case T.toLower w of
-      "monday" -> Just Mon
-      "tuesday" -> Just Tue
-      "wednesday" -> Just Wed
-      "thursday" -> Just Thu
-      "friday" -> Just Fri
-      "saturday" -> Just Sat
-      "sunday" -> Just Sun
-      _ -> Nothing
+-- | Parse "the last"
+onTheLastP :: Parser MonthConstraint
+onTheLastP = string' "the" *> space1 *> string' "last" $> OnTheLast
 
-    parseMonth :: Text -> Maybe Month
-    parseMonth w = case T.toLower w of
-      "january" -> Just Jan
-      "february" -> Just Feb
-      "march" -> Just Mar
-      "april" -> Just Apr
-      "may" -> Just May
-      "june" -> Just Jun
-      "july" -> Just Jul
-      "august" -> Just Aug
-      "september" -> Just Sep
-      "october" -> Just Oct
-      "november" -> Just Nov
-      "december" -> Just Dec
-      _ -> Nothing
+-- | Parse "the last DayOfWeek"
+onTheLastDayOfWeekP :: Parser MonthConstraint
+onTheLastDayOfWeekP = do
+  void $ string' "the" *> space1 *> string' "last" *> space1
+  OnTheDayOfWeek . LastDayOfWeek <$> dayOfWeekP
 
-    parseOrdinal :: Text -> Maybe Int
-    parseOrdinal w = case T.toLower w of
-      "1st" -> Just 1
-      "2nd" -> Just 2
-      "3rd" -> Just 3
-      "last" -> Just 31 -- Special marker for last day
-      _ | "th" `T.isSuffixOf` T.toLower w -> readMaybeInt (T.dropEnd 2 w)
-      _ -> readMaybeInt w
+-- | Parse "the Nth last DayOfWeek"
+onTheNthLastDayOfWeekP :: Parser MonthConstraint
+onTheNthLastDayOfWeekP = do
+  void $ string' "the" *> space1
+  n <- ordinalP
+  void $ space1 *> string' "last" *> space1
+  OnTheDayOfWeek . NthLastDayOfWeek n <$> dayOfWeekP
 
-    readMaybeInt :: Text -> Maybe Int
-    readMaybeInt t = case reads (toString t) of
-      [(n, "")] | n > 0 -> Just n
-      _ -> Nothing
+-- | Parse "the Nth DayOfWeek"
+onTheNthDayOfWeekP :: Parser MonthConstraint
+onTheNthDayOfWeekP = do
+  void $ string' "the" *> space1
+  n <- ordinalP
+  void space1
+  OnTheDayOfWeek . NthDayOfWeek n <$> dayOfWeekP
 
-    splitOnComma :: [Text] -> [Text]
-    splitOnComma = concatMap (T.splitOn ",") >>> map T.strip >>> filter (not . T.null)
+-- | Parse "the Nth"
+onTheNthP :: Parser MonthConstraint
+onTheNthP = do
+  void $ string' "the" *> space1
+  OnThe <$> ordinalP
+
+-- | Parse "the Nth and Mth" (comma/and separated)
+onTheDaysP :: Parser MonthConstraint
+onTheDaysP = do
+  void $ string' "the" *> space1
+  days <- ordinalP `sepBy1` separator
+  pure $ OnTheDays days
+  where
+    separator = try (space *> char' ',' *> space) <|> (space1 *> string' "and" *> space1)
+
+-- | Parse ordinal number (1st, 2nd, 3rd, 4th, etc.)
+ordinalP :: Parser Int
+ordinalP =
+  choice
+    [ try $ string' "1st" $> 1
+    , try $ string' "2nd" $> 2
+    , try $ string' "3rd" $> 3
+    , try $ string' "last" $> 31
+    , try $ do
+        n <- L.decimal
+        void $ string' "th" <|> string' "st" <|> string' "nd" <|> string' "rd"
+        pure n
+    , L.decimal
+    ]
 
 -- | Format recurrence rule back to human-readable text
 formatRecurrence :: Recurrence -> Text

@@ -257,7 +257,6 @@ spec = do
         Right (_, pandoc) -> do
           let tasks = extractTasks "recurring.md" pandoc
           length tasks `shouldBe` 5
-
           case tasks of
             [task1, task2, task3, task4, task5] -> do
               -- Test monthly recurrence
