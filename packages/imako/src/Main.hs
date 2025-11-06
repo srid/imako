@@ -28,6 +28,20 @@ import Options.Applicative (execParser)
 import System.FilePath (makeRelative)
 import Web.Scotty qualified as S
 
+{- | Process tasks for UI display with filtering and grouping.
+
+Filters out completed, cancelled, and far-future tasks, then groups remaining tasks by file.
+
+* If a task or any of its parent tasks has a start date >= 2 days from today, the entire subtree is filtered out
+* Tasks are grouped by their source file path (relative to vault)
+
+Returns a tuple of:
+
+* Number of incomplete tasks to display
+* Number of completed tasks
+* Number of filtered (far-future) tasks
+* Map of tasks grouped by file path
+-}
 processTasksForUI :: Day -> FilePath -> [Task] -> (Int, Int, Int, Map FilePath [Task])
 processTasksForUI today vaultPath tasks =
   let twoDaysFromNow = addDays 2 today
