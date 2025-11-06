@@ -8,8 +8,7 @@ module Ob.Task (
 where
 
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
-import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc)
-import Text.Pandoc.Walk (query)
+import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc (..))
 
 data Task = Task
   { description :: [Inline]
@@ -17,33 +16,48 @@ data Task = Task
   , sourceNote :: FilePath
   , isCompleted :: Bool
   , properties :: TaskProperties
+  , parentTasks :: [Text]
   }
   deriving (Show, Eq)
 
 -- | Extract tasks from a Pandoc document
 extractTasks :: FilePath -> Pandoc -> [Task]
-extractTasks sourcePath = query extractFromBlock
-  where
-    extractFromBlock = \case
-      BulletList items -> concatMap (extractFromItem sourcePath) items
-      OrderedList _ items -> concatMap (extractFromItem sourcePath) items
-      _ -> []
+extractTasks sourcePath (Pandoc _ blocks) = concatMap (extractFromBlock sourcePath []) blocks
 
--- | Extract task from a list item
-extractFromItem :: FilePath -> [Block] -> [Task]
-extractFromItem sourcePath = concatMap extractFromBlock
+-- | Extract tasks from a block, tracking parent task context
+extractFromBlock :: FilePath -> [Text] -> Block -> [Task]
+extractFromBlock path parents = \case
+  BulletList items -> concatMap (extractFromItem path parents) items
+  OrderedList _ items -> concatMap (extractFromItem path parents) items
+  _ -> []
+
+-- | Extract task from a list item, tracking parent tasks
+extractFromItem :: FilePath -> [Text] -> [Block] -> [Task]
+extractFromItem sourcePath parents blocks =
+  let (maybeTask, nestedBlocks) = extractTaskFromBlocks blocks
+      -- If this item is a task, add it to the parent chain for nested items
+      newParents = case maybeTask of
+        Just task -> parents <> [extractText task.description]
+        Nothing -> parents
+      -- Extract tasks from nested lists
+      nestedTasks = concatMap (extractFromBlock sourcePath newParents) nestedBlocks
+   in -- Return this task (if any) followed by nested tasks
+      maybeToList maybeTask <> nestedTasks
   where
-    extractFromBlock = \case
-      Plain inlines -> extractFromInlines sourcePath inlines
-      -- Don't recursively process nested lists here - let the top-level query handle them
-      _ -> []
+    -- Split blocks into task info and nested blocks
+    extractTaskFromBlocks :: [Block] -> (Maybe Task, [Block])
+    extractTaskFromBlocks = \case
+      Plain inlines : rest ->
+        let task = listToMaybe (extractFromInlines sourcePath parents inlines)
+         in (task, rest)
+      _ -> (Nothing, blocks)
 
 -- | Extract task from inline elements
-extractFromInlines :: FilePath -> [Inline] -> [Task]
-extractFromInlines sourcePath = \case
+extractFromInlines :: FilePath -> [Text] -> [Inline] -> [Task]
+extractFromInlines sourcePath parents = \case
   Str marker : Space : rest
     | Just completed <- parseCheckbox marker ->
-        [parseTaskWithMetadata rest sourcePath completed]
+        [parseTaskWithMetadata rest sourcePath parents completed]
   _ -> []
   where
     parseCheckbox = \case
@@ -52,11 +66,26 @@ extractFromInlines sourcePath = \case
       "[ ]" -> Just False -- ASCII unchecked
       "[x]" -> Just True -- ASCII checked lowercase
       "[X]" -> Just True -- ASCII checked uppercase
+      "[/]" -> Just False -- In-progress (treat as incomplete)
+      "[-]" -> Just True -- Cancelled (treat as complete)
+      "[>]" -> Just False -- Forwarded/deferred (treat as incomplete)
+      "[<]" -> Just False -- Scheduling (treat as incomplete)
+      "[?]" -> Just False -- Question (treat as incomplete)
+      "[!]" -> Just False -- Important (treat as incomplete)
+      "[*]" -> Just False -- Star (treat as incomplete)
+      "[n]" -> Just False -- Note (treat as incomplete)
+      "[l]" -> Just False -- Location (treat as incomplete)
+      "[i]" -> Just False -- Info (treat as incomplete)
+      "[I]" -> Just False -- Idea (treat as incomplete)
+      "[S]" -> Just False -- Amount/sum (treat as incomplete)
+      "[p]" -> Just False -- Pro (treat as incomplete)
+      "[c]" -> Just False -- Con (treat as incomplete)
+      "[b]" -> Just False -- Bookmark (treat as incomplete)
       _ -> Nothing
 
 -- | Parse task with obsidian-tasks metadata
-parseTaskWithMetadata :: [Inline] -> FilePath -> Bool -> Task
-parseTaskWithMetadata taskInlines sourcePath completed =
+parseTaskWithMetadata :: [Inline] -> FilePath -> [Text] -> Bool -> Task
+parseTaskWithMetadata taskInlines sourcePath parents completed =
   let props = parseInlineSequence taskInlines
    in Task
         { description = cleanInlines props
@@ -68,6 +97,7 @@ parseTaskWithMetadata taskInlines sourcePath completed =
               { completedDate = if completed then completedDate props else Nothing
               , tags = reverse (tags props)
               }
+        , parentTasks = parents
         }
 
 -- | Extract plain text from inline elements

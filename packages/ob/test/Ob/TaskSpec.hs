@@ -135,10 +135,30 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "nested.md" pandoc
-          map (\t -> (extractText t.description, t.isCompleted)) tasks
-            `shouldBe` [ ("Main task", False)
-                       , ("Another main task", False)
-                       , ("Subtask 1", False)
-                       , ("Subtask 2", True)
-                       , ("Another subtask", False)
+          map (\t -> (extractText t.description, t.isCompleted, t.parentTasks)) tasks
+            `shouldBe` [ ("Main task", False, [])
+                       , ("Subtask 1", False, ["Main task"])
+                       , ("Subtask 2", True, ["Main task"])
+                       , ("Another main task", False, [])
+                       , ("Another subtask", False, ["Another main task"])
+                       ]
+
+    it "tracks only parent tasks in breadcrumb, not plain list items" $ do
+      let markdownContent =
+            [text|
+        # Project
+
+        - Project context
+          - [/] Feature A
+            - Plain item
+              - [ ] Deep task
+        |]
+
+      case parseMarkdown "context.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "context.md" pandoc
+          map (\t -> (extractText t.description, t.parentTasks)) tasks
+            `shouldBe` [ ("Feature A", [])
+                       , ("Deep task", ["Feature A"])
                        ]

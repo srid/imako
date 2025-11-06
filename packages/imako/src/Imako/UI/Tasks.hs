@@ -16,51 +16,61 @@ import Web.TablerIcons.Outline qualified as Icon
 -- | Task item component - displays a single task with checkbox and source
 taskItem :: Task -> Html ()
 taskItem task =
-  div_ [class_ "py-3 px-4 mb-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"] $ do
-    div_ [class_ "flex items-start gap-4"] $ do
-      -- Checkbox (larger, cleaner)
-      div_ [class_ "w-5 h-5 flex-shrink-0 flex items-center justify-center"] $ toHtmlRaw $ if task.isCompleted then Icon.square_check else Icon.square
+  let indentLevel = length task.parentTasks
+      indentClass = if indentLevel > 0 then "ml-" <> show (indentLevel * 4) else ""
+   in div_
+        [class_ ("py-3 px-4 mb-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors " <> indentClass)]
+        ( do
+            div_ [class_ "flex items-start gap-4"] $ do
+              -- Checkbox (larger, cleaner)
+              div_ [class_ "w-5 h-5 flex-shrink-0 flex items-center justify-center"] $ toHtmlRaw $ if task.isCompleted then Icon.square_check else Icon.square
 
-      -- Main task text (larger, more prominent)
-      div_ [class_ "flex-1 min-w-0"] $
-        p_ [title_ (extractText task.inlines), class_ ("text-sm " <> if task.isCompleted then "line-through text-gray-400 dark:text-gray-500" else "text-gray-900 dark:text-gray-100")] $
-          toHtml (extractText task.description)
+              -- Main task text with breadcrumb
+              div_ [class_ "flex-1 min-w-0"] $ do
+                -- Show parent breadcrumb if exists
+                unless (null task.parentTasks) $
+                  div_ [class_ "text-xs text-gray-500 dark:text-gray-400 mb-1"] $
+                    toHtml (formatBreadcrumb task.parentTasks)
 
-      -- Metadata pills (simplified, icon-only or minimal)
-      div_ [class_ "flex items-center gap-1.5 flex-shrink-0"] $ do
-        -- Priority indicator (icon only, no text)
-        case task.properties.priority of
-          Normal -> mempty
-          Highest ->
-            div_ [title_ "Highest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-red-500 dark:text-red-400"] $ toHtmlRaw Icon.flame
-          High ->
-            div_ [title_ "High priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-orange-500 dark:text-orange-400"] $ toHtmlRaw Icon.arrow_up
-          Medium ->
-            div_ [title_ "Medium priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-yellow-500 dark:text-yellow-400"] $ toHtmlRaw Icon.chevron_up
-          Low ->
-            div_ [title_ "Low priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-blue-500 dark:text-blue-400"] $ toHtmlRaw Icon.chevron_down
-          Lowest ->
-            div_ [title_ "Lowest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-gray-500 dark:text-gray-400"] $ toHtmlRaw Icon.arrow_down
+                p_ [title_ (extractText task.inlines), class_ ("text-sm " <> if task.isCompleted then "line-through text-gray-400 dark:text-gray-500" else "text-gray-900 dark:text-gray-100")] $
+                  toHtml (extractText task.description)
 
-        -- Dates (compact pill with icon + date)
-        whenJust task.properties.dueDate $ \date ->
-          span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"] $
-            toHtml (formatTime defaultTimeLocale "%b %d" date)
+              -- Metadata pills (simplified, icon-only or minimal)
+              div_ [class_ "flex items-center gap-1.5 flex-shrink-0"] $ do
+                -- Priority indicator (icon only, no text)
+                case task.properties.priority of
+                  Normal -> mempty
+                  Highest ->
+                    div_ [title_ "Highest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-red-500 dark:text-red-400"] $ toHtmlRaw Icon.flame
+                  High ->
+                    div_ [title_ "High priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-orange-500 dark:text-orange-400"] $ toHtmlRaw Icon.arrow_up
+                  Medium ->
+                    div_ [title_ "Medium priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-yellow-500 dark:text-yellow-400"] $ toHtmlRaw Icon.chevron_up
+                  Low ->
+                    div_ [title_ "Low priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-blue-500 dark:text-blue-400"] $ toHtmlRaw Icon.chevron_down
+                  Lowest ->
+                    div_ [title_ "Lowest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-gray-500 dark:text-gray-400"] $ toHtmlRaw Icon.arrow_down
 
-        whenJust task.properties.scheduledDate $ \date ->
-          span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"] $
-            toHtml (formatTime defaultTimeLocale "%b %d" date)
+                -- Dates (compact pill with icon + date)
+                whenJust task.properties.dueDate $ \date ->
+                  span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"] $
+                    toHtml (formatTime defaultTimeLocale "%b %d" date)
 
-        whenJust task.properties.startDate $ \date ->
-          span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $
-            toHtml (formatTime defaultTimeLocale "%b %d" date)
+                whenJust task.properties.scheduledDate $ \date ->
+                  span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"] $
+                    toHtml (formatTime defaultTimeLocale "%b %d" date)
 
-        -- Tags (subtle, icon only with count if multiple)
-        unless (null task.properties.tags) $
-          span_ [title_ (show task.properties.tags), class_ "text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"] $
-            case task.properties.tags of
-              [tag] -> toHtml tag
-              tags -> toHtml (show (length tags) <> (" tags" :: Text))
+                whenJust task.properties.startDate $ \date ->
+                  span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $
+                    toHtml (formatTime defaultTimeLocale "%b %d" date)
+
+                -- Tags (subtle, icon only with count if multiple)
+                unless (null task.properties.tags) $
+                  span_ [title_ (show task.properties.tags), class_ "text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"] $
+                    case task.properties.tags of
+                      [tag] -> toHtml tag
+                      tags -> toHtml (show (length tags) <> (" tags" :: Text))
+        )
 
 -- | Task group component - displays tasks for a source file
 taskGroup :: FilePath -> [Task] -> Html ()
@@ -82,3 +92,12 @@ priorityText = \case
   Normal -> "Normal"
   Low -> "🔽 Low"
   Lowest -> "⏬ Lowest"
+
+-- | Format parent task breadcrumb with truncation for long trails
+formatBreadcrumb :: [Text] -> Text
+formatBreadcrumb parents
+  | length parents <= 3 = mconcat $ intersperse " > " parents
+  | otherwise =
+      let firstItems = take 2 parents
+          lastItems = drop (length parents - 1) parents
+       in mconcat $ intersperse " > " (firstItems <> ["..."] <> lastItems)
