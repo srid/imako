@@ -11,7 +11,7 @@ module Ob (
 )
 where
 
-import Control.Monad.Logger (MonadLogger, runStdoutLoggingT)
+import Control.Monad.Logger (LogLevel (..), MonadLogger, filterLogger, runStdoutLoggingT)
 import Data.LVar (LVar)
 import Data.LVar qualified as LVar
 import Data.Map.Strict qualified as Map
@@ -26,7 +26,7 @@ import UnliftIO.Async (concurrently_)
 -- | Like `withVault` but returns the current snapshot, without monitoring it.
 getVault :: FilePath -> IO Vault
 getVault path = do
-  runStdoutLoggingT $ do
+  runStdoutLoggingT $ filterLogger (\_ level -> level >= LevelInfo) $ do
     (notesMap, _) <- mountVault path
     liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Map.size notesMap) <> "; sample = " <> show (take 4 $ Map.keys notesMap)
     pure $ Vault notesMap
@@ -37,7 +37,7 @@ Uses `System.UnionMount` to monitor the filesystem for changes.
 -}
 withLiveVault :: FilePath -> (LVar Vault -> IO ()) -> IO ()
 withLiveVault path f = do
-  runStdoutLoggingT $ do
+  runStdoutLoggingT $ filterLogger (\_ level -> level >= LevelInfo) $ do
     (notesMap0, modelF) <- mountVault path
     let initialVault = Vault notesMap0
     liftIO $ putTextLn $ "Model ready; total docs = " <> show (Map.size notesMap0)
@@ -57,7 +57,7 @@ mountVault ::
     , (Map FilePath Note -> m ()) -> m ()
     )
 mountVault path =
-  UM.mount path (one ((), "**/*.md")) ["**/.*/**", ".git/**"] mempty (const $ handleMarkdownFile path)
+  UM.mount path (one ((), "**/*.md")) ["**/.*/**"] mempty (const $ handleMarkdownFile path)
 
 handleMarkdownFile :: (MonadIO m) => FilePath -> FilePath -> UM.FileAction () -> m (Map FilePath Note -> Map FilePath Note)
 handleMarkdownFile baseDir path = \case
