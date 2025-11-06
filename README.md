@@ -20,5 +20,7 @@ just NOTEBOOK=$HOME/mynotes run
 
 ## Repository architecture
 
+Imako is written in Haskell. This repository hosts multiple packages:
+
 - `packages/ob`: Haskell library for working with Obsidian vaults
-- `packages/imako`: Main Imako application (uses `ob`)
+- `packages/imako`: Main Imako application (uses `ob` package)

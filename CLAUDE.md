@@ -3,7 +3,7 @@
 
 1. **MUST** acquire the Haskell skill before doing ANY Haskell work
 2. If skill load fails, STOP and report the error - don't proceed
-3. Read README.md Architecture section
+3. Read README.md Architecture section (it is a Haskell app)
 
 # UX Guidelines
 
