@@ -93,4 +93,5 @@ executable imako
     Imako.CLI
     Imako.UI.FolderTree
     Imako.UI.Layout
+    Imako.UI.PWA
     Imako.UI.Tasks

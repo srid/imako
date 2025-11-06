@@ -25,5 +25,5 @@ opts =
     (optionsParser <**> helper)
     ( fullDesc
         <> header "Imako - Notebook Web Viewer"
-        <> progDesc "Start a web server to view your notebook at http://localhost:3000"
+        <> progDesc "Start a web server to view your notebook at http://localhost:4009"
     )

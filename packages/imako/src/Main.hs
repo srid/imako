@@ -14,6 +14,7 @@ import Data.Text.Lazy.Encoding qualified as TL
 import Imako.CLI qualified as CLI
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Layout (layout)
+import Imako.UI.PWA (imakoManifest)
 import Imako.UI.Tasks (taskItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
@@ -62,15 +63,15 @@ renderMainContent vaultPath vault = do
   -- Tasks section with hierarchical folder structure
   div_ $ do
     let folderTree = buildFolderTree groupedTasks
-    renderFolderTree (`forM_` taskItem) folderTree
+    renderFolderTree vaultPath (`forM_` taskItem) folderTree
 
 main :: IO ()
 main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
-    putTextLn "Starting web server on http://localhost:3000"
+    putTextLn "Starting web server on http://localhost:4009"
     Ob.withLiveVault options.path $ \vaultVar -> do
-      S.scotty 3000 $ do
+      S.scotty 4009 $ do
         S.get "/" $ do
           vault <- liftIO $ LVar.get vaultVar
           S.html $
@@ -81,6 +82,10 @@ main = do
                     small_ [class_ "font-mono text-sm text-gray-500"] $ toHtml options.path
                 )
                 (renderMainContent options.path vault)
+
+        S.get "/manifest.json" $ do
+          S.setHeader "Content-Type" "application/json"
+          S.json imakoManifest
 
         S.get "/events" $ do
           S.setHeader "Content-Type" "text/event-stream"
