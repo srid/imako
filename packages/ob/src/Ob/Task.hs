@@ -9,7 +9,7 @@ module Ob.Task (
 where
 
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
-import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc (..))
+import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc (..), QuoteType (..))
 
 data TaskStatus
   = Incomplete
@@ -107,6 +107,13 @@ extractText = mconcat . map go
       LineBreak -> "\n"
       Emph inlines -> extractText inlines
       Strong inlines -> extractText inlines
+      Underline inlines -> extractText inlines
+      Strikeout inlines -> extractText inlines
+      Superscript inlines -> extractText inlines
+      Subscript inlines -> extractText inlines
+      SmallCaps inlines -> extractText inlines
+      Quoted SingleQuote inlines -> "'" <> extractText inlines <> "'"
+      Quoted DoubleQuote inlines -> "\"" <> extractText inlines <> "\""
       Code _ s -> s
       Link _ inlines (url, _) ->
         let linkText = extractText inlines

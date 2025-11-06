@@ -162,3 +162,23 @@ spec = do
             `shouldBe` [ ("Feature A", [])
                        , ("Deep task", ["Feature A"])
                        ]
+
+    it "preserves quoted text in task description" $ do
+      let markdownContent =
+            [text|
+        # Tasks
+
+        - [ ] "In Progress" tasks should be shown as well
+        - [ ] Fix the "bug" in parser
+        - [ ] Use 'single quotes' too
+        |]
+
+      case parseMarkdown "quotes.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "quotes.md" pandoc
+          map (extractText . description) tasks
+            `shouldBe` [ "\"In Progress\" tasks should be shown as well"
+                       , "Fix the \"bug\" in parser"
+                       , "Use 'single quotes' too"
+                       ]
