@@ -8,7 +8,7 @@ module Imako.UI.Tasks (
 
 import Data.Time (defaultTimeLocale, formatTime)
 import Lucid
-import Ob.Task (Priority (..), Task (..), TaskStatus (..), extractText)
+import Ob.Task (Priority (..), Task (..), TaskStatus (..), extractText, renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
 import System.FilePath (takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
@@ -54,7 +54,7 @@ taskItem task =
                           InProgress -> "text-amber-700 dark:text-amber-300 font-medium"
                           Incomplete -> "text-gray-900 dark:text-gray-100"
                   ]
-                  $ toHtml (extractText task.description)
+                  $ renderInlines task.description
 
               -- Metadata pills (simplified, icon-only or minimal)
               div_ [class_ "flex items-center gap-1.5 flex-shrink-0"] $ do

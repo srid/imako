@@ -5,9 +5,11 @@ module Ob.Task (
   Priority (..),
   extractTasks,
   extractText,
+  renderInlines,
 )
 where
 
+import Lucid
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
 import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc (..), QuoteType (..))
 
@@ -119,3 +121,28 @@ extractText = mconcat . map go
         let linkText = extractText inlines
          in if linkText == "" then url else linkText
       _ -> ""
+
+-- | Render inline elements as HTML, preserving formatting
+renderInlines :: [Inline] -> Html ()
+renderInlines = mapM_ renderInline
+  where
+    renderInline = \case
+      Str s -> toHtml s
+      Space -> toHtml (" " :: Text)
+      SoftBreak -> toHtml (" " :: Text)
+      LineBreak -> toHtml ("\n" :: Text)
+      Emph inlines -> em_ $ renderInlines inlines
+      Strong inlines -> strong_ $ renderInlines inlines
+      Underline inlines -> span_ [style_ "text-decoration: underline"] $ renderInlines inlines
+      Strikeout inlines -> del_ $ renderInlines inlines
+      Superscript inlines -> sup_ $ renderInlines inlines
+      Subscript inlines -> sub_ $ renderInlines inlines
+      SmallCaps inlines -> span_ [style_ "font-variant: small-caps"] $ renderInlines inlines
+      Quoted SingleQuote inlines -> toHtml ("'" :: Text) *> renderInlines inlines *> toHtml ("'" :: Text)
+      Quoted DoubleQuote inlines -> toHtml ("\"" :: Text) *> renderInlines inlines *> toHtml ("\"" :: Text)
+      Code _ s -> code_ $ toHtml s
+      Link _ inlines (url, title) ->
+        if title /= ""
+          then a_ [href_ url, title_ title] $ renderInlines inlines
+          else a_ [href_ url] $ renderInlines inlines
+      _ -> pass

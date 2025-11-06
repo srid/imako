@@ -59,6 +59,7 @@ library
     , commonmark-wikilink
     , containers
     , filepath
+    , lucid2
     , lvar                 >=0.2
     , monad-logger
     , pandoc

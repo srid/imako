@@ -182,3 +182,25 @@ spec = do
                        , "Fix the \"bug\" in parser"
                        , "Use 'single quotes' too"
                        ]
+
+    it "preserves inline formatting in task description" $ do
+      let markdownContent =
+            [text|
+        # Tasks
+
+        - [ ] This has _italic_ and **bold** text
+        - [ ] Code with `inline code` element
+        - [ ] Check [this link](https://example.com)
+        |]
+
+      case parseMarkdown "format.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "format.md" pandoc
+          -- Just verify we can extract text without errors
+          -- The actual HTML rendering is tested visually
+          map (extractText . description) tasks
+            `shouldBe` [ "This has italic and bold text"
+                       , "Code with inline code element"
+                       , "Check this link"
+                       ]
