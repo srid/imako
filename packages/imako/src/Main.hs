@@ -27,6 +27,7 @@ import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
 import System.FilePath (makeRelative)
 import Web.Scotty qualified as S
+import Web.TablerIcons.Outline qualified as Icon
 
 {- | Process tasks for UI display with filtering and grouping.
 
@@ -69,6 +70,32 @@ processTasksForUI today vaultPath tasks =
           incompleteNotFuture
    in (length incompleteNotFuture, completed, filtered, grouped)
 
+{- | Filter tasks completed in the last 7 days.
+
+Returns completed tasks with a completion date within the last 7 days,
+sorted by completion date (most recent first).
+-}
+filterRecentlyCompleted :: Day -> [Task] -> [Task]
+filterRecentlyCompleted today tasks =
+  let sevenDaysAgo = addDays (-7) today
+      isRecentlyCompleted task =
+        task.status == Completed
+          && case task.properties.completedDate of
+            Just date -> date >= sevenDaysAgo && date <= today
+            Nothing -> False
+   in sortOn (Down . (.properties.completedDate)) $
+        filter isRecentlyCompleted tasks
+
+-- | Group tasks by their source file path (relative to vault)
+groupTasksByFile :: FilePath -> [Task] -> Map FilePath [Task]
+groupTasksByFile vaultPath =
+  List.foldl
+    ( \acc task ->
+        let relativePath = makeRelative vaultPath task.sourceNote
+         in Map.insertWith (flip (++)) relativePath [task] acc
+    )
+    Map.empty
+
 birdsEyeView :: Int -> Int -> Int -> Html ()
 birdsEyeView pendingCount completedCount notesCount =
   div_ [class_ "grid grid-cols-3 gap-4 mb-8"] $ do
@@ -85,6 +112,8 @@ birdsEyeView pendingCount completedCount notesCount =
 renderMainContent :: Day -> FilePath -> Ob.Vault -> Html ()
 renderMainContent today vaultPath vault = do
   let (pendingCount, completedCount, filteredCount, groupedTasks) = processTasksForUI today vaultPath (getTasks vault)
+      recentlyCompleted = filterRecentlyCompleted today (getTasks vault)
+      groupedRecent = groupTasksByFile vaultPath recentlyCompleted
 
   -- Show filtered tasks message if any
   when (filteredCount > 0) $
@@ -99,6 +128,27 @@ renderMainContent today vaultPath vault = do
   div_ $ do
     let folderTree = buildFolderTree groupedTasks
     renderFolderTree vaultPath (`forM_` taskItem) folderTree
+
+  -- Recently completed tasks section (last 7 days)
+  unless (null recentlyCompleted) $
+    div_ [class_ "mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"] $ do
+      details_ [class_ "", id_ "recently-completed-section", term "data-section" "recently-completed"] $ do
+        summary_ [class_ "cursor-pointer text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2"] $ do
+          div_ [class_ "w-3 h-3 flex-shrink-0 flex items-center justify-center transition-transform chevron-icon"] $
+            toHtmlRaw Icon.chevron_right
+          toHtml ("Recently Completed (" <> show (length recentlyCompleted) <> ")" :: Text)
+        div_ [class_ "mt-4"] $ do
+          p_
+            [class_ "text-sm text-gray-600 dark:text-gray-400 mb-6 px-4"]
+            "Tasks you've completed in the last 7 days. Keep up the momentum!"
+          forM_ (Map.toList groupedRecent) $ \(filePath, tasks) ->
+            div_ [class_ "mb-4"] $
+              div_ [class_ "bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"] $ do
+                h3_ [class_ "text-sm font-semibold text-gray-600 dark:text-gray-300 mb-3 px-4 pt-3"] $
+                  strong_ $
+                    toHtml filePath
+                div_ [class_ "divide-y divide-gray-100 dark:divide-gray-700"] $
+                  forM_ tasks taskItem
 
 main :: IO ()
 main = do

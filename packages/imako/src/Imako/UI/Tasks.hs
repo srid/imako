@@ -20,14 +20,14 @@ taskItem task =
   let parentDescriptions = map fst task.parentContext
       indentLevel = length parentDescriptions
       indentClass = if indentLevel > 0 then "ml-" <> show (indentLevel * 4) else ""
-      bgClass = case task.status of
-        InProgress -> "bg-amber-50 dark:bg-amber-950/20"
-        _ -> "bg-white dark:bg-gray-800"
-      borderClass = case task.status of
-        InProgress -> "border-l-2 border-amber-400 dark:border-amber-500"
-        _ -> "border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500"
+      -- De-emphasize completed tasks (used in recently completed section)
+      isCompleted = task.status == Completed
+      (bgClass, borderClass, hoverClass) = case (isCompleted, task.status) of
+        (True, _) -> ("bg-transparent", "border-l-2 border-transparent", "hover:bg-gray-100/50 dark:hover:bg-gray-700/50")
+        (False, InProgress) -> ("bg-amber-50 dark:bg-amber-950/20", "border-l-2 border-amber-400 dark:border-amber-500", "hover:bg-gray-50 dark:hover:bg-gray-700")
+        (False, _) -> ("bg-white dark:bg-gray-800", "border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500", "hover:bg-gray-50 dark:hover:bg-gray-700")
    in div_
-        [class_ ("py-3 px-4 mb-1 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors " <> bgClass <> " " <> borderClass <> " " <> indentClass)]
+        [class_ ("py-3 px-4 mb-1 transition-colors " <> bgClass <> " " <> borderClass <> " " <> hoverClass <> " " <> indentClass)]
         ( do
             div_ [class_ "flex items-start gap-4"] $ do
               -- Checkbox (larger, cleaner)
@@ -85,6 +85,10 @@ taskItem task =
 
                 whenJust task.properties.startDate $ \date ->
                   span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $
+                    toHtml (formatTime defaultTimeLocale "%b %d" date)
+
+                whenJust task.properties.completedDate $ \date ->
+                  span_ [title_ "Completed", class_ "text-xs px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700"] $
                     toHtml (formatTime defaultTimeLocale "%b %d" date)
 
                 -- Recurrence indicator
