@@ -27,10 +27,10 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "test.md" pandoc
-          map (\t -> (extractText t.description, t.isCompleted)) tasks
-            `shouldBe` [ ("Incomplete task", False)
-                       , ("Completed task", True)
-                       , ("Another incomplete task", False)
+          map (\t -> (extractText t.description, t.status)) tasks
+            `shouldBe` [ ("Incomplete task", Incomplete)
+                       , ("Completed task", Completed)
+                       , ("Another incomplete task", Incomplete)
                        ]
 
     it "parses obsidian-tasks plugin format with metadata" $ do
@@ -47,10 +47,10 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "project.md" pandoc
-          map (\t -> (extractText t.description, t.isCompleted)) tasks
-            `shouldBe` [ ("Review pull request", False)
-                       , ("Setup CI pipeline", True)
-                       , ("Write documentation", False)
+          map (\t -> (extractText t.description, t.status)) tasks
+            `shouldBe` [ ("Review pull request", Incomplete)
+                       , ("Setup CI pipeline", Completed)
+                       , ("Write documentation", Incomplete)
                        ]
 
     it "extracts obsidian-tasks properties correctly" $ do
@@ -73,7 +73,7 @@ spec = do
             [task1, task2, task3] -> do
               -- Test first task properties
               extractText task1.description `shouldBe` "Review pull request"
-              task1.isCompleted `shouldBe` False
+              task1.status `shouldBe` Incomplete
               task1.properties.scheduledDate `shouldBe` Just (fromGregorian 2024 1 10)
               task1.properties.dueDate `shouldBe` Just (fromGregorian 2024 1 15)
               task1.properties.completedDate `shouldBe` Nothing
@@ -82,7 +82,7 @@ spec = do
 
               -- Test second task properties
               extractText task2.description `shouldBe` "Setup CI pipeline"
-              task2.isCompleted `shouldBe` True
+              task2.status `shouldBe` Completed
               task2.properties.scheduledDate `shouldBe` Nothing
               task2.properties.dueDate `shouldBe` Nothing
               task2.properties.completedDate `shouldBe` Just (fromGregorian 2024 1 8)
@@ -91,7 +91,7 @@ spec = do
 
               -- Test third task properties
               extractText task3.description `shouldBe` "Write documentation"
-              task3.isCompleted `shouldBe` False
+              task3.status `shouldBe` Incomplete
               task3.properties.scheduledDate `shouldBe` Nothing
               task3.properties.dueDate `shouldBe` Just (fromGregorian 2024 1 20)
               task3.properties.completedDate `shouldBe` Nothing
@@ -135,12 +135,12 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "nested.md" pandoc
-          map (\t -> (extractText t.description, t.isCompleted, t.parentTasks)) tasks
-            `shouldBe` [ ("Main task", False, [])
-                       , ("Subtask 1", False, ["Main task"])
-                       , ("Subtask 2", True, ["Main task"])
-                       , ("Another main task", False, [])
-                       , ("Another subtask", False, ["Another main task"])
+          map (\t -> (extractText t.description, t.status, t.parentTasks)) tasks
+            `shouldBe` [ ("Main task", Incomplete, [])
+                       , ("Subtask 1", Incomplete, ["Main task"])
+                       , ("Subtask 2", Completed, ["Main task"])
+                       , ("Another main task", Incomplete, [])
+                       , ("Another subtask", Incomplete, ["Another main task"])
                        ]
 
     it "tracks only parent tasks in breadcrumb, not plain list items" $ do

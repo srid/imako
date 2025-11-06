@@ -8,7 +8,7 @@ module Imako.UI.Tasks (
 
 import Data.Time (defaultTimeLocale, formatTime)
 import Lucid
-import Ob.Task (Priority (..), Task (..), extractText)
+import Ob.Task (Priority (..), Task (..), TaskStatus (..), extractText)
 import Ob.Task.Properties (TaskProperties (..))
 import System.FilePath (takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
@@ -18,12 +18,24 @@ taskItem :: Task -> Html ()
 taskItem task =
   let indentLevel = length task.parentTasks
       indentClass = if indentLevel > 0 then "ml-" <> show (indentLevel * 4) else ""
+      bgClass = case task.status of
+        InProgress -> "bg-amber-50 dark:bg-amber-950/20"
+        _ -> "bg-white dark:bg-gray-800"
+      borderClass = case task.status of
+        InProgress -> "border-l-2 border-amber-400 dark:border-amber-500"
+        _ -> "border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500"
    in div_
-        [class_ ("py-3 px-4 mb-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors " <> indentClass)]
+        [class_ ("py-3 px-4 mb-1 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors " <> bgClass <> " " <> borderClass <> " " <> indentClass)]
         ( do
             div_ [class_ "flex items-start gap-4"] $ do
               -- Checkbox (larger, cleaner)
-              div_ [class_ "w-5 h-5 flex-shrink-0 flex items-center justify-center"] $ toHtmlRaw $ if task.isCompleted then Icon.square_check else Icon.square
+              div_ [class_ "w-5 h-5 flex-shrink-0 flex items-center justify-center"] $
+                toHtmlRaw $
+                  case task.status of
+                    Completed -> Icon.square_check
+                    Cancelled -> Icon.square_x
+                    InProgress -> Icon.square_half
+                    Incomplete -> Icon.square
 
               -- Main task text with breadcrumb
               div_ [class_ "flex-1 min-w-0"] $ do
@@ -32,8 +44,17 @@ taskItem task =
                   div_ [class_ "text-xs text-gray-500 dark:text-gray-400 mb-1"] $
                     toHtml (formatBreadcrumb task.parentTasks)
 
-                p_ [title_ (extractText task.inlines), class_ ("text-sm " <> if task.isCompleted then "line-through text-gray-400 dark:text-gray-500" else "text-gray-900 dark:text-gray-100")] $
-                  toHtml (extractText task.description)
+                p_
+                  [ title_ (extractText task.inlines)
+                  , class_ $
+                      "text-sm "
+                        <> case task.status of
+                          Completed -> "line-through text-gray-400 dark:text-gray-500"
+                          Cancelled -> "line-through text-orange-400 dark:text-orange-500"
+                          InProgress -> "text-amber-700 dark:text-amber-300 font-medium"
+                          Incomplete -> "text-gray-900 dark:text-gray-100"
+                  ]
+                  $ toHtml (extractText task.description)
 
               -- Metadata pills (simplified, icon-only or minimal)
               div_ [class_ "flex items-center gap-1.5 flex-shrink-0"] $ do

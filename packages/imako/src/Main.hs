@@ -21,7 +21,7 @@ import Lucid
 import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
 import Ob qualified
-import Ob.Task (Task (..))
+import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Task.Properties (TaskProperties (..))
 import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
@@ -34,7 +34,7 @@ processTasksForUI today vaultPath tasks =
       isNotFarFuture task = case task.properties.startDate of
         Nothing -> True
         Just startDate -> startDate < twoDaysFromNow
-      incomplete = filter (not . (.isCompleted)) tasks
+      incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       incompleteNotFuture = filter isNotFarFuture incomplete
       filtered = length incomplete - length incompleteNotFuture
       completed = length tasks - length incomplete

@@ -1,6 +1,7 @@
 -- | Module for working with obsidian-tasks
 module Ob.Task (
   Task (..),
+  TaskStatus (..),
   Priority (..),
   extractTasks,
   extractText,
@@ -10,11 +11,18 @@ where
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
 import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc (..))
 
+data TaskStatus
+  = Incomplete
+  | InProgress
+  | Cancelled
+  | Completed
+  deriving (Show, Eq)
+
 data Task = Task
   { description :: [Inline]
   , inlines :: [Inline]
   , sourceNote :: FilePath
-  , isCompleted :: Bool
+  , status :: TaskStatus
   , properties :: TaskProperties
   , parentTasks :: [Text]
   }
@@ -56,45 +64,33 @@ extractFromItem sourcePath parents blocks =
 extractFromInlines :: FilePath -> [Text] -> [Inline] -> [Task]
 extractFromInlines sourcePath parents = \case
   Str marker : Space : rest
-    | Just completed <- parseCheckbox marker ->
-        [parseTaskWithMetadata rest sourcePath parents completed]
+    | Just taskStatus <- parseCheckbox marker ->
+        [parseTaskWithMetadata rest sourcePath parents taskStatus]
   _ -> []
   where
     parseCheckbox = \case
-      "\9744" -> Just False -- Unicode unchecked
-      "\9746" -> Just True -- Unicode checked
-      "[ ]" -> Just False -- ASCII unchecked
-      "[x]" -> Just True -- ASCII checked lowercase
-      "[X]" -> Just True -- ASCII checked uppercase
-      "[/]" -> Just False -- In-progress (treat as incomplete)
-      "[-]" -> Just True -- Cancelled (treat as complete)
-      "[>]" -> Just False -- Forwarded/deferred (treat as incomplete)
-      "[<]" -> Just False -- Scheduling (treat as incomplete)
-      "[?]" -> Just False -- Question (treat as incomplete)
-      "[!]" -> Just False -- Important (treat as incomplete)
-      "[*]" -> Just False -- Star (treat as incomplete)
-      "[n]" -> Just False -- Note (treat as incomplete)
-      "[l]" -> Just False -- Location (treat as incomplete)
-      "[i]" -> Just False -- Info (treat as incomplete)
-      "[I]" -> Just False -- Idea (treat as incomplete)
-      "[S]" -> Just False -- Amount/sum (treat as incomplete)
-      "[p]" -> Just False -- Pro (treat as incomplete)
-      "[c]" -> Just False -- Con (treat as incomplete)
-      "[b]" -> Just False -- Bookmark (treat as incomplete)
+      "\9744" -> Just Incomplete -- Unicode unchecked
+      "\9746" -> Just Completed -- Unicode checked
+      "[ ]" -> Just Incomplete -- ASCII unchecked
+      "[x]" -> Just Completed -- ASCII checked lowercase
+      "[X]" -> Just Completed -- ASCII checked uppercase
+      "[/]" -> Just InProgress -- In-progress
+      "[-]" -> Just Cancelled -- Cancelled
       _ -> Nothing
 
 -- | Parse task with obsidian-tasks metadata
-parseTaskWithMetadata :: [Inline] -> FilePath -> [Text] -> Bool -> Task
-parseTaskWithMetadata taskInlines sourcePath parents completed =
+parseTaskWithMetadata :: [Inline] -> FilePath -> [Text] -> TaskStatus -> Task
+parseTaskWithMetadata taskInlines sourcePath parents taskStatus =
   let props = parseInlineSequence taskInlines
+      isComplete = taskStatus == Completed
    in Task
         { description = cleanInlines props
         , inlines = taskInlines
         , sourceNote = sourcePath
-        , isCompleted = completed
+        , status = taskStatus
         , properties =
             props
-              { completedDate = if completed then completedDate props else Nothing
+              { completedDate = if isComplete then completedDate props else Nothing
               , tags = reverse (tags props)
               }
         , parentTasks = parents
