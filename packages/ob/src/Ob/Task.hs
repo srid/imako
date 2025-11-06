@@ -26,6 +26,17 @@ data TaskStatus
     Completed
   deriving (Show, Eq)
 
+{- | Parent task context containing task hierarchy information.
+
+Each element is a tuple of:
+
+* Task description text (for displaying breadcrumb trails)
+* Optional start date (for filtering future task subtrees)
+
+The list represents the full ancestor chain from root to immediate parent.
+-}
+type ParentContext = [(Text, Maybe Day)]
+
 -- | Represents a task extracted from an Obsidian markdown file
 data Task = Task
   { description :: [Inline]
@@ -38,15 +49,10 @@ data Task = Task
   -- ^ Current status of the task
   , properties :: TaskProperties
   -- ^ Parsed metadata: dates, priority, tags, etc.
-  , parentTasks :: [Text]
-  -- ^ Text descriptions of parent tasks in the hierarchy (for breadcrumbs)
-  , parentStartDates :: [Maybe Day]
-  -- ^ Start dates of parent tasks (for filtering future task subtrees)
+  , parentContext :: ParentContext
+  -- ^ Parent task hierarchy: descriptions (for breadcrumbs) and start dates (for filtering)
   }
   deriving (Show, Eq)
-
--- | Parent task context: (description, startDate)
-type ParentContext = [(Text, Maybe Day)]
 
 -- | Extract tasks from a Pandoc document
 extractTasks :: FilePath -> Pandoc -> [Task]
@@ -113,8 +119,7 @@ parseTaskWithMetadata taskInlines sourcePath parents taskStatus =
               { completedDate = if isComplete then completedDate props else Nothing
               , tags = reverse (tags props)
               }
-        , parentTasks = map fst parents
-        , parentStartDates = map snd parents
+        , parentContext = parents
         }
 
 -- | Extract plain text from inline elements

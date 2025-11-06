@@ -39,7 +39,7 @@ processTasksForUI today vaultPath tasks =
             -- Check task's own start date
             taskNotFuture = checkDate task.properties.startDate
             -- Check all parent start dates
-            parentsNotFuture = all checkDate task.parentStartDates
+            parentsNotFuture = all (checkDate . snd) task.parentContext
          in taskNotFuture && parentsNotFuture
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       incompleteNotFuture = filter isNotFarFuture incomplete

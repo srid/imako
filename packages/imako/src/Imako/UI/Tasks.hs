@@ -16,7 +16,8 @@ import Web.TablerIcons.Outline qualified as Icon
 -- | Task item component - displays a single task with checkbox and source
 taskItem :: Task -> Html ()
 taskItem task =
-  let indentLevel = length task.parentTasks
+  let parentDescriptions = map fst task.parentContext
+      indentLevel = length parentDescriptions
       indentClass = if indentLevel > 0 then "ml-" <> show (indentLevel * 4) else ""
       bgClass = case task.status of
         InProgress -> "bg-amber-50 dark:bg-amber-950/20"
@@ -40,9 +41,9 @@ taskItem task =
               -- Main task text with breadcrumb
               div_ [class_ "flex-1 min-w-0"] $ do
                 -- Show parent breadcrumb if exists
-                unless (null task.parentTasks) $
+                unless (null parentDescriptions) $
                   div_ [class_ "text-xs text-gray-500 dark:text-gray-400 mb-1"] $
-                    toHtml (formatBreadcrumb task.parentTasks)
+                    toHtml (formatBreadcrumb parentDescriptions)
 
                 p_
                   [ title_ (extractText task.inlines)

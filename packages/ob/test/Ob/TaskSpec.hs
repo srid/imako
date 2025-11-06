@@ -135,7 +135,7 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "nested.md" pandoc
-          map (\t -> (extractText t.description, t.status, t.parentTasks)) tasks
+          map (\t -> (extractText t.description, t.status, map fst t.parentContext)) tasks
             `shouldBe` [ ("Main task", Incomplete, [])
                        , ("Subtask 1", Incomplete, ["Main task"])
                        , ("Subtask 2", Completed, ["Main task"])
@@ -158,7 +158,7 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "context.md" pandoc
-          map (\t -> (extractText t.description, t.parentTasks)) tasks
+          map (\t -> (extractText t.description, map fst t.parentContext)) tasks
             `shouldBe` [ ("Feature A", [])
                        , ("Deep task", ["Feature A"])
                        ]
@@ -224,17 +224,17 @@ spec = do
             [parent1, child1, parent2, child2] -> do
               -- Parent with future start should have it in properties
               parent1.properties.startDate `shouldBe` Just (fromGregorian 2030 1 1)
-              parent1.parentStartDates `shouldBe` []
+              parent1.parentContext `shouldBe` []
 
-              -- Child should inherit parent's start date in parentStartDates
+              -- Child should inherit parent's start date in parentContext
               child1.properties.startDate `shouldBe` Nothing
-              child1.parentStartDates `shouldBe` [Just (fromGregorian 2030 1 1)]
+              map snd child1.parentContext `shouldBe` [Just (fromGregorian 2030 1 1)]
 
               -- Parent without start
               parent2.properties.startDate `shouldBe` Nothing
-              parent2.parentStartDates `shouldBe` []
+              parent2.parentContext `shouldBe` []
 
               -- Child of parent without start
               child2.properties.startDate `shouldBe` Nothing
-              child2.parentStartDates `shouldBe` [Nothing]
+              map snd child2.parentContext `shouldBe` [Nothing]
             _ -> expectationFailure $ "Expected 4 tasks but got " <> show (length tasks)
