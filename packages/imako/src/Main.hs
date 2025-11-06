@@ -31,9 +31,16 @@ import Web.Scotty qualified as S
 processTasksForUI :: Day -> FilePath -> [Task] -> (Int, Int, Int, Map FilePath [Task])
 processTasksForUI today vaultPath tasks =
   let twoDaysFromNow = addDays 2 today
-      isNotFarFuture task = case task.properties.startDate of
-        Nothing -> True
-        Just startDate -> startDate < twoDaysFromNow
+      -- Check if task or any of its parents are far future
+      isNotFarFuture task =
+        let checkDate = \case
+              Nothing -> True
+              Just startDate -> startDate < twoDaysFromNow
+            -- Check task's own start date
+            taskNotFuture = checkDate task.properties.startDate
+            -- Check all parent start dates
+            parentsNotFuture = all checkDate task.parentStartDates
+         in taskNotFuture && parentsNotFuture
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       incompleteNotFuture = filter isNotFarFuture incomplete
       filtered = length incomplete - length incompleteNotFuture

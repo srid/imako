@@ -9,45 +9,63 @@ module Ob.Task (
 )
 where
 
+import Data.Time (Day)
 import Lucid
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
 import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc (..), QuoteType (..))
 
+-- | Status of a task in obsidian-tasks format
 data TaskStatus
-  = Incomplete
-  | InProgress
-  | Cancelled
-  | Completed
+  = -- | [ ] Not yet started
+    Incomplete
+  | -- | [/] Currently being worked on
+    InProgress
+  | -- | [-] Cancelled/abandoned
+    Cancelled
+  | -- | [x] Done
+    Completed
   deriving (Show, Eq)
 
+-- | Represents a task extracted from an Obsidian markdown file
 data Task = Task
   { description :: [Inline]
+  -- ^ Task description with metadata (dates, tags, priority) removed
   , inlines :: [Inline]
+  -- ^ Original inline elements including all metadata
   , sourceNote :: FilePath
+  -- ^ Path to the markdown file containing this task
   , status :: TaskStatus
+  -- ^ Current status of the task
   , properties :: TaskProperties
+  -- ^ Parsed metadata: dates, priority, tags, etc.
   , parentTasks :: [Text]
+  -- ^ Text descriptions of parent tasks in the hierarchy (for breadcrumbs)
+  , parentStartDates :: [Maybe Day]
+  -- ^ Start dates of parent tasks (for filtering future task subtrees)
   }
   deriving (Show, Eq)
+
+-- | Parent task context: (description, startDate)
+type ParentContext = [(Text, Maybe Day)]
 
 -- | Extract tasks from a Pandoc document
 extractTasks :: FilePath -> Pandoc -> [Task]
 extractTasks sourcePath (Pandoc _ blocks) = concatMap (extractFromBlock sourcePath []) blocks
 
 -- | Extract tasks from a block, tracking parent task context
-extractFromBlock :: FilePath -> [Text] -> Block -> [Task]
+extractFromBlock :: FilePath -> ParentContext -> Block -> [Task]
 extractFromBlock path parents = \case
   BulletList items -> concatMap (extractFromItem path parents) items
   OrderedList _ items -> concatMap (extractFromItem path parents) items
   _ -> []
 
 -- | Extract task from a list item, tracking parent tasks
-extractFromItem :: FilePath -> [Text] -> [Block] -> [Task]
+extractFromItem :: FilePath -> ParentContext -> [Block] -> [Task]
 extractFromItem sourcePath parents blocks =
   let (maybeTask, nestedBlocks) = extractTaskFromBlocks blocks
       -- If this item is a task, add it to the parent chain for nested items
       newParents = case maybeTask of
-        Just task -> parents <> [extractText task.description]
+        Just task -> parents <> [(extractText task.description, task.properties.startDate)]
         Nothing -> parents
       -- Extract tasks from nested lists
       nestedTasks = concatMap (extractFromBlock sourcePath newParents) nestedBlocks
@@ -63,7 +81,7 @@ extractFromItem sourcePath parents blocks =
       _ -> (Nothing, blocks)
 
 -- | Extract task from inline elements
-extractFromInlines :: FilePath -> [Text] -> [Inline] -> [Task]
+extractFromInlines :: FilePath -> ParentContext -> [Inline] -> [Task]
 extractFromInlines sourcePath parents = \case
   Str marker : Space : rest
     | Just taskStatus <- parseCheckbox marker ->
@@ -81,7 +99,7 @@ extractFromInlines sourcePath parents = \case
       _ -> Nothing
 
 -- | Parse task with obsidian-tasks metadata
-parseTaskWithMetadata :: [Inline] -> FilePath -> [Text] -> TaskStatus -> Task
+parseTaskWithMetadata :: [Inline] -> FilePath -> ParentContext -> TaskStatus -> Task
 parseTaskWithMetadata taskInlines sourcePath parents taskStatus =
   let props = parseInlineSequence taskInlines
       isComplete = taskStatus == Completed
@@ -95,7 +113,8 @@ parseTaskWithMetadata taskInlines sourcePath parents taskStatus =
               { completedDate = if isComplete then completedDate props else Nothing
               , tags = reverse (tags props)
               }
-        , parentTasks = parents
+        , parentTasks = map fst parents
+        , parentStartDates = map snd parents
         }
 
 -- | Extract plain text from inline elements

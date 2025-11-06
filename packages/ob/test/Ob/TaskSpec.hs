@@ -204,3 +204,37 @@ spec = do
                        , "Code with inline code element"
                        , "Check this link"
                        ]
+
+    it "tracks parent start dates for future task filtering" $ do
+      let markdownContent =
+            [text|
+        # Tasks
+
+        - [ ] Parent with future start 🛫 2030-01-01
+          - [ ] Child task without start date
+        - [ ] Another parent without start
+          - [ ] Another child
+        |]
+
+      case parseMarkdown "future.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "future.md" pandoc
+          case tasks of
+            [parent1, child1, parent2, child2] -> do
+              -- Parent with future start should have it in properties
+              parent1.properties.startDate `shouldBe` Just (fromGregorian 2030 1 1)
+              parent1.parentStartDates `shouldBe` []
+
+              -- Child should inherit parent's start date in parentStartDates
+              child1.properties.startDate `shouldBe` Nothing
+              child1.parentStartDates `shouldBe` [Just (fromGregorian 2030 1 1)]
+
+              -- Parent without start
+              parent2.properties.startDate `shouldBe` Nothing
+              parent2.parentStartDates `shouldBe` []
+
+              -- Child of parent without start
+              child2.properties.startDate `shouldBe` Nothing
+              child2.parentStartDates `shouldBe` [Nothing]
+            _ -> expectationFailure $ "Expected 4 tasks but got " <> show (length tasks)
