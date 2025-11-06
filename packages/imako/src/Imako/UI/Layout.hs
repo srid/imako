@@ -2,6 +2,7 @@ module Imako.UI.Layout (
   layout,
 ) where
 
+import Imako.UI.FolderTree (folderStateScript)
 import Imako.UI.PWA (pwaMeta)
 import Lucid
 
@@ -26,6 +27,7 @@ layout titleContent mainContent =
       script_ [src_ "https://cdn.tailwindcss.com"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx.org@2.0.4"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"] ("" :: Text)
+      folderStateScript
     body_ [class_ "min-h-screen bg-gray-100 dark:bg-gray-900"] $ do
       titleBar titleContent
       div_ [class_ "max-w-5xl mx-auto p-6", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent

@@ -4,6 +4,7 @@ module Imako.UI.FolderTree (
   FolderNode (..),
   buildFolderTree,
   renderFolderTree,
+  folderStateScript,
 ) where
 
 import Data.Map.Strict qualified as Map
@@ -61,13 +62,23 @@ renderFolderNode vaultPath renderItem currentPath node = do
 renderFolder :: FilePath -> (a -> Html ()) -> Text -> Text -> FolderNode a -> Html ()
 renderFolder vaultPath renderItem parentPath folderName node = do
   let newPath = if parentPath == "" then folderName else parentPath <> "/" <> folderName
-  details_ [class_ "mt-4 first:mt-0", open_ ""] $ do
+      folderId = "folder-" <> sanitizeId newPath
+  details_ [class_ "mt-4 first:mt-0", open_ "", id_ folderId, term "data-folder-path" newPath] $ do
     summary_ [class_ "cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center gap-2"] $ do
       div_ [class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center"] $ toHtmlRaw Icon.folder
       toHtml folderName
     -- Contents indented
     div_ [class_ "ml-4 mt-2"] $
       renderFolderNode vaultPath renderItem newPath node
+
+-- | Sanitize a path to create a valid HTML ID
+sanitizeId :: Text -> Text
+sanitizeId = toText . map sanitizeChar . toString
+  where
+    sanitizeChar c
+      | c == '/' = '-'
+      | c == ' ' = '_'
+      | otherwise = c
 
 -- | Render a file group within the hierarchy
 renderFileGroup :: FilePath -> (a -> Html ()) -> Text -> Text -> a -> Html ()
@@ -87,3 +98,41 @@ renderFileGroup vaultPath renderItem currentPath filename item = do
     -- Item content
     div_ [class_ "bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700"] $
       renderItem item
+
+-- | JavaScript for persisting folder collapse/expand state in localStorage
+folderStateScript :: Html ()
+folderStateScript =
+  script_ [] $
+    unlines
+      [ "const STORAGE_KEY = 'imako-folder-states';"
+      , ""
+      , "function saveFolderState(path, isOpen) {"
+      , "  const states = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');"
+      , "  states[path] = isOpen;"
+      , "  localStorage.setItem(STORAGE_KEY, JSON.stringify(states));"
+      , "}"
+      , ""
+      , "function loadFolderStates() {"
+      , "  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');"
+      , "}"
+      , ""
+      , "document.addEventListener('DOMContentLoaded', () => {"
+      , "  const states = loadFolderStates();"
+      , "  "
+      , "  // Restore saved states"
+      , "  document.querySelectorAll('details[data-folder-path]').forEach(details => {"
+      , "    const path = details.getAttribute('data-folder-path');"
+      , "    if (path in states) {"
+      , "      details.open = states[path];"
+      , "    }"
+      , "  });"
+      , "  "
+      , "  // Listen for toggle events"
+      , "  document.querySelectorAll('details[data-folder-path]').forEach(details => {"
+      , "    details.addEventListener('toggle', () => {"
+      , "      const path = details.getAttribute('data-folder-path');"
+      , "      saveFolderState(path, details.open);"
+      , "    });"
+      , "  });"
+      , "});"
+      ]
