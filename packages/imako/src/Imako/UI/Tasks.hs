@@ -43,23 +43,17 @@ taskItem task =
             div_ [title_ "Lowest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-gray-500 dark:text-gray-400"] $ toHtmlRaw Icon.arrow_down
 
         -- Dates (compact pill with icon + date)
-        case task.properties.dueDate of
-          Nothing -> mempty
-          Just date ->
-            span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"] $
-              toHtml (formatTime defaultTimeLocale "%b %d" date)
+        whenJust task.properties.dueDate $ \date ->
+          span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"] $
+            toHtml (formatTime defaultTimeLocale "%b %d" date)
 
-        case task.properties.scheduledDate of
-          Nothing -> mempty
-          Just date ->
-            span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"] $
-              toHtml (formatTime defaultTimeLocale "%b %d" date)
+        whenJust task.properties.scheduledDate $ \date ->
+          span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"] $
+            toHtml (formatTime defaultTimeLocale "%b %d" date)
 
-        case task.properties.startDate of
-          Nothing -> mempty
-          Just date ->
-            span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $
-              toHtml (formatTime defaultTimeLocale "%b %d" date)
+        whenJust task.properties.startDate $ \date ->
+          span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $
+            toHtml (formatTime defaultTimeLocale "%b %d" date)
 
         -- Tags (subtle, icon only with count if multiple)
         unless (null task.properties.tags) $
