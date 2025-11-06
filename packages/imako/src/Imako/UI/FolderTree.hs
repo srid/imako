@@ -64,7 +64,10 @@ renderFolder vaultPath renderItem parentPath folderName node = do
   let newPath = if parentPath == "" then folderName else parentPath <> "/" <> folderName
       folderId = "folder-" <> sanitizeId newPath
   details_ [class_ "mt-4 first:mt-0", open_ "", id_ folderId, term "data-folder-path" newPath] $ do
-    summary_ [class_ "cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center gap-2"] $ do
+    summary_ [class_ "cursor-pointer text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg border border-indigo-200 dark:border-indigo-700 flex items-center gap-2"] $ do
+      -- Chevron (collapsed by default, rotates when open)
+      div_ [class_ "w-3 h-3 flex-shrink-0 flex items-center justify-center transition-transform chevron-icon"] $ toHtmlRaw Icon.chevron_right
+      -- Folder icon
       div_ [class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center"] $ toHtmlRaw Icon.folder
       toHtml folderName
     -- Contents indented
@@ -101,7 +104,14 @@ renderFileGroup vaultPath renderItem currentPath filename item = do
 
 -- | JavaScript for persisting folder collapse/expand state in localStorage
 folderStateScript :: Html ()
-folderStateScript =
+folderStateScript = do
+  -- CSS for chevron rotation
+  style_ [] $
+    unlines
+      [ "details[open] > summary .chevron-icon {"
+      , "  transform: rotate(90deg);"
+      , "}"
+      ]
   script_ [] $
     unlines
       [ "const STORAGE_KEY = 'imako-folder-states';"
