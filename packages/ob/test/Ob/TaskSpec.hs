@@ -8,6 +8,7 @@ import NeatInterpolation (text)
 import Ob.Markdown (parseMarkdown)
 import Ob.Task
 import Ob.Task.Properties (TaskProperties (..))
+import Ob.Task.Recurrence (formatRecurrence)
 import Test.Hspec
 
 spec :: Spec
@@ -238,3 +239,54 @@ spec = do
               child2.properties.startDate `shouldBe` Nothing
               map snd child2.parentContext `shouldBe` [Nothing]
             _ -> expectationFailure $ "Expected 4 tasks but got " <> show (length tasks)
+
+    it "parses recurring tasks" $ do
+      let markdownContent =
+            [text|
+        # Recurring Tasks
+
+        - [ ] Send monthly invoice 🔁 every month 🛫 2025-11-21 📅 2025-11-21
+        - [ ] Take out trash 🔁 every Sunday 📅 2024-01-25
+        - [ ] Sweep floors 🔁 every week when done ⏳ 2024-02-06
+        - [ ] Daily standup 🔁 every weekday 📅 2024-01-15
+        - [ ] Quarterly review 🔁 every 3 months 📅 2024-03-01
+        |]
+
+      case parseMarkdown "recurring.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "recurring.md" pandoc
+          length tasks `shouldBe` 5
+
+          case tasks of
+            [task1, task2, task3, task4, task5] -> do
+              -- Test monthly recurrence
+              extractText task1.description `shouldBe` "Send monthly invoice"
+              isJust task1.properties.recurrence `shouldBe` True
+              whenJust task1.properties.recurrence $ \recur ->
+                formatRecurrence recur `shouldBe` "every month"
+
+              -- Test weekly with specific day
+              extractText task2.description `shouldBe` "Take out trash"
+              isJust task2.properties.recurrence `shouldBe` True
+              whenJust task2.properties.recurrence $ \recur ->
+                formatRecurrence recur `shouldBe` "every week on Sunday"
+
+              -- Test "when done" modifier
+              extractText task3.description `shouldBe` "Sweep floors"
+              isJust task3.properties.recurrence `shouldBe` True
+              whenJust task3.properties.recurrence $ \recur ->
+                formatRecurrence recur `shouldBe` "every week when done"
+
+              -- Test weekday
+              extractText task4.description `shouldBe` "Daily standup"
+              isJust task4.properties.recurrence `shouldBe` True
+              whenJust task4.properties.recurrence $ \recur ->
+                formatRecurrence recur `shouldBe` "every weekday"
+
+              -- Test N months
+              extractText task5.description `shouldBe` "Quarterly review"
+              isJust task5.properties.recurrence `shouldBe` True
+              whenJust task5.properties.recurrence $ \recur ->
+                formatRecurrence recur `shouldBe` "every 3 months"
+            _ -> expectationFailure $ "Expected 5 tasks but got " <> show (length tasks)

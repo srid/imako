@@ -11,6 +11,7 @@ where
 
 import Data.Text qualified as T
 import Data.Time (Day, defaultTimeLocale, parseTimeM)
+import Ob.Task.Recurrence (Recurrence, parseRecurrence)
 import Text.Pandoc.Definition (Inline (..))
 
 data Priority
@@ -31,6 +32,7 @@ data TaskProperties = TaskProperties
   , completedDate :: Maybe Day
   , priority :: Priority
   , tags :: [Text]
+  , recurrence :: Maybe Recurrence
   }
   deriving (Show, Eq)
 
@@ -45,6 +47,7 @@ initialTaskProperties =
     , completedDate = Nothing
     , priority = Normal
     , tags = []
+    , recurrence = Nothing
     }
 
 -- | Process inline elements, extracting metadata and building clean description
@@ -54,6 +57,12 @@ parseInlineSequence inlines =
    in result {cleanInlines = cleanupSpaces (reverse (cleanInlines result))}
   where
     go [] st = st
+    -- Handle recurrence emoji
+    go (Str "🔁" : Space : rest) st =
+      let (recurrenceText, remaining) = extractRecurrenceText rest
+          recur = parseRecurrence recurrenceText
+       in go remaining (st {recurrence = recur})
+    -- Handle date emojis with dates
     go (Str s : Space : Str dateStr : rest) st =
       case parseDateWithEmoji s dateStr of
         Just (dateType, date) ->
@@ -65,6 +74,7 @@ parseInlineSequence inlines =
                 _ -> st
            in go rest newState
         Nothing -> go (Space : Str dateStr : rest) (processRegularInline (Str s) st)
+    -- Handle all other inlines
     go (inline : rest) st = go rest (processRegularInline inline st)
 
     processRegularInline inline st = case inline of
@@ -74,6 +84,23 @@ parseInlineSequence inlines =
           Just tag -> st {tags = tag : tags st}
           Nothing -> st {cleanInlines = inline : cleanInlines st}
       _ -> st {cleanInlines = inline : cleanInlines st}
+
+    -- Extract recurrence text until we hit a date emoji or end
+    extractRecurrenceText :: [Inline] -> (Text, [Inline])
+    extractRecurrenceText inlines' =
+      let (recParts, rest) = break isDateEmoji inlines'
+          recText = unwords $ extractWords recParts
+       in (recText, rest)
+
+    isDateEmoji :: Inline -> Bool
+    isDateEmoji (Str s) = s `elem` ["🛫", "⏳", "📅", "✅"]
+    isDateEmoji _ = False
+
+    extractWords :: [Inline] -> [Text]
+    extractWords [] = []
+    extractWords (Str s : rest') = s : extractWords rest'
+    extractWords (Space : rest') = extractWords rest'
+    extractWords (_ : rest') = extractWords rest'
 
 -- | Parse priority emoji
 parsePriority :: Text -> Maybe Priority

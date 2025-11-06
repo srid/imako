@@ -28,6 +28,7 @@ library
     Ob.Note
     Ob.Task
     Ob.Task.Properties
+    Ob.Task.Recurrence
     Ob.Vault
 
   mixins:

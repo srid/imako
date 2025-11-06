@@ -10,6 +10,7 @@ import Data.Time (defaultTimeLocale, formatTime)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), extractText, renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
+import Ob.Task.Recurrence (formatRecurrence)
 import System.FilePath (takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
 
@@ -85,6 +86,11 @@ taskItem task =
                 whenJust task.properties.startDate $ \date ->
                   span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $
                     toHtml (formatTime defaultTimeLocale "%b %d" date)
+
+                -- Recurrence indicator
+                whenJust task.properties.recurrence $ \recur ->
+                  span_ [title_ (formatRecurrence recur), class_ "text-xs px-2 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700"] $
+                    toHtml ("🔁 " <> formatRecurrence recur)
 
                 -- Tags (subtle, icon only with count if multiple)
                 unless (null task.properties.tags) $
