@@ -11,7 +11,7 @@ import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Text.Lazy.Encoding qualified as TL
-import Data.Time (Day, UTCTime (..), addDays, getCurrentTime)
+import Data.Time (Day, addDays, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Layout (layout)
@@ -127,7 +127,7 @@ renderMainContent today vaultPath vault = do
   -- Tasks section with hierarchical folder structure
   div_ $ do
     let folderTree = buildFolderTree groupedTasks
-    renderFolderTree vaultPath (`forM_` taskItem) folderTree
+    renderFolderTree vaultPath (\tasks -> forM_ tasks $ \task -> taskItem today task) folderTree
 
   -- Recently completed tasks section (last 7 days)
   unless (null recentlyCompleted) $
@@ -148,7 +148,15 @@ renderMainContent today vaultPath vault = do
                   strong_ $
                     toHtml filePath
                 div_ [class_ "divide-y divide-gray-100 dark:divide-gray-700"] $
-                  forM_ tasks taskItem
+                  forM_ tasks $
+                    \task -> taskItem today task
+
+-- | Get the current day in the local timezone
+getLocalToday :: IO Day
+getLocalToday = do
+  now <- getCurrentTime
+  tz <- getCurrentTimeZone
+  pure $ localDay (utcToLocalTime tz now)
 
 main :: IO ()
 main = do
@@ -158,7 +166,7 @@ main = do
     Ob.withLiveVault options.path $ \vaultVar -> do
       S.scotty 4009 $ do
         S.get "/" $ do
-          today <- liftIO $ utctDay <$> getCurrentTime
+          today <- liftIO getLocalToday
           vault <- liftIO $ LVar.get vaultVar
           S.html $
             renderText $
@@ -179,7 +187,7 @@ main = do
           S.setHeader "Connection" "keep-alive"
           S.status status200
           S.stream $ \write flush -> forever $ do
-            today <- utctDay <$> getCurrentTime
+            today <- getLocalToday
             vault <- LVar.listenNext vaultVar
             let html = renderText $ renderMainContent today options.path vault
             let sseData = "data: " <> html <> "\n\n"
