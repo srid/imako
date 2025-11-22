@@ -10,6 +10,7 @@ import Data.Time (Day, defaultTimeLocale, formatTime)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
+import Ob.Task.Recurrence (formatRecurrence)
 import System.FilePath (takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
 
@@ -86,7 +87,7 @@ taskTreeItem today task = do
         renderInlines task.description
 
       -- Metadata (Inline, subtle)
-      let hasMetadata = not (null task.properties.tags) || isJust task.properties.dueDate || isJust task.properties.scheduledDate || isJust task.properties.startDate || task.properties.priority /= Normal
+      let hasMetadata = not (null task.properties.tags) || isJust task.properties.dueDate || isJust task.properties.scheduledDate || isJust task.properties.startDate || isJust task.properties.completedDate || isJust task.properties.recurrence || task.properties.priority /= Normal
       when hasMetadata $
         div_ [class_ "flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-gray-400 dark:text-gray-500"] $ do
           -- Priority
@@ -129,6 +130,18 @@ taskTreeItem today task = do
             span_ [class_ "flex items-center gap-0.5 text-purple-600 dark:text-purple-400", title_ "Start date"] $ do
               toHtmlRaw Icon.player_play
               toHtml (formatTime defaultTimeLocale "%b %d" d)
+
+          -- Completed Date
+          whenJust task.properties.completedDate $ \d ->
+            span_ [class_ "flex items-center gap-0.5 text-teal-600 dark:text-teal-400", title_ "Completed"] $ do
+              toHtmlRaw Icon.circle_check
+              toHtml (formatTime defaultTimeLocale "%b %d" d)
+
+          -- Recurrence
+          whenJust task.properties.recurrence $ \recur ->
+            span_ [class_ "flex items-center gap-0.5 text-green-600 dark:text-green-400", title_ (formatRecurrence recur)] $ do
+              toHtmlRaw Icon.repeat
+              toHtml ("🔁 " <> formatRecurrence recur)
 
           -- Tags
           unless (null task.properties.tags) $
