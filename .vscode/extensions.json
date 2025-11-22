@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "mazenb.mk-targets-runner"
+        "mazenb.mk-targets-runner",
+        "haskell.haskell"
     ]
 }

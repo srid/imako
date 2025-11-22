@@ -1,6 +1,7 @@
 module Imako.UI.Layout (
   layout,
-) where
+)
+where
 
 import Imako.UI.FolderTree (folderStateScript)
 import Imako.UI.PWA (pwaMeta)
@@ -17,8 +18,8 @@ sseSwap_ :: Text -> Attributes
 sseSwap_ = term "sse-swap"
 
 -- | Main page layout with HTML structure, head, and body
-layout :: Html () -> Html () -> Html ()
-layout titleContent mainContent =
+layout :: Text -> Html () -> Html ()
+layout vaultPath mainContent =
   html_ $ do
     head_ $ do
       title_ "Imako"
@@ -28,11 +29,11 @@ layout titleContent mainContent =
       script_ [src_ "https://unpkg.com/htmx.org@2.0.4"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"] ("" :: Text)
       folderStateScript
-    body_ [class_ "min-h-screen bg-gray-100 dark:bg-gray-900"] $ do
-      titleBar titleContent
-      div_ [class_ "max-w-5xl mx-auto p-6", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
-  where
-    titleBar :: Html () -> Html ()
-    titleBar content =
-      header_ [class_ "bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 shadow-sm"] $
-        h1_ [class_ "text-xl font-bold text-gray-900 dark:text-gray-100"] content
+    body_ [class_ "min-h-screen bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100"] $ do
+      div_ [class_ "max-w-4xl mx-auto my-6"] $ do
+        -- Vault path label attached to top of card
+        div_ [class_ "text-center"] $
+          span_ [class_ "inline-block px-3 py-1 text-xs font-mono bg-indigo-600 dark:bg-indigo-500 text-white rounded-t-lg"] $
+            toHtml vaultPath
+        -- Main content card
+        div_ [class_ "bg-white dark:bg-gray-950 rounded-xl shadow-sm border border-indigo-600 dark:border-indigo-500 p-6 sm:p-8 -mt-px", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
