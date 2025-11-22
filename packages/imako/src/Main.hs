@@ -116,7 +116,7 @@ main = do
           S.stream $ \write flush -> forever $ do
             today <- getLocalToday
             vault <- LVar.listenNext vaultVar
-            let html = renderText $ layout (toText options.path) (renderMainContent today options.path vault)
+            let html = renderText $ renderMainContent today options.path vault
             let sseData = "data: " <> html <> "\n\n"
             write $ lazyByteString $ TL.encodeUtf8 sseData
             flush
