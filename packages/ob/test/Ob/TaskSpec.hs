@@ -87,7 +87,7 @@ spec = do
               task2.properties.scheduledDate `shouldBe` Nothing
               task2.properties.dueDate `shouldBe` Nothing
               task2.properties.completedDate `shouldBe` Just (fromGregorian 2024 1 8)
-              task2.properties.priority `shouldBe` High
+              task2.properties.priority `shouldBe` Highest -- 🔺 is Highest priorityy
               task2.properties.tags `shouldBe` ["devops"]
 
               -- Test third task properties
@@ -289,3 +289,32 @@ spec = do
               whenJust task5.properties.recurrence $ \recur ->
                 formatRecurrence recur `shouldBe` "every 3 months"
             _ -> expectationFailure $ "Expected 5 tasks but got " <> show (length tasks)
+
+    it "parses all priority levels correctly" $ do
+      let markdownContent =
+            [text|
+        # Priority Tests
+
+        - [ ] Highest priority task 🔺
+        - [ ] High priority task ⏫
+        - [ ] Medium priority task 🔼
+        - [ ] Normal priority task
+        - [ ] Low priority task 🔽
+        - [ ] Lowest priority task ⏬
+        |]
+
+      case parseMarkdown "priorities.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "priorities.md" pandoc
+          length tasks `shouldBe` 6
+          case tasks of
+            [highest, high, medium, normal, low, lowest] -> do
+              -- Test all priority levels match Obsidian Tasks documentation
+              highest.properties.priority `shouldBe` Highest -- 🔺
+              high.properties.priority `shouldBe` High -- ⏫
+              medium.properties.priority `shouldBe` Medium -- 🔼
+              normal.properties.priority `shouldBe` Normal -- no symbol
+              low.properties.priority `shouldBe` Low -- 🔽
+              lowest.properties.priority `shouldBe` Lowest -- ⏬
+            _ -> expectationFailure $ "Expected 6 tasks but got " <> show (length tasks)
