@@ -16,7 +16,7 @@ import Imako.CLI qualified as CLI
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Layout (layout)
 import Imako.UI.PWA (imakoManifest)
-import Imako.UI.Tasks (taskItem)
+import Imako.UI.Tasks (fileTreeItem, taskTreeItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
@@ -127,7 +127,7 @@ renderMainContent today vaultPath vault = do
   -- Tasks section with hierarchical folder structure
   div_ $ do
     let folderTree = buildFolderTree groupedTasks
-    renderFolderTree vaultPath (\tasks -> forM_ tasks $ \task -> taskItem today task) folderTree
+    renderFolderTree vaultPath (fileTreeItem today) folderTree
 
   -- Recently completed tasks section (last 7 days)
   unless (null recentlyCompleted) $
@@ -149,7 +149,7 @@ renderMainContent today vaultPath vault = do
                     toHtml filePath
                 div_ [class_ "divide-y divide-gray-100 dark:divide-gray-700"] $
                   forM_ tasks $
-                    \task -> taskItem today task
+                    \task -> taskTreeItem today task
 
 -- | Get the current day in the local timezone
 getLocalToday :: IO Day

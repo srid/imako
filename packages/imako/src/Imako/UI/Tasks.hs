@@ -1,153 +1,131 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Imako.UI.Tasks (
-  taskItem,
-  taskGroup,
-  priorityText,
+  taskTreeItem,
+  fileTreeItem,
 ) where
 
-import Data.Time (Day, defaultTimeLocale, diffDays, formatTime)
+import Data.Time (Day, defaultTimeLocale, formatTime)
 import Lucid
-import Ob.Task (Priority (..), Task (..), TaskStatus (..), extractText, renderInlines)
+import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
-import Ob.Task.Recurrence (formatRecurrence)
+
 import System.FilePath (takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
 
-{- | Format a relative date description (e.g., "today", "in 2 days", "3 days ago").
+-- | Render a file as a tree node containing tasks
+fileTreeItem :: Day -> FilePath -> [Task] -> Html ()
+fileTreeItem today sourceFile tasks = do
+  let filename = takeFileName sourceFile
+      -- Calculate completion stats
+      total = length tasks
+      completed = length $ filter (\t -> t.status == Completed || t.status == Cancelled) tasks
+      progress = if total == 0 then 0 else (fromIntegral completed / fromIntegral total) * 100 :: Double
 
-Always returns a relative time description.
--}
-formatRelativeDate :: Day -> Day -> Text
-formatRelativeDate today date =
-  let daysDiff = diffDays date today
-   in case daysDiff of
-        0 -> "today"
-        1 -> "tomorrow"
-        -1 -> "yesterday"
-        n | n > 1 -> "in " <> show n <> " days"
-        n -> show (abs n) <> " days ago"
+  details_ [class_ "group/file", open_ ""] $ do
+    summary_ [class_ "list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 select-none transition-colors mb-1"] $ do
+      -- Chevron
+      div_ [class_ "w-4 h-4 flex items-center justify-center text-slate-400 transition-transform group-open/file:rotate-90"] $
+        toHtmlRaw Icon.chevron_right
 
--- | Task item component - displays a single task with checkbox and source
-taskItem :: Day -> Task -> Html ()
-taskItem today task = do
+      -- Icon & Name
+      div_ [class_ "flex items-center gap-2 flex-1 min-w-0"] $ do
+        div_ [class_ "text-slate-400"] $ toHtmlRaw Icon.file
+        span_ [class_ "truncate"] $ toHtml filename
+
+        -- Progress bar (mini)
+        when (total > 0) $
+          div_ [class_ "ml-2 w-16 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"] $
+            div_ [class_ "h-full bg-slate-400 dark:bg-slate-500", style_ ("width: " <> show progress <> "%")] mempty
+
+      -- Count
+      span_ [class_ "text-xs text-slate-400 font-normal"] $
+        toHtml ((show completed <> "/" <> show total) :: Text)
+
+    -- Tasks list (indented)
+    div_ [class_ "pl-2 flex flex-col"] $
+      forM_ tasks (taskTreeItem today)
+
+-- | Render a single task as a tree item row
+taskTreeItem :: Day -> Task -> Html ()
+taskTreeItem today task = do
   let parentDescriptions = map fst task.parentContext
       indentLevel = length parentDescriptions
-      indentClass = if indentLevel > 0 then "ml-" <> show (indentLevel * 4) else ""
-      -- De-emphasize completed tasks (used in recently completed section)
-      isCompleted = task.status == Completed
-      (bgClass, borderClass, hoverClass) = case (isCompleted, task.status) of
-        (True, _) -> ("bg-transparent", "border-l-2 border-transparent", "hover:bg-gray-100/50 dark:hover:bg-gray-700/50")
-        (False, InProgress) -> ("bg-amber-50 dark:bg-amber-950/20", "border-l-2 border-amber-400 dark:border-amber-500", "hover:bg-gray-50 dark:hover:bg-gray-700")
-        (False, _) -> ("bg-white dark:bg-gray-800", "border-l-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500", "hover:bg-gray-50 dark:hover:bg-gray-700")
-  div_
-    [class_ ("py-3 px-4 mb-1 transition-colors " <> bgClass <> " " <> borderClass <> " " <> hoverClass <> " " <> indentClass)]
-    ( do
-        div_ [class_ "flex items-start gap-4"] $ do
-          -- Checkbox (larger, cleaner)
-          div_ [class_ "w-5 h-5 flex-shrink-0 flex items-center justify-center"] $
-            toHtmlRaw $
-              case task.status of
-                Completed -> Icon.square_check
-                Cancelled -> Icon.square_x
-                InProgress -> Icon.square_half
-                Incomplete -> Icon.square
+      -- Visual indentation for hierarchy (increased to 2rem per level)
+      indentStyle = if indentLevel > 0 then "padding-left: " <> show (indentLevel * 2) <> "rem" else ""
 
-          -- Main task text with breadcrumb
-          div_ [class_ "flex-1 min-w-0"] $ do
-            -- Show parent breadcrumb if exists
-            unless (null parentDescriptions) $
-              div_ [class_ "text-xs text-gray-500 dark:text-gray-400 mb-1"] $
-                toHtml (formatBreadcrumb parentDescriptions)
+      (statusColor, textStyle) = case task.status of
+        Completed -> ("text-gray-400", "line-through text-gray-400 dark:text-gray-500")
+        Cancelled -> ("text-gray-400", "line-through text-gray-400 dark:text-gray-500")
+        InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
+        Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-            p_
-              [ title_ (extractText task.inlines)
-              , class_ $
-                  "text-sm "
-                    <> case task.status of
-                      Completed -> "line-through text-gray-400 dark:text-gray-500"
-                      Cancelled -> "line-through text-orange-400 dark:text-orange-500"
-                      InProgress -> "text-amber-700 dark:text-amber-300 font-medium"
-                      Incomplete -> "text-gray-900 dark:text-gray-100"
-              ]
-              $ renderInlines task.description
+  div_ [class_ "group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-start gap-2 text-sm transition-colors", style_ indentStyle] $ do
+    -- Thread line for indented items
+    when (indentLevel > 0) $
+      div_ [class_ "absolute top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800", style_ ("left: " <> show (indentLevel * 2 - 1) <> "rem")] mempty
 
-          -- Metadata pills (simplified, icon-only or minimal)
-          div_ [class_ "flex items-center gap-1.5 flex-shrink-0"] $ do
-            -- Priority indicator (icon only, no text)
-            case task.properties.priority of
-              Normal -> mempty
-              Highest ->
-                div_ [title_ "Highest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-red-500 dark:text-red-400"] $ toHtmlRaw Icon.flame
-              High ->
-                div_ [title_ "High priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-orange-500 dark:text-orange-400"] $ toHtmlRaw Icon.arrow_up
-              Medium ->
-                div_ [title_ "Medium priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-yellow-500 dark:text-yellow-400"] $ toHtmlRaw Icon.chevron_up
-              Low ->
-                div_ [title_ "Low priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-blue-500 dark:text-blue-400"] $ toHtmlRaw Icon.chevron_down
-              Lowest ->
-                div_ [title_ "Lowest priority", class_ "w-4 h-4 flex-shrink-0 flex items-center justify-center text-gray-500 dark:text-gray-400"] $ toHtmlRaw Icon.arrow_down
+    -- Checkbox
+    button_ [class_ ("mt-0.5 w-5 h-5 flex-shrink-0 flex items-center justify-center transition-colors " <> statusColor)] $
+      toHtmlRaw $
+        case task.status of
+          Completed -> Icon.square_check
+          Cancelled -> Icon.square_x
+          InProgress -> Icon.square_half
+          Incomplete -> Icon.square
 
-            -- Dates (compact pill with icon + date)
-            whenJust task.properties.dueDate $ \date ->
-              span_ [title_ "Due date", class_ "text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"] $ do
-                toHtml (formatTime defaultTimeLocale "%b %d" date)
-                toHtml (" (" <> formatRelativeDate today date <> ")")
+    -- Content
+    div_ [class_ "flex-1 min-w-0"] $ do
+      div_ [class_ ("leading-snug " <> textStyle)] $
+        renderInlines task.description
 
-            whenJust task.properties.scheduledDate $ \date ->
-              span_ [title_ "Scheduled", class_ "text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"] $ do
-                toHtml (formatTime defaultTimeLocale "%b %d" date)
-                toHtml (" (" <> formatRelativeDate today date <> ")")
+      -- Metadata (Inline, subtle)
+      let hasMetadata = not (null task.properties.tags) || isJust task.properties.dueDate || isJust task.properties.scheduledDate || isJust task.properties.startDate || task.properties.priority /= Normal
+      when hasMetadata $
+        div_ [class_ "flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-gray-400 dark:text-gray-500"] $ do
+          -- Priority
+          case task.properties.priority of
+            Normal -> mempty
+            p -> do
+              let pColor = case p of
+                    Highest -> "text-red-600 dark:text-red-400"
+                    High -> "text-orange-600 dark:text-orange-400"
+                    Medium -> "text-amber-600 dark:text-amber-400"
+                    Low -> "text-blue-600 dark:text-blue-400"
+                    Lowest -> "text-slate-500 dark:text-slate-400"
+              span_ [class_ ("flex items-center gap-0.5 font-medium " <> pColor)] $ do
+                case p of
+                  Highest -> toHtmlRaw Icon.flame
+                  High -> toHtmlRaw Icon.arrow_up
+                  Medium -> toHtmlRaw Icon.chevron_up
+                  Low -> toHtmlRaw Icon.chevron_down
+                  Lowest -> toHtmlRaw Icon.arrow_down
+                toHtml (show p :: Text)
 
-            whenJust task.properties.startDate $ \date ->
-              span_ [title_ "Start date", class_ "text-xs px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700"] $ do
-                toHtml (formatTime defaultTimeLocale "%b %d" date)
-                toHtml (" (" <> formatRelativeDate today date <> ")")
+          -- Due Date
+          whenJust task.properties.dueDate $ \d -> do
+            let (dateColor, dateIcon) = case compare d today of
+                  LT -> ("text-red-600 dark:text-red-400 font-medium", Icon.calendar_exclamation) -- Overdue
+                  EQ -> ("text-amber-600 dark:text-amber-400 font-medium", Icon.calendar) -- Today
+                  GT -> ("text-gray-500 dark:text-gray-400", Icon.calendar) -- Future
+            span_ [class_ ("flex items-center gap-0.5 " <> dateColor), title_ "Due date"] $ do
+              toHtmlRaw dateIcon
+              toHtml (formatTime defaultTimeLocale "%b %d" d)
 
-            whenJust task.properties.completedDate $ \date ->
-              span_ [title_ "Completed", class_ "text-xs px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700"] $ do
-                toHtml (formatTime defaultTimeLocale "%b %d" date)
-                toHtml (" (" <> formatRelativeDate today date <> ")")
+          -- Scheduled Date
+          whenJust task.properties.scheduledDate $ \d ->
+            span_ [class_ "flex items-center gap-0.5 text-blue-600 dark:text-blue-400", title_ "Scheduled"] $ do
+              toHtmlRaw Icon.calendar_time
+              toHtml (formatTime defaultTimeLocale "%b %d" d)
 
-            -- Recurrence indicator
-            whenJust task.properties.recurrence $ \recur ->
-              span_ [title_ (formatRecurrence recur), class_ "text-xs px-2 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700"] $
-                toHtml ("🔁 " <> formatRecurrence recur)
+          -- Start Date
+          whenJust task.properties.startDate $ \d ->
+            span_ [class_ "flex items-center gap-0.5 text-purple-600 dark:text-purple-400", title_ "Start date"] $ do
+              toHtmlRaw Icon.player_play
+              toHtml (formatTime defaultTimeLocale "%b %d" d)
 
-            -- Tags (subtle, icon only with count if multiple)
-            unless (null task.properties.tags) $
-              span_ [title_ (show task.properties.tags), class_ "text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"] $
-                case task.properties.tags of
-                  [tag] -> toHtml tag
-                  tags -> toHtml (show (length tags) <> (" tags" :: Text))
-    )
-
--- | Task group component - displays tasks for a source file
-taskGroup :: Day -> FilePath -> [Task] -> Html ()
-taskGroup today sourceFile tasks = do
-  div_ [class_ "mt-8 first:mt-0"] $ do
-    -- File header with better spacing
-    h3_ [class_ "text-sm font-semibold text-gray-600 dark:text-gray-300 mb-3 px-4"] $
-      strong_ $
-        toHtml (takeFileName sourceFile)
-    -- Tasks with subtle background
-    div_ [class_ "bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700"] $
-      forM_ tasks (taskItem today)
-
-priorityText :: Priority -> Text
-priorityText = \case
-  Highest -> "⏫ Highest"
-  High -> "🔺 High"
-  Medium -> "🔼 Medium"
-  Normal -> "Normal"
-  Low -> "🔽 Low"
-  Lowest -> "⏬ Lowest"
-
--- | Format parent task breadcrumb with truncation for long trails
-formatBreadcrumb :: [Text] -> Text
-formatBreadcrumb parents
-  | length parents <= 3 = mconcat $ intersperse " > " parents
-  | otherwise =
-      let firstItems = take 2 parents
-          lastItems = drop (length parents - 1) parents
-       in mconcat $ intersperse " > " (firstItems <> ["..."] <> lastItems)
+          -- Tags
+          unless (null task.properties.tags) $
+            span_ [class_ "flex items-center gap-0.5 text-indigo-500 dark:text-indigo-400"] $ do
+              toHtmlRaw Icon.tag
+              toHtml (mconcat $ intersperse ", " task.properties.tags)
