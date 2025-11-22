@@ -43,22 +43,21 @@ buildFolderTree = Map.foldlWithKey' insertFile emptyNode
           updatedSubfolder = insertPath existingSubfolder rest item
        in node {subfolders = Map.insert subfolderName updatedSubfolder node.subfolders}
 
-{- | Render the entire folder tree with a custom item renderer
-Note: renderItem is now expected to be compatible with fileTreeItem's expectations if we were passing it directly,
-but here we are actually passing the *list of tasks* (type `a`) to `fileTreeItem`.
-The `renderItem` argument is actually unused in the new design if we assume `a` is `[Task]`.
-However, to keep the type signature generic as requested by the module structure, we might need to adjust.
-Looking at `Main.hs` (not visible but inferred), `renderItem` was likely `taskGroup`.
-We should probably change the type signature or usage.
-For now, let's assume `a` is `[Task]` and we ignore `renderItem` because we use `fileTreeItem` directly?
-No, `renderFolderTree` is generic. Let's look at how it's used.
-Actually, `renderFileGroup` uses `renderItem`.
-In the new design, `renderFileGroup` *is* `fileTreeItem` effectively.
-So we should probably change `renderFolderTree` to take `(FilePath -> a -> Html ())` instead of just `(a -> Html ())`?
-Or better, just let `renderItem` do the work of rendering the file node.
-But `fileTreeItem` takes `Day`, `FilePath`, `[Task]`.
-Let's assume the caller will pass a partially applied `fileTreeItem today`.
--}
+-- | Render the entire folder tree as HTML.
+--
+-- Takes the root vault path, a function to render each file (given its path and associated data),
+-- and the root 'FolderNode'. Renders all subfolders and files recursively.
+--
+-- @
+-- renderFolderTree vaultPath renderFile rootNode
+-- @
+--
+-- * @vaultPath@: The root path of the folder tree.
+-- * @renderFile@: Function to render a file, given its path and associated data.
+-- * @rootNode@: The root of the folder tree to render.
+--
+-- Returns an HTML representation of the folder tree.
+--
 renderFolderTree :: FilePath -> (FilePath -> a -> Html ()) -> FolderNode a -> Html ()
 renderFolderTree vaultPath renderFile rootNode =
   div_ [class_ "flex flex-col gap-0.5"] $ renderFolderNode vaultPath renderFile "" rootNode
