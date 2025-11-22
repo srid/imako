@@ -1,6 +1,7 @@
 module Imako.UI.Layout (
   layout,
-) where
+)
+where
 
 import Imako.UI.FolderTree (folderStateScript)
 import Imako.UI.PWA (pwaMeta)
@@ -28,11 +29,12 @@ layout titleContent mainContent =
       script_ [src_ "https://unpkg.com/htmx.org@2.0.4"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"] ("" :: Text)
       folderStateScript
-    body_ [class_ "min-h-screen bg-gray-100 dark:bg-gray-900"] $ do
+    body_ [class_ "min-h-screen bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100"] $ do
       titleBar titleContent
-      div_ [class_ "max-w-5xl mx-auto p-6", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
+      div_ [class_ "max-w-4xl mx-auto my-6 bg-white dark:bg-gray-950 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
   where
     titleBar :: Html () -> Html ()
     titleBar content =
-      header_ [class_ "bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 shadow-sm"] $
-        h1_ [class_ "text-xl font-bold text-gray-900 dark:text-gray-100"] content
+      header_ [class_ "bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4"] $
+        div_ [class_ "max-w-4xl mx-auto"] $
+          h1_ [class_ "text-lg font-bold text-gray-900 dark:text-gray-100"] content

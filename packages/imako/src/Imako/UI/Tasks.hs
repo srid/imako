@@ -3,13 +3,13 @@
 module Imako.UI.Tasks (
   taskTreeItem,
   fileTreeItem,
-) where
+)
+where
 
 import Data.Time (Day, defaultTimeLocale, formatTime)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
-
 import System.FilePath (takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
 
@@ -22,8 +22,8 @@ fileTreeItem today sourceFile tasks = do
       completed = length $ filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       progress = if total == 0 then 0 else (fromIntegral completed / fromIntegral total) * 100 :: Double
 
-  details_ [class_ "group/file", open_ ""] $ do
-    summary_ [class_ "list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 select-none transition-colors mb-1"] $ do
+  details_ [class_ "group/file mt-4 first:mt-0", open_ ""] $ do
+    summary_ [class_ "list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/50 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 select-none transition-colors mb-1"] $ do
       -- Chevron
       div_ [class_ "w-4 h-4 flex items-center justify-center text-slate-400 transition-transform group-open/file:rotate-90"] $
         toHtmlRaw Icon.chevron_right
