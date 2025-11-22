@@ -16,7 +16,7 @@ import Imako.CLI qualified as CLI
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
-import Imako.UI.PWA (imakoManifest)
+import Imako.UI.PWA (imakoManifest, serviceWorkerScript)
 import Imako.UI.Tasks (fileTreeItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
@@ -113,6 +113,10 @@ main = do
         S.get "/manifest.json" $ do
           S.setHeader "Content-Type" "application/json"
           S.json imakoManifest
+
+        S.get "/sw.js" $ do
+          S.setHeader "Content-Type" "application/javascript"
+          S.text (toLText serviceWorkerScript)
 
         S.get "/events" $ do
           S.setHeader "Content-Type" "text/event-stream"

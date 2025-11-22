@@ -5,7 +5,7 @@ where
 
 import Imako.UI.FolderTree (folderStateScript)
 import Imako.UI.Inbox (inboxInputForm)
-import Imako.UI.PWA (pwaMeta)
+import Imako.UI.PWA (pwaMeta, serviceWorkerRegistration)
 import Lucid
 
 -- Custom htmx attributes using term syntax
@@ -26,6 +26,7 @@ layout vaultPath mainContent =
       title_ "Imako"
       link_ [rel_ "icon", href_ "https://fav.farm/🌌"]
       pwaMeta
+      serviceWorkerRegistration
       script_ [src_ "https://cdn.tailwindcss.com"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx.org@2.0.4"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"] ("" :: Text)

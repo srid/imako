@@ -4,6 +4,8 @@ module Imako.UI.PWA (
   Manifest,
   imakoManifest,
   pwaMeta,
+  serviceWorkerScript,
+  serviceWorkerRegistration,
 ) where
 
 import Data.Aeson (ToJSON)
@@ -56,3 +58,12 @@ pwaMeta = do
   meta_ [name_ "apple-mobile-web-app-title", content_ "Imako"]
   link_ [rel_ "apple-touch-icon", href_ "https://fav.farm/🌌"]
   link_ [rel_ "manifest", href_ "/manifest.json"]
+
+-- | Minimal service worker (required for PWA installation on Chrome)
+serviceWorkerScript :: Text
+serviceWorkerScript = "self.addEventListener('fetch', () => {});"
+
+-- | Service worker registration
+serviceWorkerRegistration :: Html ()
+serviceWorkerRegistration =
+  script_ "if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js');}"
