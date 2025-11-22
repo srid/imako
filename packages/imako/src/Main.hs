@@ -14,6 +14,7 @@ import Data.Text.Lazy.Encoding qualified as TL
 import Data.Time (Day, addDays, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
+import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
 import Imako.UI.PWA (imakoManifest)
 import Imako.UI.Tasks (fileTreeItem)
@@ -103,6 +104,11 @@ main = do
           S.html $
             renderText $
               layout (toText options.path) (renderMainContent today options.path vault)
+
+        S.post "/inbox/add" $ do
+          taskText <- S.formParam "text"
+          liftIO $ appendToInbox options.path taskText
+          S.text "OK"
 
         S.get "/manifest.json" $ do
           S.setHeader "Content-Type" "application/json"

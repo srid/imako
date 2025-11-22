@@ -4,6 +4,7 @@ module Imako.UI.Layout (
 where
 
 import Imako.UI.FolderTree (folderStateScript)
+import Imako.UI.Inbox (inboxInputForm)
 import Imako.UI.PWA (pwaMeta)
 import Lucid
 
@@ -36,4 +37,8 @@ layout vaultPath mainContent =
           span_ [class_ "inline-block px-3 py-1 text-xs font-mono bg-indigo-600 dark:bg-indigo-500 text-white rounded-t-lg"] $
             toHtml vaultPath
         -- Main content card
-        div_ [class_ "bg-white dark:bg-gray-950 rounded-xl shadow-sm border border-indigo-600 dark:border-indigo-500 p-6 sm:p-8 -mt-px", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
+        div_ [class_ "bg-white dark:bg-gray-950 rounded-xl shadow-sm border border-indigo-600 dark:border-indigo-500 p-6 sm:p-8 -mt-px"] $ do
+          -- Inbox quick-add form (static, not swapped by SSE)
+          inboxInputForm
+          -- Tasks content (swapped by SSE)
+          div_ [id_ "task-content", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
