@@ -9,6 +9,11 @@ Project origin: https://x.com/sridca/status/1896560964088271161
 > [!warning]
 > **WIP**: The author is developing Imako as he figures out what he needs. See https://github.com/srid/imako/issues/3
 
+## Screenshot
+
+<img width="937" height="794" alt="image" src="https://github.com/user-attachments/assets/4d91ce6b-d62e-4af7-99c5-bbdef3c5643f" />
+
+
 ## Running
 
 In Nix devShell,
