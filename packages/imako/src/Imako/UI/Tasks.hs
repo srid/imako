@@ -39,8 +39,14 @@ fileTreeItem today sourceFile tasks = do
             div_ [class_ "h-full bg-slate-400 dark:bg-slate-500", style_ ("width: " <> show progress <> "%")] mempty
 
       -- Count
-      span_ [class_ "text-xs text-slate-400 font-normal"] $
+      span_ [class_ "text-xs text-slate-400 font-normal mr-2"] $
         toHtml ((show completed <> "/" <> show total) :: Text)
+
+      -- Edit link
+      let obsidianUrl = "obsidian://open?path=" <> toText sourceFile
+      a_ [href_ obsidianUrl, class_ "opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600 transition-all", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
+        div_ [class_ "w-4 h-4"] $
+          toHtmlRaw Icon.edit
 
     -- Tasks list (indented)
     div_ [class_ "pl-2 flex flex-col"] $
