@@ -81,13 +81,13 @@ renderFolder vaultPath renderFile parentPath folderName node = do
       folderId = "folder-" <> sanitizeId newPath
 
   details_ [class_ "group/folder", open_ "", id_ folderId, term "data-folder-path" newPath] $ do
-    summary_ [class_ "list-none cursor-pointer -mx-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 text-sm font-medium select-none transition-colors text-gray-500 dark:text-gray-400"] $ do
+    summary_ [class_ "list-none cursor-pointer -mx-2 px-2 py-1 rounded bg-slate-600 dark:bg-gray-200 hover:bg-slate-500 dark:hover:bg-gray-300 flex items-center gap-2 text-sm font-medium select-none transition-colors text-white dark:text-gray-900"] $ do
       -- Chevron
-      div_ [class_ "w-4 h-4 flex items-center justify-center text-gray-400 transition-transform group-open/folder:rotate-90"] $
+      div_ [class_ "w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-600 transition-transform group-open/folder:rotate-90"] $
         toHtmlRaw Icon.chevron_right
 
       -- Icon
-      div_ [class_ "text-gray-400 dark:text-gray-500"] $ toHtmlRaw Icon.folder
+      div_ [class_ "text-gray-300 dark:text-gray-700"] $ toHtmlRaw Icon.folder
 
       -- Name
       toHtml folderName

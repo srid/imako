@@ -24,28 +24,28 @@ fileTreeItem today sourceFile tasks = do
       progress = if total == 0 then 0 else (fromIntegral completed / fromIntegral total) * 100 :: Double
 
   details_ [class_ "group/file mt-4 first:mt-0", open_ "", term "data-folder-path" (toText sourceFile)] $ do
-    summary_ [class_ "list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 select-none transition-colors mb-1"] $ do
+    summary_ [class_ "list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md bg-slate-600 dark:bg-gray-200 hover:bg-slate-500 dark:hover:bg-gray-300 flex items-center gap-2 text-sm font-medium text-white dark:text-gray-900 select-none transition-colors mb-1"] $ do
       -- Chevron
-      div_ [class_ "w-4 h-4 flex items-center justify-center text-gray-400 transition-transform group-open/file:rotate-90"] $
+      div_ [class_ "w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-600 transition-transform group-open/file:rotate-90"] $
         toHtmlRaw Icon.chevron_right
 
       -- Icon & Name
       div_ [class_ "flex items-center gap-2 flex-1 min-w-0"] $ do
-        div_ [class_ "text-gray-300 dark:text-gray-600"] $ toHtmlRaw Icon.file
+        div_ [class_ "text-gray-300 dark:text-gray-700"] $ toHtmlRaw Icon.file
         span_ [class_ "truncate"] $ toHtml filename
 
         -- Progress bar (mini)
         when (total > 0) $
-          div_ [class_ "ml-2 w-16 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden"] $
-            div_ [class_ "h-full bg-gray-300 dark:bg-gray-600", style_ ("width: " <> show progress <> "%")] mempty
+          div_ [class_ "ml-2 w-16 h-1 bg-gray-600 dark:bg-gray-400 rounded-full overflow-hidden"] $
+            div_ [class_ "h-full bg-gray-400 dark:bg-gray-600", style_ ("width: " <> show progress <> "%")] mempty
 
       -- Count
-      span_ [class_ "text-xs text-gray-300 dark:text-gray-600 font-normal mr-2"] $
+      span_ [class_ "text-xs text-gray-400 dark:text-gray-600 font-normal mr-2"] $
         toHtml ((show completed <> "/" <> show total) :: Text)
 
       -- Edit link
       let obsidianUrl = "obsidian://open?path=" <> toText sourceFile
-      a_ [href_ obsidianUrl, class_ "opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-indigo-600 transition-all", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
+      a_ [href_ obsidianUrl, class_ "opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-500 dark:hover:bg-gray-300 text-gray-400 dark:text-gray-600 hover:text-indigo-400 dark:hover:text-indigo-600 transition-all", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
         div_ [class_ "w-4 h-4"] $
           toHtmlRaw Icon.edit
 
