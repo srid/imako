@@ -73,7 +73,7 @@ taskTreeItem today task = do
       div_ [class_ "absolute top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800", style_ ("left: " <> show (indentLevel * 2 - 1) <> "rem")] mempty
 
     -- Checkbox
-    button_ [class_ ("mt-0.5 w-5 h-5 flex-shrink-0 flex items-center justify-center transition-colors " <> statusColor)] $
+    button_ [class_ ("w-5 h-5 flex-shrink-0 flex items-center justify-center transition-colors " <> statusColor)] $
       toHtmlRaw $
         case task.status of
           Completed -> Icon.square_check
