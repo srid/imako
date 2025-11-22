@@ -5,10 +5,10 @@ module Imako.UI.FolderTree (
   buildFolderTree,
   renderFolderTree,
   folderStateScript,
-) where
+)
+where
 
 import Data.Map.Strict qualified as Map
-
 import Lucid
 import System.FilePath (splitDirectories, (</>))
 import Web.TablerIcons.Outline qualified as Icon
@@ -81,13 +81,13 @@ renderFolder vaultPath renderFile parentPath folderName node = do
       folderId = "folder-" <> sanitizeId newPath
 
   details_ [class_ "group/folder", open_ "", id_ folderId, term "data-folder-path" newPath] $ do
-    summary_ [class_ "list-none cursor-pointer -mx-2 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-sm font-medium select-none transition-colors text-gray-700 dark:text-gray-200"] $ do
+    summary_ [class_ "list-none cursor-pointer -mx-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 text-sm font-medium select-none transition-colors text-gray-500 dark:text-gray-400"] $ do
       -- Chevron
       div_ [class_ "w-4 h-4 flex items-center justify-center text-gray-400 transition-transform group-open/folder:rotate-90"] $
         toHtmlRaw Icon.chevron_right
 
       -- Icon
-      div_ [class_ "text-blue-400 dark:text-blue-500"] $ toHtmlRaw Icon.folder
+      div_ [class_ "text-gray-400 dark:text-gray-500"] $ toHtmlRaw Icon.folder
 
       -- Name
       toHtml folderName
@@ -131,7 +131,7 @@ folderStateScript = do
       , "  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');"
       , "}"
       , ""
-      , "document.addEventListener('DOMContentLoaded', () => {"
+      , "function restoreAndAttachListeners() {"
       , "  const states = loadFolderStates();"
       , "  "
       , "  // Restore saved states for folders"
@@ -140,14 +140,23 @@ folderStateScript = do
       , "    if (path in states) {"
       , "      details.open = states[path];"
       , "    }"
+      , "    "
+      , "    // Remove old listeners to avoid duplicates"
+      , "    details.replaceWith(details.cloneNode(true));"
       , "  });"
       , "  "
-      , "  // Listen for toggle events on folders"
+      , "  // Re-query after replacing nodes and attach listeners"
       , "  document.querySelectorAll('details[data-folder-path]').forEach(details => {"
       , "    details.addEventListener('toggle', () => {"
       , "      const path = details.getAttribute('data-folder-path');"
       , "      saveFolderState(path, details.open);"
       , "    });"
       , "  });"
-      , "});"
+      , "}"
+      , ""
+      , "// Restore on initial page load"
+      , "document.addEventListener('DOMContentLoaded', restoreAndAttachListeners);"
+      , ""
+      , "// Restore after htmx swaps content"
+      , "document.addEventListener('htmx:afterSwap', restoreAndAttachListeners);"
       ]
