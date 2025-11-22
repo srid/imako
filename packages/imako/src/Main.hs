@@ -95,9 +95,9 @@ main :: IO ()
 main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
-    putTextLn "Starting web server on http://localhost:4009"
+    putTextLn $ "Starting web server on http://" <> toText options.host <> ":" <> show options.port
     Ob.withLiveVault options.path $ \vaultVar -> do
-      S.scotty 4009 $ do
+      S.scotty options.port $ do
         S.get "/" $ do
           today <- liftIO getLocalToday
           vault <- liftIO $ LVar.get vaultVar

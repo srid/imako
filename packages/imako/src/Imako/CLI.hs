@@ -3,8 +3,10 @@ module Imako.CLI where
 import Options.Applicative
 
 -- Define the data structure to hold parsed arguments
-newtype Options = Options
+data Options = Options
   { path :: FilePath
+  , port :: Int
+  , host :: String
   }
   deriving stock (Show)
 
@@ -17,6 +19,23 @@ optionsParser =
       ( metavar "PATH"
           <> help "Path to notebook"
       )
+    <*> option
+      auto
+      ( long "port"
+          <> short 'p'
+          <> metavar "PORT"
+          <> value 4009
+          <> showDefault
+          <> help "Port to run the web server on"
+      )
+    <*> strOption
+      ( long "host"
+          <> short 'h'
+          <> metavar "HOST"
+          <> value "localhost"
+          <> showDefault
+          <> help "Host to bind the web server to"
+      )
 
 -- Parser info with additional configuration
 opts :: ParserInfo Options
@@ -25,5 +44,5 @@ opts =
     (optionsParser <**> helper)
     ( fullDesc
         <> header "Imako - Notebook Web Viewer"
-        <> progDesc "Start a web server to view your notebook at http://localhost:4009"
+        <> progDesc "Start a web server to view your notebook"
     )
