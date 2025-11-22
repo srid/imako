@@ -23,7 +23,7 @@ fileTreeItem today sourceFile tasks = do
       completed = length $ filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       progress = if total == 0 then 0 else (fromIntegral completed / fromIntegral total) * 100 :: Double
 
-  details_ [class_ "group/file mt-4 first:mt-0", open_ "", term "data-folder-path" (toText sourceFile)] $ do
+  details_ [class_ "group/file mt-3", open_ "", term "data-folder-path" (toText sourceFile)] $ do
     summary_ [class_ "list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md bg-slate-600 dark:bg-gray-200 hover:bg-slate-500 dark:hover:bg-gray-300 flex items-center gap-2 text-sm font-medium text-white dark:text-gray-900 select-none transition-colors mb-1"] $ do
       -- Chevron
       div_ [class_ "w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-600 transition-transform group-open/file:rotate-90"] $

@@ -43,21 +43,21 @@ buildFolderTree = Map.foldlWithKey' insertFile emptyNode
           updatedSubfolder = insertPath existingSubfolder rest item
        in node {subfolders = Map.insert subfolderName updatedSubfolder node.subfolders}
 
--- | Render the entire folder tree as HTML.
---
--- Takes the root vault path, a function to render each file (given its path and associated data),
--- and the root 'FolderNode'. Renders all subfolders and files recursively.
---
--- @
--- renderFolderTree vaultPath renderFile rootNode
--- @
---
--- * @vaultPath@: The root path of the folder tree.
--- * @renderFile@: Function to render a file, given its path and associated data.
--- * @rootNode@: The root of the folder tree to render.
---
--- Returns an HTML representation of the folder tree.
---
+{- | Render the entire folder tree as HTML.
+
+Takes the root vault path, a function to render each file (given its path and associated data),
+and the root 'FolderNode'. Renders all subfolders and files recursively.
+
+@
+renderFolderTree vaultPath renderFile rootNode
+@
+
+* @vaultPath@: The root path of the folder tree.
+* @renderFile@: Function to render a file, given its path and associated data.
+* @rootNode@: The root of the folder tree to render.
+
+Returns an HTML representation of the folder tree.
+-}
 renderFolderTree :: FilePath -> (FilePath -> a -> Html ()) -> FolderNode a -> Html ()
 renderFolderTree vaultPath renderFile rootNode =
   div_ [class_ "flex flex-col gap-0.5"] $ renderFolderNode vaultPath renderFile "" rootNode
@@ -79,7 +79,7 @@ renderFolder vaultPath renderFile parentPath folderName node = do
   let newPath = if parentPath == "" then folderName else parentPath <> "/" <> folderName
       folderId = "folder-" <> sanitizeId newPath
 
-  details_ [class_ "group/folder", open_ "", id_ folderId, term "data-folder-path" newPath] $ do
+  details_ [class_ "group/folder mt-3", open_ "", id_ folderId, term "data-folder-path" newPath] $ do
     summary_ [class_ "list-none cursor-pointer -mx-2 px-2 py-1 rounded bg-slate-600 dark:bg-gray-200 hover:bg-slate-500 dark:hover:bg-gray-300 flex items-center gap-2 text-sm font-medium select-none transition-colors text-white dark:text-gray-900"] $ do
       -- Chevron
       div_ [class_ "w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-600 transition-transform group-open/folder:rotate-90"] $
@@ -92,7 +92,7 @@ renderFolder vaultPath renderFile parentPath folderName node = do
       toHtml folderName
 
     -- Contents (indented)
-    div_ [class_ "pl-4 border-l border-gray-100 dark:border-gray-800 ml-2 mt-0.5 flex flex-col gap-0.5"] $
+    div_ [class_ "pl-4 border-l border-gray-100 dark:border-gray-800 ml-2 mt-0.5 flex flex-col"] $
       renderFolderNode vaultPath renderFile newPath node
 
 -- | Sanitize a path to create a valid HTML ID
