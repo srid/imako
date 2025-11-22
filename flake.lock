@@ -351,7 +351,8 @@
         "nixpkgs": "nixpkgs_2",
         "servant-event-stream": "servant-event-stream",
         "tabler-icons": "tabler-icons",
-        "unionmount": "unionmount"
+        "unionmount": "unionmount",
+        "warp-tls-simple": "warp-tls-simple"
       }
     },
     "servant-event-stream": {
@@ -420,6 +421,22 @@
       "original": {
         "owner": "srid",
         "repo": "unionmount",
+        "type": "github"
+      }
+    },
+    "warp-tls-simple": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1758321703,
+        "narHash": "sha256-7/U6UwXuJqWKi2CpNkTjDPO/13Mtof4LwmHbWnf/unU=",
+        "owner": "srid",
+        "repo": "warp-tls-simple",
+        "rev": "bbe9069048f38a04bb45b7adeda9ce84d87f2015",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "warp-tls-simple",
         "type": "github"
       }
     }

@@ -1,12 +1,15 @@
 module Imako.CLI where
 
+import Network.Wai.Handler.Warp (Port)
+import Network.Wai.Handler.WarpTLS.Simple (TLSConfig, tlsConfigParser)
 import Options.Applicative
 
 -- Define the data structure to hold parsed arguments
 data Options = Options
   { path :: FilePath
-  , port :: Int
-  , host :: String
+  , port :: Port
+  , host :: Text
+  , tlsConfig :: TLSConfig
   }
   deriving stock (Show)
 
@@ -36,6 +39,7 @@ optionsParser =
           <> showDefault
           <> help "Host to bind the web server to"
       )
+    <*> tlsConfigParser
 
 -- Parser info with additional configuration
 opts :: ParserInfo Options

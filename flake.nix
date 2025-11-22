@@ -30,6 +30,8 @@
     servant-event-stream.flake = false;
     tabler-icons.url = "github:juspay/tabler-icons-hs";
     tabler-icons.flake = false;
+    warp-tls-simple.url = "github:srid/warp-tls-simple";
+    warp-tls-simple.flake = false;
   };
 
   outputs = inputs:
