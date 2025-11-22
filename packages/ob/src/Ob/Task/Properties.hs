@@ -105,8 +105,8 @@ parseInlineSequence inlines =
 -- | Parse priority emoji
 parsePriority :: Text -> Maybe Priority
 parsePriority = \case
-  "⏫" -> Just Highest
-  "🔺" -> Just High
+  "🔺" -> Just Highest
+  "⏫" -> Just High
   "🔼" -> Just Medium
   "🔽" -> Just Low
   "⏬" -> Just Lowest
