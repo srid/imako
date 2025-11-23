@@ -21,6 +21,7 @@ import Imako.UI.Tasks (fileTreeItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
+import Network.Wai (Application)
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Handler.WarpTLS.Simple (TLSConfig (..), startWarpServer)
 import Ob qualified
@@ -34,17 +35,47 @@ renderMainContent today vaultPath vault = do
 
   -- Filter Bar
   renderFilterBar
-
   -- Tasks section with hierarchical folder structure
-  div_ $
-    renderFolderTree vaultPath (fileTreeItem today) view.folderTree
+  renderFolderTree vaultPath (fileTreeItem today) view.folderTree
 
--- | Get the current day in the local timezone
-getLocalToday :: IO Day
-getLocalToday = do
-  now <- getCurrentTime
-  tz <- getCurrentTimeZone
-  pure $ localDay (utcToLocalTime tz now)
+-- | Create the Scotty application with all routes
+mkApp :: FilePath -> LVar.LVar Ob.Vault -> IO Application
+mkApp vaultPath vaultVar = S.scottyApp $ do
+  S.get "/" $ do
+    today <- liftIO getLocalToday
+    vault <- liftIO $ LVar.get vaultVar
+    S.html $
+      renderText $
+        layout (toText vaultPath) (renderMainContent today vaultPath vault)
+
+  S.post "/inbox/add" $ do
+    taskText <- S.formParam "text"
+    liftIO $ appendToInbox vaultPath taskText
+    S.text "OK"
+
+  S.get "/manifest.json" $ do
+    S.setHeader "Content-Type" "application/json"
+    S.json imakoManifest
+
+  S.get "/events" $ do
+    S.setHeader "Content-Type" "text/event-stream"
+    S.setHeader "Cache-Control" "no-cache"
+    S.setHeader "Connection" "keep-alive"
+    S.status status200
+    S.stream $ \write flush -> forever $ do
+      today <- getLocalToday
+      vault <- LVar.listenNext vaultVar
+      let html = renderText $ renderMainContent today vaultPath vault
+      let sseData = "data: " <> html <> "\n\n"
+      write $ lazyByteString $ TL.encodeUtf8 sseData
+      flush
+  where
+    -- \| Get the current day in the local timezone
+    getLocalToday :: IO Day
+    getLocalToday = do
+      now <- getCurrentTime
+      tz <- getCurrentTimeZone
+      pure $ localDay (utcToLocalTime tz now)
 
 main :: IO ()
 main = do
@@ -56,35 +87,7 @@ main = do
         url = protocol <> "://" <> options.host <> ":" <> show options.port
     putTextLn $ "Starting web server on " <> url
     Ob.withLiveVault options.path $ \vaultVar -> do
-      app <- S.scottyApp $ do
-        S.get "/" $ do
-          today <- liftIO getLocalToday
-          vault <- liftIO $ LVar.get vaultVar
-          S.html $
-            renderText $
-              layout (toText options.path) (renderMainContent today options.path vault)
-
-        S.post "/inbox/add" $ do
-          taskText <- S.formParam "text"
-          liftIO $ appendToInbox options.path taskText
-          S.text "OK"
-
-        S.get "/manifest.json" $ do
-          S.setHeader "Content-Type" "application/json"
-          S.json imakoManifest
-
-        S.get "/events" $ do
-          S.setHeader "Content-Type" "text/event-stream"
-          S.setHeader "Cache-Control" "no-cache"
-          S.setHeader "Connection" "keep-alive"
-          S.status status200
-          S.stream $ \write flush -> forever $ do
-            today <- getLocalToday
-            vault <- LVar.listenNext vaultVar
-            let html = renderText $ renderMainContent today options.path vault
-            let sseData = "data: " <> html <> "\n\n"
-            write $ lazyByteString $ TL.encodeUtf8 sseData
-            flush
+      app <- mkApp options.path vaultVar
 
       let settings =
             Warp.defaultSettings
