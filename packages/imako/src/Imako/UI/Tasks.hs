@@ -7,7 +7,7 @@ module Imako.UI.Tasks (
 )
 where
 
-import Data.Time (Day, defaultTimeLocale, formatTime)
+import Data.Time (Day, addDays, defaultTimeLocale, formatTime)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
@@ -73,7 +73,18 @@ taskTreeItem today task = do
         InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-  div_ [class_ "group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-start gap-2 text-sm transition-colors", style_ indentStyle] $ do
+      -- Future task detection
+      twoDaysFromNow = Data.Time.addDays 2 today
+      isFuture = case task.properties.startDate of
+        Just d -> d >= twoDaysFromNow
+        Nothing -> False
+      -- Check if any parent is future (if parent is future, child is effectively future)
+      isParentFuture = any (\(_, start) -> maybe False (>= twoDaysFromNow) start) task.parentContext
+      isEffectiveFuture = isFuture || isParentFuture
+
+      visibilityClass = if isEffectiveFuture then "hidden group-[.show-future]:flex" else "flex"
+
+  div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items
     when (indentLevel > 0) $
       div_ [class_ "absolute top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800", style_ ("left: " <> show (indentLevel * 2 - 1) <> "rem")] mempty

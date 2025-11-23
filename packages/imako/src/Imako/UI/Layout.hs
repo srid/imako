@@ -41,4 +41,4 @@ layout vaultPath mainContent =
           -- Inbox quick-add form (static, not swapped by SSE)
           inboxInputForm
           -- Tasks content (swapped by SSE)
-          div_ [id_ "task-content", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
+          div_ [id_ "task-content", class_ "group", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
