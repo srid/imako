@@ -3,9 +3,9 @@ module Imako.UI.Layout (
 )
 where
 
-import Imako.UI.FolderTree (folderStateScript)
 import Imako.UI.Inbox (inboxInputForm)
 import Imako.UI.PWA (pwaMeta)
+import Imako.UI.Scripts (appScripts)
 import Lucid
 
 -- Custom htmx attributes using term syntax
@@ -29,7 +29,7 @@ layout vaultPath mainContent =
       script_ [src_ "https://cdn.tailwindcss.com"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx.org@2.0.4"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"] ("" :: Text)
-      folderStateScript
+      appScripts
     body_ [class_ "min-h-screen bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100"] $ do
       div_ [class_ "max-w-4xl mx-auto my-6"] $ do
         -- Vault path label attached to top of card
@@ -41,4 +41,4 @@ layout vaultPath mainContent =
           -- Inbox quick-add form (static, not swapped by SSE)
           inboxInputForm
           -- Tasks content (swapped by SSE)
-          div_ [id_ "task-content", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent
+          div_ [id_ "task-content", class_ "group", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent

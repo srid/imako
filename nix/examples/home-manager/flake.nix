@@ -119,7 +119,7 @@
             machine.wait_for_open_port(4009)
 
             # Test HTTP response
-            machine.succeed("curl -f http://localhost:4009")
+            machine.succeed("curl -k -f https://localhost:4009")
 
             print("✅ Imako home-manager service is running and responding to HTTP requests")
           '';

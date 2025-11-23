@@ -11,8 +11,9 @@ import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Text.Lazy.Encoding qualified as TL
-import Data.Time (Day, addDays, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
+import Data.Time (Day, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
 import Imako.CLI qualified as CLI
+import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
@@ -25,7 +26,6 @@ import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Handler.WarpTLS.Simple (TLSConfig (..), startWarpServer)
 import Ob qualified
 import Ob.Task (Task (..), TaskStatus (..))
-import Ob.Task.Properties (TaskProperties (..))
 import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
 import System.FilePath (makeRelative, (</>))
@@ -45,22 +45,9 @@ Returns a tuple of:
 * Number of filtered (far-future) tasks
 * Map of tasks grouped by file path
 -}
-processTasksForUI :: Day -> FilePath -> [Task] -> (Int, Int, Int, Map FilePath [Task])
-processTasksForUI today vaultPath tasks =
-  let twoDaysFromNow = addDays 2 today
-      -- Check if task or any of its parents are far future
-      isNotFarFuture task =
-        let checkDate = \case
-              Nothing -> True
-              Just startDate -> startDate < twoDaysFromNow
-            -- Check task's own start date
-            taskNotFuture = checkDate task.properties.startDate
-            -- Check all parent start dates
-            parentsNotFuture = all (checkDate . snd) task.parentContext
-         in taskNotFuture && parentsNotFuture
-      incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
-      incompleteNotFuture = filter isNotFarFuture incomplete
-      filtered = length incomplete - length incompleteNotFuture
+processTasksForUI :: FilePath -> [Task] -> (Int, Int, Map FilePath [Task])
+processTasksForUI vaultPath tasks =
+  let incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       groupedAll =
         List.foldl
@@ -69,19 +56,17 @@ processTasksForUI today vaultPath tasks =
                in Map.insertWith (flip (++)) relativePath [task] acc
           )
           Map.empty
-          (incompleteNotFuture <> completedTasks)
-      -- Only show files that have at least one incomplete task
-      grouped = Map.filter (any (\t -> t.status /= Completed && t.status /= Cancelled)) groupedAll
-   in (length incompleteNotFuture, length completedTasks, filtered, grouped)
+          (incomplete <> completedTasks)
+      -- Show all files
+      grouped = groupedAll
+   in (length incomplete, length completedTasks, grouped)
 
 renderMainContent :: Day -> FilePath -> Ob.Vault -> Html ()
 renderMainContent today vaultPath vault = do
-  let (_pendingCount, _completedCount, filteredCount, groupedTasks) = processTasksForUI today vaultPath (getTasks vault)
+  let (_pendingCount, _completedCount, groupedTasks) = processTasksForUI vaultPath (getTasks vault)
 
-  -- Show filtered tasks message if any (subtle)
-  when (filteredCount > 0) $
-    div_ [class_ "mb-3 text-xs text-gray-400 dark:text-gray-600"] $
-      toHtml ("Hiding " <> show filteredCount <> " future task" <> (if filteredCount == 1 then "" else "s" :: Text))
+  -- Filter Bar
+  renderFilterBar
 
   -- Tasks section with hierarchical folder structure
   div_ $ do

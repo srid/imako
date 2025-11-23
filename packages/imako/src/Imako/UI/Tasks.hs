@@ -8,6 +8,7 @@ module Imako.UI.Tasks (
 where
 
 import Data.Time (Day, defaultTimeLocale, formatTime)
+import Imako.UI.Filters (filterClass, filterPredicate, filters)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
@@ -57,7 +58,24 @@ fileTreeItem today vaultPath sourceFile tasks = do
 
     -- Tasks list (indented)
     div_ [class_ "pl-8 flex flex-col"] $
-      forM_ (filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks) (taskTreeItem today)
+      forM_ tasks (taskTreeItem today)
+
+-- | Compute visibility classes based on task state
+computeVisibilityClasses :: Day -> Task -> Text
+computeVisibilityClasses today task =
+  let
+    -- Find all filters that match this task
+    matchingFilters = filter (\f -> f.filterPredicate today task) filters
+
+    -- If any filter matches, the task is hidden by default
+    baseVisibility = if not (null matchingFilters) then "hidden" else "flex"
+
+    -- Add conditional visibility classes for each matching filter
+    -- e.g. " group-[.show-future]:flex"
+    conditionalVisibility =
+      foldMap (\f -> " group-[." <> f.filterClass <> "]:flex") matchingFilters
+   in
+    baseVisibility <> conditionalVisibility
 
 -- | Render a single task as a tree item row
 taskTreeItem :: Day -> Task -> Html ()
@@ -73,7 +91,9 @@ taskTreeItem today task = do
         InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-  div_ [class_ "group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-start gap-2 text-sm transition-colors", style_ indentStyle] $ do
+      visibilityClass = computeVisibilityClasses today task
+
+  div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items
     when (indentLevel > 0) $
       div_ [class_ "absolute top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800", style_ ("left: " <> show (indentLevel * 2 - 1) <> "rem")] mempty

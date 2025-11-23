@@ -4,7 +4,6 @@ module Imako.UI.FolderTree (
   FolderNode (..),
   buildFolderTree,
   renderFolderTree,
-  folderStateScript,
 )
 where
 
@@ -111,50 +110,3 @@ renderFileGroup vaultPath renderFile currentPath filename item = do
 
   -- Delegate to the provided renderer (which should be fileTreeItem)
   renderFile vaultPath (toString relativePath) item
-
--- | JavaScript for persisting folder collapse/expand state in localStorage
-folderStateScript :: Html ()
-folderStateScript = do
-  script_ [] $
-    unlines
-      [ "const STORAGE_KEY = 'imako-folder-states';"
-      , ""
-      , "function saveFolderState(path, isOpen) {"
-      , "  const states = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');"
-      , "  states[path] = isOpen;"
-      , "  localStorage.setItem(STORAGE_KEY, JSON.stringify(states));"
-      , "}"
-      , ""
-      , "function loadFolderStates() {"
-      , "  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');"
-      , "}"
-      , ""
-      , "function restoreAndAttachListeners() {"
-      , "  const states = loadFolderStates();"
-      , "  "
-      , "  // Restore saved states for folders"
-      , "  document.querySelectorAll('details[data-folder-path]').forEach(details => {"
-      , "    const path = details.getAttribute('data-folder-path');"
-      , "    if (path in states) {"
-      , "      details.open = states[path];"
-      , "    }"
-      , "    "
-      , "    // Remove old listeners to avoid duplicates"
-      , "    details.replaceWith(details.cloneNode(true));"
-      , "  });"
-      , "  "
-      , "  // Re-query after replacing nodes and attach listeners"
-      , "  document.querySelectorAll('details[data-folder-path]').forEach(details => {"
-      , "    details.addEventListener('toggle', () => {"
-      , "      const path = details.getAttribute('data-folder-path');"
-      , "      saveFolderState(path, details.open);"
-      , "    });"
-      , "  });"
-      , "}"
-      , ""
-      , "// Restore on initial page load"
-      , "document.addEventListener('DOMContentLoaded', restoreAndAttachListeners);"
-      , ""
-      , "// Restore after htmx swaps content"
-      , "document.addEventListener('htmx:afterSwap', restoreAndAttachListeners);"
-      ]
