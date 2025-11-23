@@ -7,7 +7,8 @@ module Imako.UI.Tasks (
 )
 where
 
-import Data.Time (Day, defaultTimeLocale, formatTime)
+import Data.Time (defaultTimeLocale, formatTime)
+import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
@@ -25,8 +26,8 @@ obsidianEditButton vaultPath relativePath = do
     toHtmlRaw Icon.edit
 
 -- | Render a file as a tree node containing tasks
-fileTreeItem :: [Filter] -> Day -> FilePath -> FilePath -> [Task] -> Html ()
-fileTreeItem filters today vaultPath sourceFile tasks = do
+fileTreeItem :: AppView -> FilePath -> [Task] -> Html ()
+fileTreeItem view sourceFile tasks = do
   let filename = takeFileName sourceFile
       -- Calculate completion stats
       total = length tasks
@@ -54,18 +55,18 @@ fileTreeItem filters today vaultPath sourceFile tasks = do
         toHtml ((show completed <> "/" <> show total) :: Text)
 
       -- Edit link
-      obsidianEditButton vaultPath sourceFile
+      obsidianEditButton view.vaultPath sourceFile
 
     -- Tasks list (indented)
     div_ [class_ "pl-8 flex flex-col"] $
-      forM_ tasks (taskTreeItem filters today)
+      forM_ tasks (taskTreeItem view)
 
 -- | Compute visibility classes based on task state
-computeVisibilityClasses :: [Filter] -> Day -> Task -> Text
-computeVisibilityClasses filters today task =
+computeVisibilityClasses :: AppView -> Task -> Text
+computeVisibilityClasses view task =
   let
     -- Find all filters that match this task
-    matchingFilters = filter (\f -> f.filterPredicate today task) filters
+    matchingFilters = filter (\f -> f.filterPredicate view.today task) view.filters
 
     -- If any filter matches, the task is hidden by default
     baseVisibility = if not (null matchingFilters) then "hidden" else "flex"
@@ -79,8 +80,8 @@ computeVisibilityClasses filters today task =
     baseVisibility <> conditionalVisibility
 
 -- | Render a single task as a tree item row
-taskTreeItem :: [Filter] -> Day -> Task -> Html ()
-taskTreeItem filters today task = do
+taskTreeItem :: AppView -> Task -> Html ()
+taskTreeItem view task = do
   let parentDescriptions = map fst task.parentContext
       indentLevel = length parentDescriptions
       -- Visual indentation for hierarchy (increased to 2rem per level)
@@ -92,7 +93,7 @@ taskTreeItem filters today task = do
         InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-      visibilityClass = computeVisibilityClasses filters today task
+      visibilityClass = computeVisibilityClasses view task
 
   div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items
@@ -138,7 +139,7 @@ taskTreeItem filters today task = do
 
           -- Due Date
           whenJust task.properties.dueDate $ \d -> do
-            let (dateColor, dateIcon) = case compare d today of
+            let (dateColor, dateIcon) = case compare d view.today of
                   LT -> ("text-red-600 dark:text-red-400 font-medium", Icon.calendar_exclamation) -- Overdue
                   EQ -> ("text-amber-600 dark:text-amber-400 font-medium", Icon.calendar) -- Today
                   GT -> ("text-gray-500 dark:text-gray-400", Icon.calendar) -- Future

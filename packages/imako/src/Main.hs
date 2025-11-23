@@ -29,25 +29,22 @@ import Options.Applicative (execParser)
 import System.FilePath ((</>))
 import Web.Scotty qualified as S
 
-renderMainContent :: Day -> FilePath -> Ob.Vault -> Html ()
-renderMainContent today vaultPath vault = do
-  let view = mkAppView vaultPath vault
-
+renderMainContent :: AppView -> Html ()
+renderMainContent view = do
   -- Filter Bar
   renderFilterBar view.filters
 
   -- Tasks section with hierarchical folder structure
-  renderFolderTree vaultPath (fileTreeItem view.filters today) view.folderTree
+  renderFolderTree view.vaultPath (fileTreeItem view) view.folderTree
 
 -- | Create the Scotty application with all routes
 mkApp :: FilePath -> LVar.LVar Ob.Vault -> IO Application
 mkApp vaultPath vaultVar = S.scottyApp $ do
   S.get "/" $ do
-    today <- liftIO getLocalToday
     vault <- liftIO $ LVar.get vaultVar
-    S.html $
-      renderText $
-        layout (toText vaultPath) (renderMainContent today vaultPath vault)
+    today <- liftIO getLocalToday
+    let view = mkAppView today vaultPath vault
+    S.html $ renderText $ layout (toText vaultPath) (renderMainContent view)
 
   S.post "/inbox/add" $ do
     taskText <- S.formParam "text"
@@ -64,9 +61,10 @@ mkApp vaultPath vaultVar = S.scottyApp $ do
     S.setHeader "Connection" "keep-alive"
     S.status status200
     S.stream $ \write flush -> forever $ do
-      today <- getLocalToday
       vault <- LVar.listenNext vaultVar
-      let html = renderText $ renderMainContent today vaultPath vault
+      today <- getLocalToday
+      let view = mkAppView today vaultPath vault
+          html = renderText $ renderMainContent view
       let sseData = "data: " <> html <> "\n\n"
       write $ lazyByteString $ TL.encodeUtf8 sseData
       flush

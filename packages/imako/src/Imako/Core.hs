@@ -8,6 +8,7 @@ where
 
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
+import Data.Time (Day)
 import Imako.Core.Filter (Filter)
 import Imako.Core.Filter qualified as FilterDef
 import Imako.Core.FolderTree (FolderNode, buildFolderTree)
@@ -24,12 +25,16 @@ data AppView = AppView
   -- ^ Tasks organized in a hierarchical folder tree structure
   , filters :: [Filter]
   -- ^ Available filters for task visibility
+  , today :: Day
+  -- ^ Current date for date-based comparisons and filtering
+  , vaultPath :: FilePath
+  -- ^ Path to the vault root directory
   }
   deriving stock (Show, Eq)
 
 -- | Pure function to transform raw Vault data into AppView
-mkAppView :: FilePath -> Vault -> AppView
-mkAppView vaultPath vault =
+mkAppView :: Day -> FilePath -> Vault -> AppView
+mkAppView today vaultPath vault =
   let tasks = getTasks vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
@@ -45,4 +50,6 @@ mkAppView vaultPath vault =
    in AppView
         { folderTree = tree
         , filters = FilterDef.filters
+        , today = today
+        , vaultPath = vaultPath
         }
