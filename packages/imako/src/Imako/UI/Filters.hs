@@ -7,7 +7,11 @@ module Imako.UI.Filters (
 )
 where
 
+import Data.Time (Day, addDays)
 import Lucid
+import Ob (Task (..))
+import Ob.Task (TaskStatus (..))
+import Ob.Task.Properties (TaskProperties (..))
 
 -- | A filter for task visibility
 data Filter = Filter
@@ -16,8 +20,8 @@ data Filter = Filter
   , filterClass :: Text
   , filterStorageKey :: Text
   , filterJsFunction :: Text
+  , filterPredicate :: Day -> Task -> Bool
   }
-  deriving stock (Show, Eq)
 
 -- | All available filters
 filters :: [Filter]
@@ -28,6 +32,13 @@ filters =
       , filterClass = "show-future"
       , filterStorageKey = "showFuture"
       , filterJsFunction = "toggleFilter('showFuture', 'show-future', 'task-content', 'future-tasks-toggle')"
+      , filterPredicate = \today task ->
+          let twoDaysFromNow = addDays 2 today
+              isFuture = case task.properties.startDate of
+                Just d -> d >= twoDaysFromNow
+                Nothing -> False
+              isParentFuture = any (\(_, start) -> maybe False (>= twoDaysFromNow) start) task.parentContext
+           in isFuture || isParentFuture
       }
   , Filter
       { filterId = "past-tasks-toggle"
@@ -35,6 +46,7 @@ filters =
       , filterClass = "show-past"
       , filterStorageKey = "showPast"
       , filterJsFunction = "toggleFilter('showPast', 'show-past', 'task-content', 'past-tasks-toggle')"
+      , filterPredicate = \_ task -> task.status == Completed || task.status == Cancelled
       }
   ]
 

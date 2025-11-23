@@ -7,7 +7,8 @@ module Imako.UI.Tasks (
 )
 where
 
-import Data.Time (Day, addDays, defaultTimeLocale, formatTime)
+import Data.Time (Day, defaultTimeLocale, formatTime)
+import Imako.UI.Filters (filterClass, filterPredicate, filters)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
@@ -60,13 +61,21 @@ fileTreeItem today vaultPath sourceFile tasks = do
       forM_ tasks (taskTreeItem today)
 
 -- | Compute visibility classes based on task state
-computeVisibilityClasses :: Bool -> Bool -> Text
-computeVisibilityClasses isEffectiveFuture isPast =
-  let baseVisibility = if isEffectiveFuture || isPast then "hidden" else "flex"
-      conditionalVisibility =
-        (if isEffectiveFuture then " group-[.show-future]:flex" else "")
-          <> (if isPast then " group-[.show-past]:flex" else "")
-   in baseVisibility <> conditionalVisibility
+computeVisibilityClasses :: Day -> Task -> Text
+computeVisibilityClasses today task =
+  let
+    -- Find all filters that match this task
+    matchingFilters = filter (\f -> f.filterPredicate today task) filters
+
+    -- If any filter matches, the task is hidden by default
+    baseVisibility = if not (null matchingFilters) then "hidden" else "flex"
+
+    -- Add conditional visibility classes for each matching filter
+    -- e.g. " group-[.show-future]:flex"
+    conditionalVisibility =
+      foldMap (\f -> " group-[." <> f.filterClass <> "]:flex") matchingFilters
+   in
+    baseVisibility <> conditionalVisibility
 
 -- | Render a single task as a tree item row
 taskTreeItem :: Day -> Task -> Html ()
@@ -82,19 +91,7 @@ taskTreeItem today task = do
         InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-      -- Future task detection
-      twoDaysFromNow = addDays 2 today
-      isFuture = case task.properties.startDate of
-        Just d -> d >= twoDaysFromNow
-        Nothing -> False
-      -- Check if any parent is future (if parent is future, child is effectively future)
-      isParentFuture = any (\(_, start) -> maybe False (>= twoDaysFromNow) start) task.parentContext
-      isEffectiveFuture = isFuture || isParentFuture
-
-      -- Past task detection (completed or cancelled)
-      isPast = task.status == Completed || task.status == Cancelled
-
-      visibilityClass = computeVisibilityClasses isEffectiveFuture isPast
+      visibilityClass = computeVisibilityClasses today task
 
   div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items
