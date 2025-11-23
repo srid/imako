@@ -21,12 +21,14 @@ import Imako.UI.Tasks (fileTreeItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
+import Network.Wai.Handler.Warp qualified as Warp
+import Network.Wai.Handler.WarpTLS.Simple (TLSConfig (..), startWarpServer)
 import Ob qualified
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Task.Properties (TaskProperties (..))
 import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
-import System.FilePath (makeRelative)
+import System.FilePath (makeRelative, (</>))
 import Web.Scotty qualified as S
 
 {- | Process tasks for UI display with filtering and grouping.
@@ -95,9 +97,13 @@ main :: IO ()
 main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
-    putTextLn $ "Starting web server on http://" <> toText options.host <> ":" <> show options.port
+    let protocol = case options.tlsConfig of
+          TLSDisabled -> "http"
+          _ -> "https"
+        url = protocol <> "://" <> options.host <> ":" <> show options.port
+    putTextLn $ "Starting web server on " <> url
     Ob.withLiveVault options.path $ \vaultVar -> do
-      S.scotty options.port $ do
+      app <- S.scottyApp $ do
         S.get "/" $ do
           today <- liftIO getLocalToday
           vault <- liftIO $ LVar.get vaultVar
@@ -126,3 +132,11 @@ main = do
             let sseData = "data: " <> html <> "\n\n"
             write $ lazyByteString $ TL.encodeUtf8 sseData
             flush
+
+      let settings =
+            Warp.defaultSettings
+              & Warp.setHost (fromString $ toString options.host)
+              & Warp.setPort options.port
+              & Warp.setTimeout 600 -- 10 minutes (for long SSE connections)
+          tlsStateDir = options.path </> ".imako"
+      liftIO $ startWarpServer settings tlsStateDir options.tlsConfig app

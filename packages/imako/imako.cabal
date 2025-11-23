@@ -79,8 +79,11 @@ common shared
     , time
     , unionmount             >=0.3
     , unliftio-core
+    , wai
     , wai-extra
     , wai-middleware-static
+    , warp
+    , warp-tls-simple
     , with-utf8
 
   hs-source-dirs:     src
