@@ -94,6 +94,7 @@ executable imako
   main-is:       Main.hs
   other-modules:
     Imako.CLI
+    Imako.Core
     Imako.UI.Filters
     Imako.UI.FolderTree
     Imako.UI.Inbox

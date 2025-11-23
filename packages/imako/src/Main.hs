@@ -8,11 +8,10 @@ module Main where
 
 import Data.ByteString.Builder (lazyByteString)
 import Data.LVar qualified as LVar
-import Data.List qualified as List
-import Data.Map.Strict qualified as Map
 import Data.Text.Lazy.Encoding qualified as TL
 import Data.Time (Day, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
 import Imako.CLI qualified as CLI
+import Imako.Core (AppView (..), mkAppView)
 import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
@@ -25,52 +24,20 @@ import Network.HTTP.Types (status200)
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Handler.WarpTLS.Simple (TLSConfig (..), startWarpServer)
 import Ob qualified
-import Ob.Task (Task (..), TaskStatus (..))
-import Ob.Vault (getTasks)
 import Options.Applicative (execParser)
-import System.FilePath (makeRelative, (</>))
+import System.FilePath ((</>))
 import Web.Scotty qualified as S
-
-{- | Process tasks for UI display with filtering and grouping.
-
-Filters out completed, cancelled, and far-future tasks, then groups remaining tasks by file.
-
-* If a task or any of its parent tasks has a start date >= 2 days from today, the entire subtree is filtered out
-* Tasks are grouped by their source file path (relative to vault)
-
-Returns a tuple of:
-
-* Number of incomplete tasks to display
-* Number of completed tasks
-* Number of filtered (far-future) tasks
-* Map of tasks grouped by file path
--}
-processTasksForUI :: FilePath -> [Task] -> (Int, Int, Map FilePath [Task])
-processTasksForUI vaultPath tasks =
-  let incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
-      completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
-      groupedAll =
-        List.foldl
-          ( \acc task ->
-              let relativePath = makeRelative vaultPath task.sourceNote
-               in Map.insertWith (flip (++)) relativePath [task] acc
-          )
-          Map.empty
-          (incomplete <> completedTasks)
-      -- Show all files
-      grouped = groupedAll
-   in (length incomplete, length completedTasks, grouped)
 
 renderMainContent :: Day -> FilePath -> Ob.Vault -> Html ()
 renderMainContent today vaultPath vault = do
-  let (_pendingCount, _completedCount, groupedTasks) = processTasksForUI vaultPath (getTasks vault)
+  let view = mkAppView vaultPath vault
 
   -- Filter Bar
   renderFilterBar
 
   -- Tasks section with hierarchical folder structure
   div_ $ do
-    let folderTree = buildFolderTree groupedTasks
+    let folderTree = buildFolderTree view.groupedTasks
     renderFolderTree vaultPath (fileTreeItem today) folderTree
 
 -- | Get the current day in the local timezone

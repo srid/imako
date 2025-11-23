@@ -5,6 +5,7 @@ WARNING: This package doesn't provide anything useful yet. See the GitHub repo f
 module Ob (
   Note (..),
   Task (..),
+  TaskStatus (..),
   Vault (..),
   getVault,
   withLiveVault,
@@ -16,7 +17,7 @@ import Data.LVar (LVar)
 import Data.LVar qualified as LVar
 import Data.Map.Strict qualified as Map
 import Ob.Note (Note (..), parseNote)
-import Ob.Task (Task (..))
+import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Vault (Vault (..), getTasks)
 import System.FilePath ((</>))
 import System.UnionMount qualified as UM
