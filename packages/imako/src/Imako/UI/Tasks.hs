@@ -3,6 +3,7 @@
 module Imako.UI.Tasks (
   taskTreeItem,
   fileTreeItem,
+  obsidianEditButton,
 )
 where
 
@@ -11,12 +12,21 @@ import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
 import Ob.Task.Recurrence (formatRecurrence)
-import System.FilePath (takeFileName)
+import System.FilePath (takeBaseName, takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
 
+-- | Render an Obsidian edit button that opens a file in the Obsidian app
+obsidianEditButton :: FilePath -> FilePath -> Html ()
+obsidianEditButton vaultPath relativePath = do
+  let vaultName = toText $ takeBaseName vaultPath
+      obsidianUrl = "obsidian://open?vault=" <> vaultName <> "&file=" <> toText relativePath
+  a_ [href_ obsidianUrl, class_ "opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-500 dark:hover:bg-gray-300 text-gray-400 dark:text-gray-600 hover:text-indigo-400 dark:hover:text-indigo-600 transition-all", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
+    div_ [class_ "w-4 h-4"] $
+      toHtmlRaw Icon.edit
+
 -- | Render a file as a tree node containing tasks
-fileTreeItem :: Day -> FilePath -> [Task] -> Html ()
-fileTreeItem today sourceFile tasks = do
+fileTreeItem :: Day -> FilePath -> FilePath -> [Task] -> Html ()
+fileTreeItem today vaultPath sourceFile tasks = do
   let filename = takeFileName sourceFile
       -- Calculate completion stats
       total = length tasks
@@ -44,10 +54,7 @@ fileTreeItem today sourceFile tasks = do
         toHtml ((show completed <> "/" <> show total) :: Text)
 
       -- Edit link
-      let obsidianUrl = "obsidian://open?path=" <> toText sourceFile
-      a_ [href_ obsidianUrl, class_ "opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-500 dark:hover:bg-gray-300 text-gray-400 dark:text-gray-600 hover:text-indigo-400 dark:hover:text-indigo-600 transition-all", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
-        div_ [class_ "w-4 h-4"] $
-          toHtmlRaw Icon.edit
+      obsidianEditButton vaultPath sourceFile
 
     -- Tasks list (indented)
     div_ [class_ "pl-8 flex flex-col"] $

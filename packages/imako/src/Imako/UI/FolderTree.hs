@@ -10,7 +10,7 @@ where
 
 import Data.Map.Strict qualified as Map
 import Lucid
-import System.FilePath (splitDirectories, (</>))
+import System.FilePath (splitDirectories)
 import Web.TablerIcons.Outline qualified as Icon
 
 -- | Hierarchical folder structure for organizing any type of data
@@ -45,7 +45,7 @@ buildFolderTree = Map.foldlWithKey' insertFile emptyNode
 
 {- | Render the entire folder tree as HTML.
 
-Takes the root vault path, a function to render each file (given its path and associated data),
+Takes the root vault path, a function to render each file (given vault path, relative path, and associated data),
 and the root 'FolderNode'. Renders all subfolders and files recursively.
 
 @
@@ -53,17 +53,17 @@ renderFolderTree vaultPath renderFile rootNode
 @
 
 * @vaultPath@: The root path of the folder tree.
-* @renderFile@: Function to render a file, given its path and associated data.
+* @renderFile@: Function to render a file, given vault path, relative path, and associated data.
 * @rootNode@: The root of the folder tree to render.
 
 Returns an HTML representation of the folder tree.
 -}
-renderFolderTree :: FilePath -> (FilePath -> a -> Html ()) -> FolderNode a -> Html ()
+renderFolderTree :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> FolderNode a -> Html ()
 renderFolderTree vaultPath renderFile rootNode =
   div_ [class_ "flex flex-col gap-0.5"] $ renderFolderNode vaultPath renderFile "" rootNode
 
 -- | Render a single folder node with all its contents
-renderFolderNode :: FilePath -> (FilePath -> a -> Html ()) -> Text -> FolderNode a -> Html ()
+renderFolderNode :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> Text -> FolderNode a -> Html ()
 renderFolderNode vaultPath renderFile currentPath node = do
   -- Render subfolders first (usually looks better to have folders at top)
   forM_ (Map.toList node.subfolders) $
@@ -74,7 +74,7 @@ renderFolderNode vaultPath renderFile currentPath node = do
     uncurry (renderFileGroup vaultPath renderFile currentPath)
 
 -- | Render a collapsible folder
-renderFolder :: FilePath -> (FilePath -> a -> Html ()) -> Text -> Text -> FolderNode a -> Html ()
+renderFolder :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> Text -> Text -> FolderNode a -> Html ()
 renderFolder vaultPath renderFile parentPath folderName node = do
   let newPath = if parentPath == "" then folderName else parentPath <> "/" <> folderName
       folderId = "folder-" <> sanitizeId newPath
@@ -105,13 +105,12 @@ sanitizeId = toText . map sanitizeChar . toString
       | otherwise = c
 
 -- | Render a file group within the hierarchy
-renderFileGroup :: FilePath -> (FilePath -> a -> Html ()) -> Text -> Text -> a -> Html ()
+renderFileGroup :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> Text -> Text -> a -> Html ()
 renderFileGroup vaultPath renderFile currentPath filename item = do
   let relativePath = if currentPath == "" then filename else currentPath <> "/" <> filename
-      absolutePath = vaultPath </> toString relativePath
 
   -- Delegate to the provided renderer (which should be fileTreeItem)
-  renderFile absolutePath item
+  renderFile vaultPath (toString relativePath) item
 
 -- | JavaScript for persisting folder collapse/expand state in localStorage
 folderStateScript :: Html ()
