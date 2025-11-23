@@ -20,9 +20,8 @@ obsidianEditButton :: FilePath -> FilePath -> Html ()
 obsidianEditButton vaultPath relativePath = do
   let vaultName = toText $ takeBaseName vaultPath
       obsidianUrl = "obsidian://open?vault=" <> vaultName <> "&file=" <> toText relativePath
-  a_ [href_ obsidianUrl, class_ "opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-500 dark:hover:bg-gray-300 text-gray-400 dark:text-gray-600 hover:text-indigo-400 dark:hover:text-indigo-600 transition-all", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
-    div_ [class_ "w-4 h-4"] $
-      toHtmlRaw Icon.edit
+  a_ [href_ obsidianUrl, class_ "flex items-center justify-center opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-500 dark:hover:bg-gray-300 text-gray-400 dark:text-gray-600 hover:text-indigo-400 dark:hover:text-indigo-600 transition-all [&>svg]:w-4 [&>svg]:h-4", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
+    toHtmlRaw Icon.edit
 
 -- | Render a file as a tree node containing tasks
 fileTreeItem :: Day -> FilePath -> FilePath -> [Task] -> Html ()
