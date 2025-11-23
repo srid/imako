@@ -7,10 +7,8 @@
 module Main where
 
 import Data.ByteString.Builder (lazyByteString)
-import Data.ByteString.Builder qualified as Builder
 import Data.LVar qualified as LVar
 import Data.Text.Lazy.Encoding qualified as TL
-import Data.Text.Lazy.Encoding qualified as TLE
 import Data.Time (Day, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
@@ -18,6 +16,7 @@ import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
+import Imako.UI.Lucid (runAppHtml)
 import Imako.UI.PWA (imakoManifest)
 import Imako.UI.Tasks (fileTreeItem)
 import Lucid
@@ -47,13 +46,8 @@ mkApp vaultPath vaultVar = S.scottyApp $ do
     vault <- liftIO $ LVar.get vaultVar
     today <- liftIO getLocalToday
     let view = mkAppView today vaultPath vault
-        -- Run the Reader monad to get the Html output
-        -- execHtmlT :: Monad m => HtmlT m a -> m Builder
-        -- So execHtmlT renderMainContent :: Reader AppView Builder
-        builder = runReader (execHtmlT renderMainContent) view
-        mainContentText = TLE.decodeUtf8 (Builder.toLazyByteString builder)
-        mainHtml = toHtmlRaw mainContentText
-    S.html $ renderText $ layout (toText vaultPath) mainHtml
+        mainContent = toHtmlRaw $ runAppHtml view renderMainContent
+    S.html $ renderText $ layout (toText vaultPath) mainContent
 
   S.post "/inbox/add" $ do
     taskText <- S.formParam "text"
@@ -73,11 +67,8 @@ mkApp vaultPath vaultVar = S.scottyApp $ do
       vault <- LVar.listenNext vaultVar
       today <- getLocalToday
       let view = mkAppView today vaultPath vault
-          builder = runReader (execHtmlT renderMainContent) view
-          mainContentText = TLE.decodeUtf8 (Builder.toLazyByteString builder)
-          mainHtml = toHtmlRaw mainContentText
-          html = renderText mainHtml
-      let sseData = "data: " <> html <> "\n\n"
+          html = runAppHtml view renderMainContent
+          sseData = "data: " <> html <> "\n\n"
       write $ lazyByteString $ TL.encodeUtf8 sseData
       flush
   where

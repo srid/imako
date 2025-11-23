@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Imako.UI.Tasks (
-  AppHtml,
   taskTreeItem,
   fileTreeItem,
   obsidianEditButton,
@@ -11,20 +10,13 @@ where
 import Data.Time (defaultTimeLocale, formatTime)
 import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
+import Imako.UI.Lucid (liftHtml)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
 import Ob.Task.Recurrence (formatRecurrence)
 import System.FilePath (takeBaseName, takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
-
-type AppHtml a = HtmlT (Reader AppView) a
-
-{- | Lift pure Html into any HtmlT monad by rendering and re-parsing
-TODO: Find a more efficient way to do this with Lucid2 API
--}
-liftHtml :: (Monad m) => Html () -> HtmlT m ()
-liftHtml html = toHtmlRaw (renderText html)
 
 -- | Render an Obsidian edit button that opens a file in the Obsidian app
 obsidianEditButton :: (MonadReader AppView m) => FilePath -> HtmlT m ()
