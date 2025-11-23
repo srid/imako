@@ -4,6 +4,7 @@ module Imako.Core where
 
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
+import Imako.Core.FolderTree (FolderNode, buildFolderTree)
 import Ob (Task (..), TaskStatus (..), Vault)
 import Ob.Vault (getTasks)
 import System.FilePath (makeRelative)
@@ -13,8 +14,8 @@ import System.FilePath (makeRelative)
 Represents the processed state of the vault data, ready for UI rendering.
 -}
 newtype AppView = AppView
-  { groupedTasks :: Map FilePath [Task]
-  -- ^ Tasks grouped by their source file path (relative to vault)
+  { folderTree :: FolderNode
+  -- ^ Tasks organized in a hierarchical folder tree structure
   }
   deriving stock (Show, Eq)
 
@@ -32,6 +33,7 @@ mkAppView vaultPath vault =
           )
           Map.empty
           (incomplete <> completedTasks)
+      tree = buildFolderTree groupedAll
    in AppView
-        { groupedTasks = groupedAll
+        { folderTree = tree
         }

@@ -13,7 +13,7 @@ import Data.Time (Day, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalT
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
 import Imako.UI.Filters (renderFilterBar)
-import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
+import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
 import Imako.UI.PWA (imakoManifest)
@@ -36,9 +36,8 @@ renderMainContent today vaultPath vault = do
   renderFilterBar
 
   -- Tasks section with hierarchical folder structure
-  div_ $ do
-    let folderTree = buildFolderTree view.groupedTasks
-    renderFolderTree vaultPath (fileTreeItem today) folderTree
+  div_ $
+    renderFolderTree vaultPath (fileTreeItem today) view.folderTree
 
 -- | Get the current day in the local timezone
 getLocalToday :: IO Day

@@ -1,46 +1,15 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Imako.UI.FolderTree (
-  FolderNode (..),
-  buildFolderTree,
   renderFolderTree,
 )
 where
 
 import Data.Map.Strict qualified as Map
+import Imako.Core.FolderTree (FolderNode (..))
 import Lucid
-import System.FilePath (splitDirectories)
+import Ob (Task)
 import Web.TablerIcons.Outline qualified as Icon
-
--- | Hierarchical folder structure for organizing any type of data
-data FolderNode a = FolderNode
-  { subfolders :: Map Text (FolderNode a)
-  , files :: Map Text a
-  }
-  deriving stock (Show)
-
--- | Build a folder tree from a map of file paths to items
-buildFolderTree :: Map FilePath a -> FolderNode a
-buildFolderTree = Map.foldlWithKey' insertFile emptyNode
-  where
-    emptyNode = FolderNode Map.empty Map.empty
-
-    insertFile :: FolderNode a -> FilePath -> a -> FolderNode a
-    insertFile node filepath item =
-      let parts = splitDirectories filepath
-       in insertPath node parts item
-
-    insertPath :: FolderNode a -> [FilePath] -> a -> FolderNode a
-    insertPath node [] _ = node -- shouldn't happen
-    insertPath node [filename] item =
-      -- Leaf: add file to current node
-      node {files = Map.insert (toText filename) item node.files}
-    insertPath node (folder : rest) item =
-      -- Branch: recurse into subfolder
-      let subfolderName = toText folder
-          existingSubfolder = Map.findWithDefault emptyNode subfolderName node.subfolders
-          updatedSubfolder = insertPath existingSubfolder rest item
-       in node {subfolders = Map.insert subfolderName updatedSubfolder node.subfolders}
 
 {- | Render the entire folder tree as HTML.
 
@@ -57,12 +26,12 @@ renderFolderTree vaultPath renderFile rootNode
 
 Returns an HTML representation of the folder tree.
 -}
-renderFolderTree :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> FolderNode a -> Html ()
+renderFolderTree :: FilePath -> (FilePath -> FilePath -> [Task] -> Html ()) -> FolderNode -> Html ()
 renderFolderTree vaultPath renderFile rootNode =
   div_ [class_ "flex flex-col gap-0.5"] $ renderFolderNode vaultPath renderFile "" rootNode
 
 -- | Render a single folder node with all its contents
-renderFolderNode :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> Text -> FolderNode a -> Html ()
+renderFolderNode :: FilePath -> (FilePath -> FilePath -> [Task] -> Html ()) -> Text -> FolderNode -> Html ()
 renderFolderNode vaultPath renderFile currentPath node = do
   -- Render subfolders first (usually looks better to have folders at top)
   forM_ (Map.toList node.subfolders) $
@@ -73,7 +42,7 @@ renderFolderNode vaultPath renderFile currentPath node = do
     uncurry (renderFileGroup vaultPath renderFile currentPath)
 
 -- | Render a collapsible folder
-renderFolder :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> Text -> Text -> FolderNode a -> Html ()
+renderFolder :: FilePath -> (FilePath -> FilePath -> [Task] -> Html ()) -> Text -> Text -> FolderNode -> Html ()
 renderFolder vaultPath renderFile parentPath folderName node = do
   let newPath = if parentPath == "" then folderName else parentPath <> "/" <> folderName
       folderId = "folder-" <> sanitizeId newPath
@@ -104,9 +73,9 @@ sanitizeId = toText . map sanitizeChar . toString
       | otherwise = c
 
 -- | Render a file group within the hierarchy
-renderFileGroup :: FilePath -> (FilePath -> FilePath -> a -> Html ()) -> Text -> Text -> a -> Html ()
-renderFileGroup vaultPath renderFile currentPath filename item = do
+renderFileGroup :: FilePath -> (FilePath -> FilePath -> [Task] -> Html ()) -> Text -> Text -> [Task] -> Html ()
+renderFileGroup vaultPath renderFile currentPath filename tasks = do
   let relativePath = if currentPath == "" then filename else currentPath <> "/" <> filename
 
   -- Delegate to the provided renderer (which should be fileTreeItem)
-  renderFile vaultPath (toString relativePath) item
+  renderFile vaultPath (toString relativePath) tasks
