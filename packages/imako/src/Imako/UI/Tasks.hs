@@ -8,7 +8,7 @@ module Imako.UI.Tasks (
 where
 
 import Data.Time (Day, defaultTimeLocale, formatTime)
-import Imako.UI.Filters (Filter (..), filterPredicate, filters)
+import Imako.Core.Filter (Filter (..))
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
@@ -25,8 +25,8 @@ obsidianEditButton vaultPath relativePath = do
     toHtmlRaw Icon.edit
 
 -- | Render a file as a tree node containing tasks
-fileTreeItem :: Day -> FilePath -> FilePath -> [Task] -> Html ()
-fileTreeItem today vaultPath sourceFile tasks = do
+fileTreeItem :: [Filter] -> Day -> FilePath -> FilePath -> [Task] -> Html ()
+fileTreeItem filters today vaultPath sourceFile tasks = do
   let filename = takeFileName sourceFile
       -- Calculate completion stats
       total = length tasks
@@ -58,11 +58,11 @@ fileTreeItem today vaultPath sourceFile tasks = do
 
     -- Tasks list (indented)
     div_ [class_ "pl-8 flex flex-col"] $
-      forM_ tasks (taskTreeItem today)
+      forM_ tasks (taskTreeItem filters today)
 
 -- | Compute visibility classes based on task state
-computeVisibilityClasses :: Day -> Task -> Text
-computeVisibilityClasses today task =
+computeVisibilityClasses :: [Filter] -> Day -> Task -> Text
+computeVisibilityClasses filters today task =
   let
     -- Find all filters that match this task
     matchingFilters = filter (\f -> f.filterPredicate today task) filters
@@ -79,8 +79,8 @@ computeVisibilityClasses today task =
     baseVisibility <> conditionalVisibility
 
 -- | Render a single task as a tree item row
-taskTreeItem :: Day -> Task -> Html ()
-taskTreeItem today task = do
+taskTreeItem :: [Filter] -> Day -> Task -> Html ()
+taskTreeItem filters today task = do
   let parentDescriptions = map fst task.parentContext
       indentLevel = length parentDescriptions
       -- Visual indentation for hierarchy (increased to 2rem per level)
@@ -92,7 +92,7 @@ taskTreeItem today task = do
         InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-      visibilityClass = computeVisibilityClasses today task
+      visibilityClass = computeVisibilityClasses filters today task
 
   div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items

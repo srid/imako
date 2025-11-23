@@ -1,9 +1,15 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Imako.Core where
+module Imako.Core (
+  AppView (..),
+  mkAppView,
+)
+where
 
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
+import Imako.Core.Filter (Filter)
+import Imako.Core.Filter qualified as FilterDef
 import Imako.Core.FolderTree (FolderNode, buildFolderTree)
 import Ob (Task (..), TaskStatus (..), Vault)
 import Ob.Vault (getTasks)
@@ -13,9 +19,11 @@ import System.FilePath (makeRelative)
 
 Represents the processed state of the vault data, ready for UI rendering.
 -}
-newtype AppView = AppView
+data AppView = AppView
   { folderTree :: FolderNode
   -- ^ Tasks organized in a hierarchical folder tree structure
+  , filters :: [Filter]
+  -- ^ Available filters for task visibility
   }
   deriving stock (Show, Eq)
 
@@ -36,4 +44,5 @@ mkAppView vaultPath vault =
       tree = buildFolderTree groupedAll
    in AppView
         { folderTree = tree
+        , filters = FilterDef.filters
         }

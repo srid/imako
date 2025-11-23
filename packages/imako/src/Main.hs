@@ -34,9 +34,10 @@ renderMainContent today vaultPath vault = do
   let view = mkAppView vaultPath vault
 
   -- Filter Bar
-  renderFilterBar
+  renderFilterBar view.filters
+
   -- Tasks section with hierarchical folder structure
-  renderFolderTree vaultPath (fileTreeItem today) view.folderTree
+  renderFolderTree vaultPath (fileTreeItem view.filters today) view.folderTree
 
 -- | Create the Scotty application with all routes
 mkApp :: FilePath -> LVar.LVar Ob.Vault -> IO Application

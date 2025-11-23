@@ -95,6 +95,7 @@ executable imako
   other-modules:
     Imako.CLI
     Imako.Core
+    Imako.Core.Filter
     Imako.Core.FolderTree
     Imako.UI.Filters
     Imako.UI.FolderTree
