@@ -56,8 +56,8 @@ processTasksForUI vaultPath tasks =
           )
           Map.empty
           (incomplete <> completedTasks)
-      -- Only show files that have at least one incomplete task
-      grouped = Map.filter (any (\t -> t.status /= Completed && t.status /= Cancelled)) groupedAll
+      -- Show all files
+      grouped = groupedAll
    in (length incomplete, length completedTasks, grouped)
 
 renderMainContent :: Day -> FilePath -> Ob.Vault -> Html ()
@@ -74,6 +74,15 @@ renderMainContent today vaultPath vault = do
       , term "aria-pressed" "false"
       ]
       "Future tasks"
+
+    -- Past Tasks Toggle
+    button_
+      [ id_ "past-tasks-toggle"
+      , class_ "px-3 py-1 text-xs font-medium rounded-full transition-colors bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 aria-pressed:bg-indigo-600 dark:aria-pressed:bg-indigo-500 aria-pressed:text-white dark:aria-pressed:text-white aria-pressed:hover:bg-indigo-700 dark:aria-pressed:hover:bg-indigo-400"
+      , onclick_ "togglePastTasks()"
+      , term "aria-pressed" "false"
+      ]
+      "Past tasks"
 
   -- Tasks section with hierarchical folder structure
   div_ $ do

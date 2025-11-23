@@ -57,7 +57,7 @@ fileTreeItem today vaultPath sourceFile tasks = do
 
     -- Tasks list (indented)
     div_ [class_ "pl-8 flex flex-col"] $
-      forM_ (filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks) (taskTreeItem today)
+      forM_ tasks (taskTreeItem today)
 
 -- | Render a single task as a tree item row
 taskTreeItem :: Day -> Task -> Html ()
@@ -74,7 +74,7 @@ taskTreeItem today task = do
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
       -- Future task detection
-      twoDaysFromNow = Data.Time.addDays 2 today
+      twoDaysFromNow = addDays 2 today
       isFuture = case task.properties.startDate of
         Just d -> d >= twoDaysFromNow
         Nothing -> False
@@ -82,7 +82,15 @@ taskTreeItem today task = do
       isParentFuture = any (\(_, start) -> maybe False (>= twoDaysFromNow) start) task.parentContext
       isEffectiveFuture = isFuture || isParentFuture
 
-      visibilityClass = if isEffectiveFuture then "hidden group-[.show-future]:flex" else "flex"
+      -- Past task detection (completed or cancelled)
+      isPast = task.status == Completed || task.status == Cancelled
+
+      -- Visibility classes: hide if future or past, show conditionally based on parent classes
+      baseVisibility = if isEffectiveFuture || isPast then "hidden" else "flex"
+      conditionalVisibility =
+        (if isEffectiveFuture then " group-[.show-future]:flex" else "")
+          <> (if isPast then " group-[.show-past]:flex" else "")
+      visibilityClass = baseVisibility <> conditionalVisibility
 
   div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items
