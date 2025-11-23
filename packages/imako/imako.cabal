@@ -22,6 +22,8 @@ extra-source-files:
   LICENSE
   README.md
 
+data-files:         static/**/*.js
+
 common shared
   ghc-options:
     -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
@@ -101,7 +103,7 @@ executable imako
     Imako.UI.FolderTree
     Imako.UI.Inbox
     Imako.UI.Layout
-    Imako.UI.Lucid
     Imako.UI.PWA
-    Imako.UI.Scripts
     Imako.UI.Tasks
+    Imako.Web.Lucid
+    Imako.Web.Static

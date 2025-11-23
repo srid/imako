@@ -1,4 +1,4 @@
-module Imako.UI.Lucid (
+module Imako.Web.Lucid (
   AppHtml,
   liftHtml,
   runAppHtml,

@@ -16,9 +16,10 @@ import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
-import Imako.UI.Lucid (runAppHtml)
 import Imako.UI.PWA (imakoManifest)
 import Imako.UI.Tasks (fileTreeItem)
+import Imako.Web.Lucid (runAppHtml)
+import Imako.Web.Static (mkStaticMiddleware)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
@@ -41,36 +42,39 @@ renderMainContent = do
 
 -- | Create the Scotty application with all routes
 mkApp :: FilePath -> LVar.LVar Ob.Vault -> IO Application
-mkApp vaultPath vaultVar = S.scottyApp $ do
-  S.get "/" $ do
-    vault <- liftIO $ LVar.get vaultVar
-    today <- liftIO getLocalToday
-    let view = mkAppView today vaultPath vault
-        mainContent = toHtmlRaw $ runAppHtml view renderMainContent
-    S.html $ renderText $ layout (toText vaultPath) mainContent
-
-  S.post "/inbox/add" $ do
-    taskText <- S.formParam "text"
-    liftIO $ appendToInbox vaultPath taskText
-    S.text "OK"
-
-  S.get "/manifest.json" $ do
-    S.setHeader "Content-Type" "application/json"
-    S.json imakoManifest
-
-  S.get "/events" $ do
-    S.setHeader "Content-Type" "text/event-stream"
-    S.setHeader "Cache-Control" "no-cache"
-    S.setHeader "Connection" "keep-alive"
-    S.status status200
-    S.stream $ \write flush -> forever $ do
-      vault <- LVar.listenNext vaultVar
-      today <- getLocalToday
+mkApp vaultPath vaultVar = do
+  staticMiddleware <- mkStaticMiddleware
+  app <- S.scottyApp $ do
+    S.get "/" $ do
+      vault <- liftIO $ LVar.get vaultVar
+      today <- liftIO getLocalToday
       let view = mkAppView today vaultPath vault
-          html = runAppHtml view renderMainContent
-          sseData = "data: " <> html <> "\n\n"
-      write $ lazyByteString $ TL.encodeUtf8 sseData
-      flush
+          mainContent = toHtmlRaw $ runAppHtml view renderMainContent
+      S.html $ renderText $ layout (toText vaultPath) mainContent
+
+    S.post "/inbox/add" $ do
+      taskText <- S.formParam "text"
+      liftIO $ appendToInbox vaultPath taskText
+      S.text "OK"
+
+    S.get "/manifest.json" $ do
+      S.setHeader "Content-Type" "application/json"
+      S.json imakoManifest
+
+    S.get "/events" $ do
+      S.setHeader "Content-Type" "text/event-stream"
+      S.setHeader "Cache-Control" "no-cache"
+      S.setHeader "Connection" "keep-alive"
+      S.status status200
+      S.stream $ \write flush -> forever $ do
+        vault <- LVar.listenNext vaultVar
+        today <- getLocalToday
+        let view = mkAppView today vaultPath vault
+            html = runAppHtml view renderMainContent
+            sseData = "data: " <> html <> "\n\n"
+        write $ lazyByteString $ TL.encodeUtf8 sseData
+        flush
+  pure $ staticMiddleware app
   where
     -- \| Get the current day in the local timezone
     getLocalToday :: IO Day

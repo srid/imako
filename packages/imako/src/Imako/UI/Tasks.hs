@@ -10,7 +10,7 @@ where
 import Data.Time (defaultTimeLocale, formatTime)
 import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
-import Imako.UI.Lucid (liftHtml)
+import Imako.Web.Lucid (liftHtml)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
