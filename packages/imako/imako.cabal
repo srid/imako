@@ -98,4 +98,5 @@ executable imako
     Imako.UI.Inbox
     Imako.UI.Layout
     Imako.UI.PWA
+    Imako.UI.Scripts
     Imako.UI.Tasks
