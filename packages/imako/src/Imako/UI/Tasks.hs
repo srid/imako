@@ -59,6 +59,15 @@ fileTreeItem today vaultPath sourceFile tasks = do
     div_ [class_ "pl-8 flex flex-col"] $
       forM_ tasks (taskTreeItem today)
 
+-- | Compute visibility classes based on task state
+computeVisibilityClasses :: Bool -> Bool -> Text
+computeVisibilityClasses isEffectiveFuture isPast =
+  let baseVisibility = if isEffectiveFuture || isPast then "hidden" else "flex"
+      conditionalVisibility =
+        (if isEffectiveFuture then " group-[.show-future]:flex" else "")
+          <> (if isPast then " group-[.show-past]:flex" else "")
+   in baseVisibility <> conditionalVisibility
+
 -- | Render a single task as a tree item row
 taskTreeItem :: Day -> Task -> Html ()
 taskTreeItem today task = do
@@ -85,12 +94,7 @@ taskTreeItem today task = do
       -- Past task detection (completed or cancelled)
       isPast = task.status == Completed || task.status == Cancelled
 
-      -- Visibility classes: hide if future or past, show conditionally based on parent classes
-      baseVisibility = if isEffectiveFuture || isPast then "hidden" else "flex"
-      conditionalVisibility =
-        (if isEffectiveFuture then " group-[.show-future]:flex" else "")
-          <> (if isPast then " group-[.show-past]:flex" else "")
-      visibilityClass = baseVisibility <> conditionalVisibility
+      visibilityClass = computeVisibilityClasses isEffectiveFuture isPast
 
   div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items

@@ -13,6 +13,7 @@ import Data.Map.Strict qualified as Map
 import Data.Text.Lazy.Encoding qualified as TL
 import Data.Time (Day, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
 import Imako.CLI qualified as CLI
+import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (buildFolderTree, renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
@@ -65,24 +66,7 @@ renderMainContent today vaultPath vault = do
   let (_pendingCount, _completedCount, groupedTasks) = processTasksForUI vaultPath (getTasks vault)
 
   -- Filter Bar
-  div_ [class_ "mb-4 flex items-center gap-2"] $ do
-    -- Future Tasks Toggle
-    button_
-      [ id_ "future-tasks-toggle"
-      , class_ "px-3 py-1 text-xs font-medium rounded-full transition-colors bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 aria-pressed:bg-indigo-600 dark:aria-pressed:bg-indigo-500 aria-pressed:text-white dark:aria-pressed:text-white aria-pressed:hover:bg-indigo-700 dark:aria-pressed:hover:bg-indigo-400"
-      , onclick_ "toggleFutureTasks()"
-      , term "aria-pressed" "false"
-      ]
-      "Future tasks"
-
-    -- Past Tasks Toggle
-    button_
-      [ id_ "past-tasks-toggle"
-      , class_ "px-3 py-1 text-xs font-medium rounded-full transition-colors bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 aria-pressed:bg-indigo-600 dark:aria-pressed:bg-indigo-500 aria-pressed:text-white dark:aria-pressed:text-white aria-pressed:hover:bg-indigo-700 dark:aria-pressed:hover:bg-indigo-400"
-      , onclick_ "togglePastTasks()"
-      , term "aria-pressed" "false"
-      ]
-      "Past tasks"
+  renderFilterBar
 
   -- Tasks section with hierarchical folder structure
   div_ $ do
