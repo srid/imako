@@ -20,23 +20,23 @@ import Web.TablerIcons.Outline qualified as Icon
 
 type AppHtml a = HtmlT (Reader AppView) a
 
-{- | Lift pure Html into AppHtml context by rendering and re-parsing
+{- | Lift pure Html into any HtmlT monad by rendering and re-parsing
 TODO: Find a more efficient way to do this with Lucid2 API
 -}
-liftHtml :: Html () -> AppHtml ()
+liftHtml :: (Monad m) => Html () -> HtmlT m ()
 liftHtml html = toHtmlRaw (renderText html)
 
 -- | Render an Obsidian edit button that opens a file in the Obsidian app
-obsidianEditButton :: FilePath -> AppHtml ()
+obsidianEditButton :: (MonadReader AppView m) => FilePath -> HtmlT m ()
 obsidianEditButton relativePath = do
-  vaultPath <- lift $ asks (.vaultPath)
+  vaultPath <- asks (.vaultPath)
   let vaultName = toText $ takeBaseName vaultPath
       obsidianUrl = "obsidian://open?vault=" <> vaultName <> "&file=" <> toText relativePath
   a_ [href_ obsidianUrl, class_ "flex items-center justify-center opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-500 dark:hover:bg-gray-300 text-gray-400 dark:text-gray-600 hover:text-indigo-400 dark:hover:text-indigo-600 transition-all [&>svg]:w-4 [&>svg]:h-4", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
     toHtmlRaw Icon.edit
 
 -- | Render a file as a tree node containing tasks
-fileTreeItem :: FilePath -> [Task] -> AppHtml ()
+fileTreeItem :: (MonadReader AppView m) => FilePath -> [Task] -> HtmlT m ()
 fileTreeItem sourceFile tasks = do
   let filename = takeFileName sourceFile
       -- Calculate completion stats
@@ -72,7 +72,7 @@ fileTreeItem sourceFile tasks = do
       forM_ tasks taskTreeItem
 
 -- | Compute visibility classes based on task state
-computeVisibilityClasses :: Task -> Reader AppView Text
+computeVisibilityClasses :: (MonadReader AppView m) => Task -> m Text
 computeVisibilityClasses task = do
   view <- ask
   let
@@ -90,9 +90,9 @@ computeVisibilityClasses task = do
   pure $ baseVisibility <> conditionalVisibility
 
 -- | Render a single task as a tree item row
-taskTreeItem :: Task -> AppHtml ()
+taskTreeItem :: (MonadReader AppView m) => Task -> HtmlT m ()
 taskTreeItem task = do
-  view <- lift ask
+  view <- ask
   let parentDescriptions = map fst task.parentContext
       indentLevel = length parentDescriptions
       -- Visual indentation for hierarchy (increased to 2rem per level)
@@ -104,7 +104,7 @@ taskTreeItem task = do
         InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-  visibilityClass <- lift $ computeVisibilityClasses task
+  visibilityClass <- computeVisibilityClasses task
 
   div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items

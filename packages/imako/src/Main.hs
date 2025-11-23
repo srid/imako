@@ -19,7 +19,7 @@ import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
 import Imako.UI.PWA (imakoManifest)
-import Imako.UI.Tasks (AppHtml, fileTreeItem)
+import Imako.UI.Tasks (fileTreeItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
@@ -31,13 +31,13 @@ import Options.Applicative (execParser)
 import System.FilePath ((</>))
 import Web.Scotty qualified as S
 
-renderMainContent :: AppHtml ()
+renderMainContent :: (MonadReader AppView m) => HtmlT m ()
 renderMainContent = do
   -- Filter Bar
   renderFilterBar
 
   -- Tasks section with hierarchical folder structure
-  view <- lift ask
+  view <- ask
   renderFolderTree fileTreeItem view.folderTree
 
 -- | Create the Scotty application with all routes

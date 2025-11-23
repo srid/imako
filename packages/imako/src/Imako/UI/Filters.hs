@@ -7,7 +7,6 @@ where
 
 import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
-import Imako.UI.Tasks (AppHtml)
 import Lucid
 
 -- | Render a single filter button
@@ -25,8 +24,8 @@ renderFilterButton f =
         (toHtml f.filterLabel)
 
 -- | Render the filter bar with all filters
-renderFilterBar :: AppHtml ()
+renderFilterBar :: (MonadReader AppView m) => HtmlT m ()
 renderFilterBar = do
-  filters <- lift $ asks (\view -> view.filters)
+  filters <- asks (.filters)
   div_ [class_ "mb-4 flex items-center gap-2"] $
     forM_ filters renderFilterButton
