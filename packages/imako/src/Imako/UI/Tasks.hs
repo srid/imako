@@ -10,6 +10,7 @@ where
 import Data.Time (defaultTimeLocale, formatTime)
 import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
+import Imako.UI.Lucid (liftHtml)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
@@ -18,16 +19,17 @@ import System.FilePath (takeBaseName, takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
 
 -- | Render an Obsidian edit button that opens a file in the Obsidian app
-obsidianEditButton :: FilePath -> FilePath -> Html ()
-obsidianEditButton vaultPath relativePath = do
+obsidianEditButton :: (MonadReader AppView m) => FilePath -> HtmlT m ()
+obsidianEditButton relativePath = do
+  vaultPath <- asks (.vaultPath)
   let vaultName = toText $ takeBaseName vaultPath
       obsidianUrl = "obsidian://open?vault=" <> vaultName <> "&file=" <> toText relativePath
   a_ [href_ obsidianUrl, class_ "flex items-center justify-center opacity-0 group-hover/file:opacity-100 p-1 -mr-1 rounded hover:bg-slate-500 dark:hover:bg-gray-300 text-gray-400 dark:text-gray-600 hover:text-indigo-400 dark:hover:text-indigo-600 transition-all [&>svg]:w-4 [&>svg]:h-4", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
     toHtmlRaw Icon.edit
 
 -- | Render a file as a tree node containing tasks
-fileTreeItem :: AppView -> FilePath -> [Task] -> Html ()
-fileTreeItem view sourceFile tasks = do
+fileTreeItem :: (MonadReader AppView m) => FilePath -> [Task] -> HtmlT m ()
+fileTreeItem sourceFile tasks = do
   let filename = takeFileName sourceFile
       -- Calculate completion stats
       total = length tasks
@@ -55,15 +57,16 @@ fileTreeItem view sourceFile tasks = do
         toHtml ((show completed <> "/" <> show total) :: Text)
 
       -- Edit link
-      obsidianEditButton view.vaultPath sourceFile
+      obsidianEditButton sourceFile
 
     -- Tasks list (indented)
     div_ [class_ "pl-8 flex flex-col"] $
-      forM_ tasks (taskTreeItem view)
+      forM_ tasks taskTreeItem
 
 -- | Compute visibility classes based on task state
-computeVisibilityClasses :: AppView -> Task -> Text
-computeVisibilityClasses view task =
+computeVisibilityClasses :: (MonadReader AppView m) => Task -> m Text
+computeVisibilityClasses task = do
+  view <- ask
   let
     -- Find all filters that match this task
     matchingFilters = filter (\f -> f.filterPredicate view.today task) view.filters
@@ -76,12 +79,12 @@ computeVisibilityClasses view task =
     -- Derive CSS class from filterId: "showFuture" -> "show-showFuture"
     conditionalVisibility =
       foldMap (\f -> " group-[.show-" <> f.filterId <> "]:flex") matchingFilters
-   in
-    baseVisibility <> conditionalVisibility
+  pure $ baseVisibility <> conditionalVisibility
 
 -- | Render a single task as a tree item row
-taskTreeItem :: AppView -> Task -> Html ()
-taskTreeItem view task = do
+taskTreeItem :: (MonadReader AppView m) => Task -> HtmlT m ()
+taskTreeItem task = do
+  view <- ask
   let parentDescriptions = map fst task.parentContext
       indentLevel = length parentDescriptions
       -- Visual indentation for hierarchy (increased to 2rem per level)
@@ -93,7 +96,7 @@ taskTreeItem view task = do
         InProgress -> ("text-amber-500", "text-gray-900 dark:text-gray-100")
         Incomplete -> ("text-gray-400 hover:text-gray-600", "text-gray-900 dark:text-gray-100")
 
-      visibilityClass = computeVisibilityClasses view task
+  visibilityClass <- computeVisibilityClasses task
 
   div_ [class_ ("group/task relative py-1 -mx-2 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 items-start gap-2 text-sm transition-colors " <> visibilityClass), style_ indentStyle] $ do
     -- Thread line for indented items
@@ -112,7 +115,8 @@ taskTreeItem view task = do
     -- Content
     div_ [class_ "flex-1 min-w-0"] $ do
       div_ [class_ ("leading-snug " <> textStyle)] $
-        renderInlines task.description
+        liftHtml $
+          renderInlines task.description
 
       -- Metadata (Inline, subtle)
       let hasMetadata = not (null task.properties.tags) || isJust task.properties.dueDate || isJust task.properties.scheduledDate || isJust task.properties.startDate || isJust task.properties.completedDate || isJust task.properties.recurrence || task.properties.priority /= Normal

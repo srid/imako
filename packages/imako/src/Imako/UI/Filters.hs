@@ -5,11 +5,12 @@ module Imako.UI.Filters (
 )
 where
 
+import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
 import Lucid
 
 -- | Render a single filter button
-renderFilterButton :: Filter -> Html ()
+renderFilterButton :: (Monad m) => Filter -> HtmlT m ()
 renderFilterButton f =
   let buttonId = f.filterId <> "-toggle"
       cssClass = "show-" <> f.filterId
@@ -23,7 +24,8 @@ renderFilterButton f =
         (toHtml f.filterLabel)
 
 -- | Render the filter bar with all filters
-renderFilterBar :: [Filter] -> Html ()
-renderFilterBar filters =
+renderFilterBar :: (MonadReader AppView m) => HtmlT m ()
+renderFilterBar = do
+  filters <- asks (.filters)
   div_ [class_ "mb-4 flex items-center gap-2"] $
     forM_ filters renderFilterButton

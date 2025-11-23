@@ -16,6 +16,7 @@ import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
+import Imako.UI.Lucid (runAppHtml)
 import Imako.UI.PWA (imakoManifest)
 import Imako.UI.Tasks (fileTreeItem)
 import Lucid
@@ -29,13 +30,14 @@ import Options.Applicative (execParser)
 import System.FilePath ((</>))
 import Web.Scotty qualified as S
 
-renderMainContent :: AppView -> Html ()
-renderMainContent view = do
+renderMainContent :: (MonadReader AppView m) => HtmlT m ()
+renderMainContent = do
   -- Filter Bar
-  renderFilterBar view.filters
+  renderFilterBar
 
   -- Tasks section with hierarchical folder structure
-  renderFolderTree view.vaultPath (fileTreeItem view) view.folderTree
+  view <- ask
+  renderFolderTree fileTreeItem view.folderTree
 
 -- | Create the Scotty application with all routes
 mkApp :: FilePath -> LVar.LVar Ob.Vault -> IO Application
@@ -44,7 +46,8 @@ mkApp vaultPath vaultVar = S.scottyApp $ do
     vault <- liftIO $ LVar.get vaultVar
     today <- liftIO getLocalToday
     let view = mkAppView today vaultPath vault
-    S.html $ renderText $ layout (toText vaultPath) (renderMainContent view)
+        mainContent = toHtmlRaw $ runAppHtml view renderMainContent
+    S.html $ renderText $ layout (toText vaultPath) mainContent
 
   S.post "/inbox/add" $ do
     taskText <- S.formParam "text"
@@ -64,8 +67,8 @@ mkApp vaultPath vaultVar = S.scottyApp $ do
       vault <- LVar.listenNext vaultVar
       today <- getLocalToday
       let view = mkAppView today vaultPath vault
-          html = renderText $ renderMainContent view
-      let sseData = "data: " <> html <> "\n\n"
+          html = runAppHtml view renderMainContent
+          sseData = "data: " <> html <> "\n\n"
       write $ lazyByteString $ TL.encodeUtf8 sseData
       flush
   where

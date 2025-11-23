@@ -101,6 +101,7 @@ executable imako
     Imako.UI.FolderTree
     Imako.UI.Inbox
     Imako.UI.Layout
+    Imako.UI.Lucid
     Imako.UI.PWA
     Imako.UI.Scripts
     Imako.UI.Tasks

@@ -6,18 +6,20 @@ module Imako.UI.FolderTree (
 where
 
 import Data.Map.Strict qualified as Map
+import Imako.Core (AppView (..))
 import Imako.Core.FolderTree (FolderNode (..))
 import Lucid
 import Ob.Task (Task)
 import Web.TablerIcons.Outline qualified as Icon
 
 -- | Render a folder tree structure where each leaf is rendered by the provided function
-renderFolderTree :: FilePath -> (FilePath -> [Task] -> Html ()) -> FolderNode -> Html ()
-renderFolderTree vaultPath renderLeaf node =
+renderFolderTree :: (MonadReader AppView m) => (FilePath -> [Task] -> HtmlT m ()) -> FolderNode -> HtmlT m ()
+renderFolderTree renderLeaf node = do
+  vaultPath <- asks (.vaultPath)
   div_ [class_ "flex flex-col gap-0.5"] $ renderFolderNode vaultPath renderLeaf "" node
 
 -- | Render a single folder node with all its contents
-renderFolderNode :: FilePath -> (FilePath -> [Task] -> Html ()) -> Text -> FolderNode -> Html ()
+renderFolderNode :: (MonadReader AppView m) => FilePath -> (FilePath -> [Task] -> HtmlT m ()) -> Text -> FolderNode -> HtmlT m ()
 renderFolderNode vaultPath renderLeaf currentPath node = do
   -- Render subfolders first (usually looks better to have folders at top)
   forM_ (Map.toList node.subfolders) $
@@ -28,7 +30,7 @@ renderFolderNode vaultPath renderLeaf currentPath node = do
     uncurry (renderFileGroup vaultPath renderLeaf currentPath)
 
 -- | Render a folder (directory) as a collapsible section
-renderFolder :: FilePath -> (FilePath -> [Task] -> Html ()) -> Text -> Text -> FolderNode -> Html ()
+renderFolder :: (MonadReader AppView m) => FilePath -> (FilePath -> [Task] -> HtmlT m ()) -> Text -> Text -> FolderNode -> HtmlT m ()
 renderFolder vaultPath renderLeaf currentPath folderName subNode = do
   let fullPath = if currentPath == "" then folderName else currentPath <> "/" <> folderName
 
@@ -48,7 +50,7 @@ renderFolder vaultPath renderLeaf currentPath folderName subNode = do
       renderFolderNode vaultPath renderLeaf fullPath subNode
 
 -- | Render a file group (tasks from a markdown file)
-renderFileGroup :: FilePath -> (FilePath -> [Task] -> Html ()) -> Text -> Text -> [Task] -> Html ()
+renderFileGroup :: (MonadReader AppView m) => FilePath -> (FilePath -> [Task] -> HtmlT m ()) -> Text -> Text -> [Task] -> HtmlT m ()
 renderFileGroup _ renderLeaf currentPath filename tasks = do
   let relativePath = if currentPath == "" then filename else currentPath <> "/" <> filename
   renderLeaf (toString relativePath) tasks
