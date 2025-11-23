@@ -45,8 +45,8 @@ fileTreeItem today vaultPath sourceFile tasks = do
 
         -- Progress bar (mini)
         when (total > 0) $
-          div_ [class_ "ml-2 w-16 h-1 bg-gray-600 dark:bg-gray-400 rounded-full overflow-hidden"] $
-            div_ [class_ "h-full bg-gray-400 dark:bg-gray-600", style_ ("width: " <> show progress <> "%")] mempty
+          div_ [class_ "ml-2 w-16 h-1 bg-slate-700 dark:bg-gray-300 rounded-full overflow-hidden"] $
+            div_ [class_ "h-full bg-slate-300 dark:bg-gray-500", style_ ("width: " <> show progress <> "%")] mempty
 
       -- Count
       span_ [class_ "text-xs text-gray-400 dark:text-gray-600 font-normal mr-2"] $
@@ -57,7 +57,7 @@ fileTreeItem today vaultPath sourceFile tasks = do
 
     -- Tasks list (indented)
     div_ [class_ "pl-8 flex flex-col"] $
-      forM_ tasks (taskTreeItem today)
+      forM_ (filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks) (taskTreeItem today)
 
 -- | Render a single task as a tree item row
 taskTreeItem :: Day -> Task -> Html ()

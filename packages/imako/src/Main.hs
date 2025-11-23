@@ -61,16 +61,18 @@ processTasksForUI today vaultPath tasks =
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       incompleteNotFuture = filter isNotFarFuture incomplete
       filtered = length incomplete - length incompleteNotFuture
-      completed = length tasks - length incomplete
-      grouped =
+      completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
+      groupedAll =
         List.foldl
           ( \acc task ->
               let relativePath = makeRelative vaultPath task.sourceNote
                in Map.insertWith (flip (++)) relativePath [task] acc
           )
           Map.empty
-          incompleteNotFuture
-   in (length incompleteNotFuture, completed, filtered, grouped)
+          (incompleteNotFuture <> completedTasks)
+      -- Only show files that have at least one incomplete task
+      grouped = Map.filter (any (\t -> t.status /= Completed && t.status /= Cancelled)) groupedAll
+   in (length incompleteNotFuture, length completedTasks, filtered, grouped)
 
 renderMainContent :: Day -> FilePath -> Ob.Vault -> Html ()
 renderMainContent today vaultPath vault = do
