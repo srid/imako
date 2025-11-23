@@ -8,7 +8,7 @@ module Imako.UI.Tasks (
 where
 
 import Data.Time (Day, defaultTimeLocale, formatTime)
-import Imako.UI.Filters (filterClass, filterPredicate, filters)
+import Imako.UI.Filters (Filter (..), filterPredicate, filters)
 import Lucid
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
@@ -71,9 +71,10 @@ computeVisibilityClasses today task =
     baseVisibility = if not (null matchingFilters) then "hidden" else "flex"
 
     -- Add conditional visibility classes for each matching filter
-    -- e.g. " group-[.show-future]:flex"
+    -- e.g. " group-[.show-showFuture]:flex"
+    -- Derive CSS class from filterId: "showFuture" -> "show-showFuture"
     conditionalVisibility =
-      foldMap (\f -> " group-[." <> f.filterClass <> "]:flex") matchingFilters
+      foldMap (\f -> " group-[.show-" <> f.filterId <> "]:flex") matchingFilters
    in
     baseVisibility <> conditionalVisibility
 
