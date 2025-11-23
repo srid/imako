@@ -7,8 +7,10 @@
 module Main where
 
 import Data.ByteString.Builder (lazyByteString)
+import Data.ByteString.Builder qualified as Builder
 import Data.LVar qualified as LVar
 import Data.Text.Lazy.Encoding qualified as TL
+import Data.Text.Lazy.Encoding qualified as TLE
 import Data.Time (Day, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
@@ -17,7 +19,7 @@ import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
 import Imako.UI.PWA (imakoManifest)
-import Imako.UI.Tasks (fileTreeItem)
+import Imako.UI.Tasks (AppHtml, fileTreeItem)
 import Lucid
 import Main.Utf8 qualified as Utf8
 import Network.HTTP.Types (status200)
@@ -29,13 +31,14 @@ import Options.Applicative (execParser)
 import System.FilePath ((</>))
 import Web.Scotty qualified as S
 
-renderMainContent :: AppView -> Html ()
-renderMainContent view = do
+renderMainContent :: AppHtml ()
+renderMainContent = do
   -- Filter Bar
-  renderFilterBar view.filters
+  renderFilterBar
 
   -- Tasks section with hierarchical folder structure
-  renderFolderTree view.vaultPath (fileTreeItem view) view.folderTree
+  view <- lift ask
+  renderFolderTree fileTreeItem view.folderTree
 
 -- | Create the Scotty application with all routes
 mkApp :: FilePath -> LVar.LVar Ob.Vault -> IO Application
@@ -44,7 +47,13 @@ mkApp vaultPath vaultVar = S.scottyApp $ do
     vault <- liftIO $ LVar.get vaultVar
     today <- liftIO getLocalToday
     let view = mkAppView today vaultPath vault
-    S.html $ renderText $ layout (toText vaultPath) (renderMainContent view)
+        -- Run the Reader monad to get the Html output
+        -- execHtmlT :: Monad m => HtmlT m a -> m Builder
+        -- So execHtmlT renderMainContent :: Reader AppView Builder
+        builder = runReader (execHtmlT renderMainContent) view
+        mainContentText = TLE.decodeUtf8 (Builder.toLazyByteString builder)
+        mainHtml = toHtmlRaw mainContentText
+    S.html $ renderText $ layout (toText vaultPath) mainHtml
 
   S.post "/inbox/add" $ do
     taskText <- S.formParam "text"
@@ -64,7 +73,10 @@ mkApp vaultPath vaultVar = S.scottyApp $ do
       vault <- LVar.listenNext vaultVar
       today <- getLocalToday
       let view = mkAppView today vaultPath vault
-          html = renderText $ renderMainContent view
+          builder = runReader (execHtmlT renderMainContent) view
+          mainContentText = TLE.decodeUtf8 (Builder.toLazyByteString builder)
+          mainHtml = toHtmlRaw mainContentText
+          html = renderText mainHtml
       let sseData = "data: " <> html <> "\n\n"
       write $ lazyByteString $ TL.encodeUtf8 sseData
       flush
