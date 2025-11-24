@@ -96,7 +96,9 @@ test-suite ob-test
     TypeFamilies
     ViewPatterns
 
-  other-modules:      Ob.TaskSpec
+  other-modules:
+    Ob.Task.RecurrenceSpec
+    Ob.TaskSpec
 
   -- other-extensions:
   type:               exitcode-stdio-1.0
