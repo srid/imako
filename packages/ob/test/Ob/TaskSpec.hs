@@ -318,3 +318,25 @@ spec = do
               low.properties.priority `shouldBe` Low -- 🔽
               lowest.properties.priority `shouldBe` Lowest -- ⏬
             _ -> expectationFailure $ "Expected 6 tasks but got " <> show (length tasks)
+
+    it "parses tasks from loose lists (with blank lines)" $ do
+      let markdownContent =
+            [text|
+        # Loose List Tasks
+
+        - [ ] Task 1
+
+        - [ ] Task 2
+
+        - [ ] Task 3
+        |]
+
+      case parseMarkdown "loose.md" markdownContent of
+        Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
+        Right (_, pandoc) -> do
+          let tasks = extractTasks "loose.md" pandoc
+          map (extractText . description) tasks
+            `shouldBe` [ "Task 1"
+                       , "Task 2"
+                       , "Task 3"
+                       ]

@@ -84,6 +84,9 @@ extractFromItem sourcePath parents blocks =
       Plain inlines : rest ->
         let task = listToMaybe (extractFromInlines sourcePath parents inlines)
          in (task, rest)
+      Para inlines : rest ->
+        let task = listToMaybe (extractFromInlines sourcePath parents inlines)
+         in (task, rest)
       _ -> (Nothing, blocks)
 
 -- | Extract task from inline elements
