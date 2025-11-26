@@ -6,10 +6,12 @@
 
 module Main where
 
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.Async (Concurrently (..), runConcurrently)
 import Data.ByteString.Builder (lazyByteString)
 import Data.LVar qualified as LVar
 import Data.Text.Lazy.Encoding qualified as TL
-import Data.Time (Day, getCurrentTime, getCurrentTimeZone, localDay, utcToLocalTime)
+import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
 import Imako.UI.Filters (renderFilterBar)
@@ -67,7 +69,12 @@ mkApp vaultPath vaultVar = do
       S.setHeader "Connection" "keep-alive"
       S.status status200
       S.stream $ \write flush -> forever $ do
-        vault <- LVar.listenNext vaultVar
+        -- Wait for next update OR next midnight (to refresh dates)
+        vault <-
+          runConcurrently . asum . map Concurrently $
+            [ listenDayChange >> LVar.get vaultVar
+            , LVar.listenNext vaultVar
+            ]
         today <- getLocalToday
         let view = mkAppView today vaultPath vault
             html = runAppHtml view renderMainContent
@@ -76,12 +83,20 @@ mkApp vaultPath vaultVar = do
         flush
   pure $ staticMiddleware app
   where
+    -- \| Wait until the next midnight (local time)
+    --
+    -- Checks for day change every minute. This is simple and robust against system suspend.
+    listenDayChange :: IO ()
+    listenDayChange = do
+      startDay <- getLocalToday
+      fix $ \loop -> do
+        threadDelay (60 * 1000000) -- 1 minute
+        currentDay <- getLocalToday
+        when (currentDay == startDay) loop
+
     -- \| Get the current day in the local timezone
     getLocalToday :: IO Day
-    getLocalToday = do
-      now <- getCurrentTime
-      tz <- getCurrentTimeZone
-      pure $ localDay (utcToLocalTime tz now)
+    getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
 
 main :: IO ()
 main = do
