@@ -6,7 +6,6 @@ import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (Concurrently (..), runConcurrently)
 import Data.ByteString.Builder (Builder, lazyByteString)
 import Data.LVar qualified as LVar
-import Data.Text.Lazy.Encoding qualified as TL
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
@@ -80,7 +79,7 @@ mkApp vaultPath vaultVar = do
         let view = mkAppView today vaultPath vault
             html = runAppHtml view renderMainContent
             sseData = "data: " <> html <> "\n\n"
-        write $ lazyByteString $ TL.encodeUtf8 sseData
+        write $ lazyByteString $ encodeUtf8 sseData
         flush
   pure $ staticMiddleware app
   where
