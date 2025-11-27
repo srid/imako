@@ -13,5 +13,8 @@
         [ "."
         , "./nix/examples/home-manager" { overrideInputs = [("imako", ".")] }
         ]
+    , cache.url = if
+        | isMain -> Just "https://cache.nixos.asia/oss"
+        | otherwise -> Nothing
     , signoff.enable = True
     }
