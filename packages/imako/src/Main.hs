@@ -1,14 +1,10 @@
 {-# LANGUAGE OverloadedRecordDot #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Use if" #-}
-{-# HLINT ignore "Use infinitely" #-}
 
 module Main where
 
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (Concurrently (..), runConcurrently)
-import Data.ByteString.Builder (lazyByteString)
+import Data.ByteString.Builder (Builder, lazyByteString)
 import Data.LVar qualified as LVar
 import Data.Text.Lazy.Encoding qualified as TL
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
@@ -42,6 +38,15 @@ renderMainContent = do
   view <- ask
   renderFolderTree fileTreeItem view.folderTree
 
+-- | Set up SSE headers and start streaming
+sse :: ((Builder -> IO ()) -> IO () -> IO ()) -> S.ActionM ()
+sse streamAction = do
+  S.setHeader "Content-Type" "text/event-stream"
+  S.setHeader "Cache-Control" "no-cache"
+  S.setHeader "Connection" "keep-alive"
+  S.status status200
+  S.stream streamAction
+
 -- | Create the Scotty application with all routes
 mkApp :: FilePath -> LVar.LVar Ob.Vault -> IO Application
 mkApp vaultPath vaultVar = do
@@ -64,11 +69,7 @@ mkApp vaultPath vaultVar = do
       S.json imakoManifest
 
     S.get "/events" $ do
-      S.setHeader "Content-Type" "text/event-stream"
-      S.setHeader "Cache-Control" "no-cache"
-      S.setHeader "Connection" "keep-alive"
-      S.status status200
-      S.stream $ \write flush -> forever $ do
+      sse $ \write flush -> void $ infinitely $ do
         -- Wait for next update OR next midnight (to refresh dates)
         vault <-
           runConcurrently . asum . map Concurrently $
