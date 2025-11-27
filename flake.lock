@@ -23,6 +23,24 @@
         "type": "github"
       }
     },
+    "co-log-effectful-simple": {
+      "flake": false,
+      "locked": {
+        "dir": "packages/co-log-effectful-simple",
+        "lastModified": 1764275713,
+        "narHash": "sha256-bUTtloKwMLwTT4Eg4QALP3Hk6DheZG53GsUrzhnlDkI=",
+        "owner": "juspay",
+        "repo": "vira",
+        "rev": "e4bf69396e6636593e10aefb48933694479abbfc",
+        "type": "github"
+      },
+      "original": {
+        "dir": "packages/co-log-effectful-simple",
+        "owner": "juspay",
+        "repo": "vira",
+        "type": "github"
+      }
+    },
     "commonmark-simple": {
       "flake": false,
       "locked": {
@@ -335,9 +353,26 @@
         "type": "github"
       }
     },
+    "record-hasfield": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1705829538,
+        "narHash": "sha256-GmPVs+M8LIL3h8QO57yV9e6okczJdpEtzinD8gxCvjQ=",
+        "owner": "ndmitchell",
+        "repo": "record-hasfield",
+        "rev": "093fb013d3e8951a215e0508cda2c24977ef117c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ndmitchell",
+        "repo": "record-hasfield",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "co-log-effectful": "co-log-effectful",
+        "co-log-effectful-simple": "co-log-effectful-simple",
         "commonmark-simple": "commonmark-simple",
         "commonmark-wikilink": "commonmark-wikilink",
         "flake-parts": "flake-parts_2",
@@ -349,6 +384,7 @@
         "lvar": "lvar",
         "nixos-unified": "nixos-unified",
         "nixpkgs": "nixpkgs_2",
+        "record-hasfield": "record-hasfield",
         "servant-event-stream": "servant-event-stream",
         "tabler-icons": "tabler-icons",
         "unionmount": "unionmount",

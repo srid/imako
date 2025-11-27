@@ -23,6 +23,8 @@
     htmx.url = "github:JonathanLorimer/htmx";
     htmx.flake = false;
     co-log-effectful.url = "github:eldritch-cookie/co-log-effectful";
+    co-log-effectful-simple.url = "github:juspay/vira?dir=packages/co-log-effectful-simple";
+    co-log-effectful-simple.flake = false;
     htmx-extensions.url = "github:juspay/htmx-extensions/sse-unload"; # https://github.com/bigskysoftware/htmx-extensions/pull/147
     htmx-extensions.flake = false;
     # https://github.com/bflyblue/servant-event-stream/pull/13
@@ -32,6 +34,8 @@
     tabler-icons.flake = false;
     warp-tls-simple.url = "github:srid/warp-tls-simple";
     warp-tls-simple.flake = false;
+    record-hasfield.url = "github:ndmitchell/record-hasfield";
+    record-hasfield.flake = false;
   };
 
   outputs = inputs:

@@ -56,12 +56,16 @@ library
     , aeson
     , async
     , base
+    , co-log
+    , co-log-effectful
+    , co-log-effectful-simple
     , commonmark-simple
     , commonmark-wikilink
     , containers
+    , effectful
     , filepath
     , lucid2
-    , lvar                 >=0.2
+    , lvar                     >=0.2
     , megaparsec
     , monad-logger
     , pandoc

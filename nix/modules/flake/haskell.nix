@@ -30,10 +30,16 @@
         htmx-servant.source = inputs.htmx + /htmx-servant;
         servant-event-stream.source = inputs.servant-event-stream;
         tabler-icons.source = inputs.tabler-icons;
+        co-log-effectful-simple.source = inputs.co-log-effectful-simple;
+        co-log-effectful.source = inputs.co-log-effectful;
+        record-hasfield.source = inputs.record-hasfield;
+        co-log.source = "0.7.0.0";
       };
 
       settings = {
         unionmount.jailbreak = true;
+        co-log-effectful.jailbreak = true;
+        co-log-effectful-simple.jailbreak = true;
       };
 
       # Development shell configuration
