@@ -64,6 +64,7 @@ library
     , commonmark-wikilink
     , containers
     , effectful
+    , effectful-core
     , filepath
     , lucid2
     , lvar                     >=0.2
