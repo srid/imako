@@ -1,5 +1,8 @@
 module Imako.CLI where
 
+import Data.Char (toLower)
+
+import Effectful.Colog.Simple (Severity (..))
 import Network.Wai.Handler.Warp (Port)
 import Network.Wai.Handler.WarpTLS.Simple (TLSConfig, tlsConfigParser)
 import Options.Applicative
@@ -10,6 +13,7 @@ data Options = Options
   , port :: Port
   , host :: Text
   , tlsConfig :: TLSConfig
+  , logLevel :: Severity
   }
   deriving stock (Show)
 
@@ -40,6 +44,15 @@ optionsParser =
           <> help "Host to bind the web server to"
       )
     <*> tlsConfigParser
+    <*> option
+      (maybeReader parseSeverity)
+      ( long "log-level"
+          <> short 'l'
+          <> metavar "LOG_LEVEL"
+          <> value Info
+          <> showDefault
+          <> help "Log level (Debug, Info, Warning, Error)"
+      )
 
 -- Parser info with additional configuration
 opts :: ParserInfo Options
@@ -50,3 +63,11 @@ opts =
         <> header "Imako - Notebook Web Viewer"
         <> progDesc "Start a web server to view your notebook"
     )
+
+parseSeverity :: String -> Maybe Severity
+parseSeverity s = case map toLower s of
+  "debug" -> Just Debug
+  "info" -> Just Info
+  "warning" -> Just Warning
+  "error" -> Just Error
+  _ -> Nothing

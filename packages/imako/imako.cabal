@@ -39,6 +39,7 @@ common shared
     DataKinds
     DerivingStrategies
     DerivingVia
+    DisambiguateRecordFields
     LambdaCase
     MultiWayIf
     NoStarIsType
@@ -51,9 +52,13 @@ common shared
     , aeson
     , async
     , base
+    , co-log-effectful
+    , co-log-effectful-simple
     , commonmark-simple
     , data-default
     , directory
+    , effectful
+    , effectful-core
     , filepath
     , filepattern
     , htmx
@@ -61,7 +66,7 @@ common shared
     , htmx-servant
     , http-types
     , lucid2
-    , lvar                   >=0.2
+    , lvar                     >=0.2
     , monad-logger
     , mtl
     , ob
@@ -70,7 +75,7 @@ common shared
     , pandoc
     , pandoc-types
     , profunctors
-    , relude                 >=1.0
+    , relude                   >=1.0
     , scotty
     , servant
     , servant-event-stream
@@ -79,7 +84,7 @@ common shared
     , tabler-icons
     , text
     , time
-    , unionmount             >=0.3
+    , unionmount               >=0.3
     , unliftio-core
     , wai
     , wai-extra

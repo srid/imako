@@ -73,15 +73,17 @@ mountVault ::
     )
 mountVault path = withEffToIO (ConcUnlift Ephemeral Unlimited) $ \runInIO -> do
   let logger = LogAction $ \(WithSeverity msg sev) -> runInIO $ log sev msg
-  (initial, umCallback) <- UM.mount logger path (one ((), "**/*.md")) ["**/.*/**"] mempty (const $ handleMarkdownFile path)
+  (initial, umCallback) <- UM.mount logger path (one ((), "**/*.md")) ["**/.*/**"] mempty (\_ fp act -> runInIO $ handleMarkdownFile path fp act)
   let finalCallback userAction = do
         umCallback $ \notes -> liftIO $ userAction notes
   pure (initial, finalCallback)
 
-handleMarkdownFile :: (MonadIO m) => FilePath -> FilePath -> UM.FileAction () -> m (Map FilePath Note -> Map FilePath Note)
+handleMarkdownFile :: (ER.Reader LogContext :> es, Log (RichMessage IO) :> es, IOE :> es) => FilePath -> FilePath -> UM.FileAction () -> Eff es (Map FilePath Note -> Map FilePath Note)
 handleMarkdownFile baseDir path = \case
-  UM.Refresh _ _ -> do
+  UM.Refresh rAction _ -> do
+    unless (rAction == UM.Existing) $ log Info $ "Refreshing [" <> show rAction <> "] " <> toText path
     note <- parseNote $ baseDir </> path
     pure $ Map.insert path note
   UM.Delete -> do
+    log Info $ "Deleting " <> toText path
     pure $ Map.delete path

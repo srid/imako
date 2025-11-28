@@ -7,6 +7,8 @@ import Control.Concurrent.Async (Concurrently (..), runConcurrently)
 import Data.ByteString.Builder (Builder, lazyByteString)
 import Data.LVar qualified as LVar
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
+import Effectful (runEff)
+import Effectful.Colog.Simple (Severity (..), log, runLogActionStdout, withLogContext)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
 import Imako.UI.Filters (renderFilterBar)
@@ -75,6 +77,9 @@ mkApp vaultPath vaultVar = do
             [ listenDayChange >> LVar.get vaultVar
             , LVar.listenNext vaultVar
             ]
+        runEff . runLogActionStdout Info $ do
+          withLogContext [("context", "SSE")] $ do
+            log Info "Refreshing client"
         today <- getLocalToday
         let view = mkAppView today vaultPath vault
             html = runAppHtml view renderMainContent
@@ -101,12 +106,14 @@ mkApp vaultPath vaultVar = do
 main :: IO ()
 main = do
   Utf8.withUtf8 $ do
+    hSetBuffering stdout LineBuffering
+    hSetBuffering stderr LineBuffering
     options <- liftIO $ execParser CLI.opts
     let protocol = case options.tlsConfig of
           TLSDisabled -> "http"
           _ -> "https"
         url = protocol <> "://" <> options.host <> ":" <> show options.port
-    putTextLn $ "Starting web server on " <> url
+    runEff . runLogActionStdout options.logLevel $ log Info $ "Starting web server on " <> url
     Ob.withLiveVault options.path $ \vaultVar -> do
       app <- mkApp options.path vaultVar
 

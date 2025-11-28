@@ -40,6 +40,7 @@ library
     DataKinds
     DerivingStrategies
     DerivingVia
+    DisambiguateRecordFields
     DuplicateRecordFields
     LambdaCase
     MultiWayIf
@@ -93,6 +94,7 @@ test-suite ob-test
     DataKinds
     DerivingStrategies
     DerivingVia
+    DisambiguateRecordFields
     LambdaCase
     MultiWayIf
     NoStarIsType

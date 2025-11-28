@@ -17,7 +17,7 @@ repl *ARGS:
 
 # Run ghcid -- auto-recompile and run `main` function
 run:
-    ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }}' --setup ":set args {{ NOTEBOOK }}"
+    ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }}' --setup ":set args --log-level=Debug {{ NOTEBOOK }}"
 
 # Run tests
 test:
