@@ -11,7 +11,7 @@
     git-hooks.url = "github:cachix/git-hooks.nix";
     git-hooks.flake = false;
 
-    unionmount.url = "github:srid/unionmount";
+    unionmount.url = "github:srid/unionmount/log";
     unionmount.flake = false;
     lvar.url = "github:srid/lvar";
     lvar.flake = false;

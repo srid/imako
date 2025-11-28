@@ -57,6 +57,7 @@ library
     , async
     , base
     , co-log
+    , co-log-core
     , co-log-effectful
     , co-log-effectful-simple
     , commonmark-simple

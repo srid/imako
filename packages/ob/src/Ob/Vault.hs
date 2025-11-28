@@ -7,10 +7,10 @@ module Ob.Vault (
 )
 where
 
-import Control.Monad.Logger (runStdoutLoggingT)
 import Effectful
 import Effectful.Colog.Simple (Severity (..), log, runLogActionStdout)
 
+import Colog (LogAction (..))
 import Data.LVar (LVar)
 import Data.LVar qualified as LVar
 import Data.Map.Strict qualified as Map
@@ -64,8 +64,9 @@ mountVault ::
     , (Map FilePath Note -> IO ()) -> IO ()
     )
 mountVault path = liftIO $ do
-  (initial, umCallback) <- runStdoutLoggingT $ UM.mount path (one ((), "**/*.md")) ["**/.*/**"] mempty (const $ handleMarkdownFile path)
-  let finalCallback userAction = runStdoutLoggingT $ do
+  let logger = LogAction $ \msg -> putTextLn $ "ℹ️  INFO [UnionMount] " <> msg
+  (initial, umCallback) <- UM.mount logger path (one ((), "**/*.md")) ["**/.*/**"] mempty (const $ handleMarkdownFile path)
+  let finalCallback userAction = do
         umCallback $ \notes -> liftIO $ userAction notes
   pure (initial, finalCallback)
 
