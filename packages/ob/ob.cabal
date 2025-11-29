@@ -62,6 +62,7 @@ library
     , commonmark-simple
     , commonmark-wikilink
     , containers
+    , directory
     , filepath
     , lucid2
     , lvar                 >=0.2

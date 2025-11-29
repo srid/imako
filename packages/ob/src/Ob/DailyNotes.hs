@@ -15,6 +15,7 @@ module Ob.DailyNotes (
 import Data.Aeson (FromJSON (..), (.!=), (.:?))
 import Data.Aeson qualified as Aeson
 import Data.Time (Day, defaultTimeLocale, formatTime, parseTimeM)
+import System.Directory (doesFileExist)
 import System.FilePath (takeBaseName, takeDirectory, (</>))
 import Text.Megaparsec (Parsec, anySingle, eof, parse, try)
 import Text.Megaparsec.Char (string)
@@ -46,11 +47,21 @@ data DailyNote = DailyNote
   }
   deriving stock (Show, Eq)
 
--- | Load daily notes configuration from the vault
+{- | Load daily notes configuration from the vault
+Returns Nothing if the config file doesn't exist.
+Throws an error if the config file exists but can't be parsed.
+-}
 loadDailyNotesConfig :: FilePath -> IO (Maybe DailyNotesConfig)
 loadDailyNotesConfig vaultPath = do
   let configPath = vaultPath </> ".obsidian" </> "daily-notes.json"
-  Aeson.decodeFileStrict configPath
+  exists <- doesFileExist configPath
+  if exists
+    then do
+      result <- Aeson.eitherDecodeFileStrict configPath
+      case result of
+        Left err -> error $ "Failed to parse " <> toText configPath <> ": " <> toText err
+        Right config -> pure $ Just config
+    else pure Nothing
 
 -- | Check if a file path matches the daily notes pattern
 isDailyNote :: DailyNotesConfig -> FilePath -> Bool
