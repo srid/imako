@@ -17,7 +17,6 @@ import Imako.UI.Tasks (obsidianEditButton)
 import Imako.Web.Lucid (hxGet_, hxSwapOob_, hxSwap_, hxTarget_, liftHtml)
 import Lucid
 import Ob (DailyNote (..))
-import System.FilePath (takeBaseName)
 import Text.Pandoc (def, runPure, writeHtml5String)
 import Text.Pandoc.Definition (Pandoc)
 import Web.TablerIcons.Outline qualified as Icon
@@ -97,18 +96,9 @@ renderDateSidebarOob today selectedDay notes = do
 
 -- | Render a daily note with its content
 renderNoteView :: (MonadReader AppView m) => Bool -> DailyNote -> HtmlT m ()
-renderNoteView isToday note = do
-  -- Note header with edit button
-  div_ [class_ "group/note flex items-center justify-between mb-3"] $ do
-    div_ [class_ "flex items-center gap-3"] $ do
-      div_ [class_ "w-10 h-10 rounded-full bg-indigo-500 dark:bg-indigo-600 flex items-center justify-center text-white"] $
-        toHtmlRaw Icon.calendar_event
-      div_ $ do
-        div_ [class_ "font-medium text-gray-900 dark:text-gray-100"] $
-          toHtml (toText $ takeBaseName note.notePath)
-        div_ [class_ "text-sm text-gray-600 dark:text-gray-400"] $
-          toHtml $
-            if isToday then "Today's note" :: Text else formatDay note.day
+renderNoteView _isToday note = do
+  -- Edit button (top right)
+  div_ [class_ "group/note flex justify-end mb-2"] $
     obsidianEditButton note.notePath
 
   -- Note content rendered from Pandoc
