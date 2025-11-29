@@ -9,6 +9,7 @@ module Ob.DailyNotes (
   isDailyNote,
   parseDailyNoteDate,
   getTodayNotePath,
+  momentToHaskellFormat,
 ) where
 
 import Data.Aeson (FromJSON (..), (.:), (.:?))

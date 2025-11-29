@@ -98,6 +98,7 @@ test-suite ob-test
     ViewPatterns
 
   other-modules:
+    Ob.DailyNotesSpec
     Ob.Task.RecurrenceSpec
     Ob.TaskSpec
 
