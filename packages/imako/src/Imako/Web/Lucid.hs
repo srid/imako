@@ -2,6 +2,11 @@ module Imako.Web.Lucid (
   AppHtml,
   liftHtml,
   runAppHtml,
+  -- HTMX attributes
+  hxGet_,
+  hxTarget_,
+  hxSwap_,
+  hxSwapOob_,
 )
 where
 
@@ -33,3 +38,17 @@ runAppHtml :: AppView -> AppHtml () -> LT.Text
 runAppHtml view html =
   let builder = runReader (execHtmlT html) view
    in TLE.decodeUtf8 (Builder.toLazyByteString builder)
+
+-- HTMX attribute helpers
+
+hxGet_ :: Text -> Attributes
+hxGet_ = term "hx-get"
+
+hxTarget_ :: Text -> Attributes
+hxTarget_ = term "hx-target"
+
+hxSwap_ :: Text -> Attributes
+hxSwap_ = term "hx-swap"
+
+hxSwapOob_ :: Text -> Attributes
+hxSwapOob_ = term "hx-swap-oob"

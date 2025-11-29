@@ -7,12 +7,14 @@ The vertical date sidebar acts like tabs, with today highlighted as the focal po
 -}
 module Imako.UI.DailyNotes (
   renderThisMoment,
+  renderDailyNoteWithSidebar,
 ) where
 
 import Data.List qualified as List
 import Data.Time (Day, defaultTimeLocale, formatTime)
 import Imako.Core (AppView (..))
-import Imako.UI.Tasks (obsidianEditButton, taskTreeItem)
+import Imako.UI.Tasks (obsidianEditButton)
+import Imako.Web.Lucid (hxGet_, hxSwapOob_, hxSwap_, hxTarget_, liftHtml)
 import Lucid
 import Ob (DailyNote (..))
 import System.FilePath (takeBaseName)
@@ -32,67 +34,83 @@ renderThisMoment = do
       h2_ [class_ "text-lg font-semibold text-gray-800 dark:text-gray-200"] "This Moment"
 
     -- Sidebar layout: dates on left, content on right
-    div_ [class_ "flex gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden"] $ do
+    div_ [class_ "flex bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden"] $ do
       -- Left sidebar: vertical date tabs
-      renderDateSidebar view.today view.dailyNotes
+      liftHtml $ renderDateSidebar view.today view.today view.dailyNotes
 
-      -- Right content: today's note + tasks
-      div_ [class_ "flex-1 p-4"] $ do
-        renderTodayContent view
+      -- Right content: selected note (defaults to today)
+      div_ [id_ "daily-note-content", class_ "flex-1 p-4"] $
+        renderNoteContentOnly view.today
 
--- | Render the vertical date sidebar
-renderDateSidebar :: (MonadReader AppView m) => Day -> [DailyNote] -> HtmlT m ()
-renderDateSidebar today notes = do
-  vaultPath <- asks (.vaultPath)
-  let vaultName = toText $ takeBaseName vaultPath
-  nav_ [class_ "w-24 flex-shrink-0 bg-indigo-100/50 dark:bg-indigo-900/20 border-r border-indigo-200 dark:border-indigo-800 py-2"] $ do
-    forM_ notes $ \note -> do
-      let isToday = note.day == today
-          obsidianUrl = "obsidian://open?vault=" <> vaultName <> "&file=" <> toText note.notePath
-          baseClasses = "block w-full px-3 py-2 text-center transition-colors"
-          todayClasses = "bg-indigo-500 text-white font-medium"
-          otherClasses = "text-gray-600 dark:text-gray-400 hover:bg-indigo-200/50 dark:hover:bg-indigo-800/30 hover:text-gray-900 dark:hover:text-gray-200"
-      a_
-        [ href_ obsidianUrl
-        , class_ $ baseClasses <> " " <> if isToday then todayClasses else otherClasses
-        ]
-        $ do
-          div_ [class_ "text-xs font-medium"] $
-            toHtml (formatDayName note.day)
-          div_ [class_ $ "text-lg " <> if isToday then "font-bold" else ""] $
-            toHtml (formatDayNumber note.day)
-          when isToday $
-            div_ [class_ "text-xs opacity-80"] "Today"
+-- | Render the vertical date sidebar with HTMX tab switching
+renderDateSidebar :: Day -> Day -> [DailyNote] -> Html ()
+renderDateSidebar today selectedDay notes = do
+  nav_ [id_ "daily-note-sidebar", class_ "w-24 flex-shrink-0 bg-indigo-100/50 dark:bg-indigo-900/20 border-r border-indigo-200 dark:border-indigo-800 py-2"] $
+    renderDateButtons today selectedDay notes
 
--- | Render today's content (note + tasks)
-renderTodayContent :: (MonadReader AppView m) => AppView -> HtmlT m ()
-renderTodayContent view = do
-  let todayNote = List.find (\dn -> dn.day == view.today) view.dailyNotes
-  case todayNote of
-    Just note -> renderTodayNote note
-    Nothing -> renderNoTodayNote view.today
+-- | Render the date tab buttons (shared between initial render and OOB updates)
+renderDateButtons :: Day -> Day -> [DailyNote] -> Html ()
+renderDateButtons today selectedDay notes = do
+  forM_ notes $ \note -> do
+    let isToday = note.day == today
+        isSelected = note.day == selectedDay
+        baseClasses = "block w-full px-3 py-2 text-center transition-colors cursor-pointer"
+        selectedClasses = "bg-indigo-500 text-white font-medium"
+        unselectedClasses = "text-gray-600 dark:text-gray-400 hover:bg-indigo-200/50 dark:hover:bg-indigo-800/30 hover:text-gray-900 dark:hover:text-gray-200"
+    button_
+      [ hxGet_ ("/daily/" <> formatDayISO note.day)
+      , hxTarget_ "#daily-note-content"
+      , hxSwap_ "innerHTML"
+      , class_ $ baseClasses <> " " <> if isSelected then selectedClasses else unselectedClasses
+      ]
+      $ do
+        div_ [class_ "text-xs font-medium"] $
+          toHtml (formatDayName note.day)
+        div_ [class_ $ "text-lg " <> if isSelected then "font-bold" else ""] $
+          toHtml (formatDayNumber note.day)
+        when isToday $
+          div_ [class_ $ "text-xs " <> if isSelected then "opacity-80" else "text-indigo-500 dark:text-indigo-400"] "Today"
 
-  -- Tasks due today
-  unless (null view.todayTasks) $ do
-    div_ [class_ "mt-4 pt-4 border-t border-indigo-200 dark:border-indigo-800"] $ do
-      div_ [class_ "flex items-center gap-2 mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"] $ do
-        toHtmlRaw Icon.checkbox
-        span_ $ toHtml ("Due today (" <> show (length view.todayTasks) <> ")" :: Text)
-      div_ [class_ "flex flex-col gap-1"] $
-        forM_ view.todayTasks taskTreeItem
+-- | Render content for a specific day (internal, just the note content)
+renderNoteContentOnly :: (MonadReader AppView m) => Day -> HtmlT m ()
+renderNoteContentOnly selectedDay = do
+  view <- ask
+  let selectedNote = List.find (\dn -> dn.day == selectedDay) view.dailyNotes
+  case selectedNote of
+    Just note -> renderNoteView (note.day == view.today) note
+    Nothing -> liftHtml $ renderNoNoteForDay selectedDay
 
--- | Render today's daily note with its content
-renderTodayNote :: (MonadReader AppView m) => DailyNote -> HtmlT m ()
-renderTodayNote note = do
+{- | Render content + OOB sidebar update for HTMX endpoint
+Returns both the note content AND an out-of-band sidebar swap
+-}
+renderDailyNoteWithSidebar :: (MonadReader AppView m) => Day -> HtmlT m ()
+renderDailyNoteWithSidebar selectedDay = do
+  view <- ask
+  -- Main content (will replace #daily-note-content)
+  renderNoteContentOnly selectedDay
+  -- Out-of-band sidebar update (will replace #daily-note-sidebar)
+  liftHtml $ renderDateSidebarOob view.today selectedDay view.dailyNotes
+
+-- | Render sidebar with hx-swap-oob for out-of-band update
+renderDateSidebarOob :: Day -> Day -> [DailyNote] -> Html ()
+renderDateSidebarOob today selectedDay notes = do
+  nav_ [id_ "daily-note-sidebar", hxSwapOob_ "true", class_ "w-24 flex-shrink-0 bg-indigo-100/50 dark:bg-indigo-900/20 border-r border-indigo-200 dark:border-indigo-800 py-2"] $
+    renderDateButtons today selectedDay notes
+
+-- | Render a daily note with its content
+renderNoteView :: (MonadReader AppView m) => Bool -> DailyNote -> HtmlT m ()
+renderNoteView isToday note = do
   -- Note header with edit button
-  div_ [class_ "group/today flex items-center justify-between mb-3"] $ do
+  div_ [class_ "group/note flex items-center justify-between mb-3"] $ do
     div_ [class_ "flex items-center gap-3"] $ do
       div_ [class_ "w-10 h-10 rounded-full bg-indigo-500 dark:bg-indigo-600 flex items-center justify-center text-white"] $
         toHtmlRaw Icon.calendar_event
       div_ $ do
         div_ [class_ "font-medium text-gray-900 dark:text-gray-100"] $
           toHtml (toText $ takeBaseName note.notePath)
-        div_ [class_ "text-sm text-gray-600 dark:text-gray-400"] "Today's note"
+        div_ [class_ "text-sm text-gray-600 dark:text-gray-400"] $
+          toHtml $
+            if isToday then "Today's note" :: Text else formatDay note.day
     obsidianEditButton note.notePath
 
   -- Note content rendered from Pandoc
@@ -106,16 +124,16 @@ renderPandoc doc =
     Left _ -> ""
     Right html -> html
 
--- | Render placeholder when no today's note exists
-renderNoTodayNote :: (Monad m) => Day -> HtmlT m ()
-renderNoTodayNote today = do
+-- | Render placeholder when no note exists for the selected day
+renderNoNoteForDay :: Day -> Html ()
+renderNoNoteForDay day = do
   div_ [class_ "flex items-center gap-3 text-gray-500 dark:text-gray-400"] $ do
     div_ [class_ "w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"] $
       toHtmlRaw Icon.calendar_plus
     div_ $ do
-      div_ [class_ "font-medium"] "No daily note yet"
+      div_ [class_ "font-medium"] "No daily note"
       div_ [class_ "text-sm"] $
-        toHtml ("Create one for " <> formatDay today)
+        toHtml ("No note for " <> formatDay day)
 
 -- | Format a day as a full date (e.g., "Saturday, Nov 29")
 formatDay :: Day -> Text
@@ -128,3 +146,7 @@ formatDayName = toText . formatTime defaultTimeLocale "%a"
 -- | Format day number (e.g., "29")
 formatDayNumber :: Day -> Text
 formatDayNumber = toText . formatTime defaultTimeLocale "%-d"
+
+-- | Format day as ISO date (e.g., "2025-11-29") for URL
+formatDayISO :: Day -> Text
+formatDayISO = toText . formatTime defaultTimeLocale "%Y-%m-%d"

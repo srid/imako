@@ -6,10 +6,10 @@ import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (Concurrently (..), runConcurrently)
 import Data.ByteString.Builder (Builder, lazyByteString)
 import Data.LVar qualified as LVar
-import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
+import Data.Time (Day, defaultTimeLocale, getZonedTime, localDay, parseTimeM, zonedTimeToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
-import Imako.UI.DailyNotes (renderThisMoment)
+import Imako.UI.DailyNotes (renderDailyNoteWithSidebar, renderThisMoment)
 import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
@@ -66,6 +66,17 @@ mkApp vaultPath vaultVar = do
       taskText <- S.formParam "text"
       liftIO $ appendToInbox vaultPath taskText
       S.text "OK"
+
+    -- HTMX endpoint for daily note content switching
+    S.get "/daily/:day" $ do
+      dayParam <- S.captureParam "day"
+      case parseTimeM True defaultTimeLocale "%Y-%m-%d" dayParam of
+        Nothing -> S.text "Invalid date format"
+        Just selectedDay -> do
+          vault <- liftIO $ LVar.get vaultVar
+          today <- liftIO getLocalToday
+          let view = mkAppView today vaultPath vault
+          S.html $ runAppHtml view (renderDailyNoteWithSidebar selectedDay)
 
     S.get "/manifest.json" $ do
       S.setHeader "Content-Type" "application/json"
