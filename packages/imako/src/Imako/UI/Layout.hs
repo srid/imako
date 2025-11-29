@@ -25,7 +25,8 @@ layout vaultPath mainContent =
       title_ "Imako"
       link_ [rel_ "icon", href_ "https://fav.farm/🌌"]
       pwaMeta
-      script_ [src_ "https://cdn.tailwindcss.com"] ("" :: Text)
+      -- Tailwind CSS with Typography plugin
+      script_ [src_ "https://cdn.tailwindcss.com?plugins=typography"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx.org@2.0.4"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"] ("" :: Text)
       script_ [src_ "/app.js"] ("" :: Text)
