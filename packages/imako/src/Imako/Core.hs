@@ -30,10 +30,8 @@ data AppView = AppView
   -- ^ Current date for date-based comparisons and filtering
   , vaultPath :: FilePath
   -- ^ Path to the vault root directory
-  , todayNote :: Maybe DailyNote
-  -- ^ Today's daily note (the focal point of "this moment")
-  , recentNotes :: [DailyNote]
-  -- ^ Recent daily notes (past 7 days, excluding today) for context
+  , dailyNotes :: [DailyNote]
+  -- ^ All daily notes (today + recent), sorted most recent first
   , todayTasks :: [Task]
   -- ^ Tasks due today (for unified "this moment" view)
   }
@@ -54,11 +52,9 @@ mkAppView today vaultPath vault =
           Map.empty
           (incomplete <> completedTasks)
       tree = buildFolderTree groupedAll
-      -- Daily notes processing
+      -- Daily notes: today + past 7 days, sorted most recent first
       allDailyNotes = getDailyNotes vault
-      todayNote' = List.find (\dn -> dn.day == today) allDailyNotes
-      -- Recent notes: past 7 days excluding today, sorted most recent first
-      recentNotes' = take 7 $ filter (\dn -> dn.day < today) allDailyNotes
+      dailyNotes' = take 8 $ filter (\dn -> dn.day <= today) allDailyNotes
       -- Tasks due today (for unified "this moment" view)
       todayTasks' = filter (isDueToday today) incomplete
    in AppView
@@ -66,8 +62,7 @@ mkAppView today vaultPath vault =
         , filters = FilterDef.filters
         , today = today
         , vaultPath = vaultPath
-        , todayNote = todayNote'
-        , recentNotes = recentNotes'
+        , dailyNotes = dailyNotes'
         , todayTasks = todayTasks'
         }
 
