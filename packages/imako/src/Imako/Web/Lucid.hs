@@ -4,6 +4,7 @@ module Imako.Web.Lucid (
   runAppHtml,
   -- HTMX attributes
   hxGet_,
+  hxPost_,
   hxTarget_,
   hxSwap_,
   hxSwapOob_,
@@ -44,6 +45,9 @@ runAppHtml view html =
 
 hxGet_ :: Text -> Attributes
 hxGet_ = term "hx-get"
+
+hxPost_ :: Text -> Attributes
+hxPost_ = term "hx-post"
 
 hxTarget_ :: Text -> Attributes
 hxTarget_ = term "hx-target"

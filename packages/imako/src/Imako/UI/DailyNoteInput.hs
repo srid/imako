@@ -8,17 +8,11 @@ module Imako.UI.DailyNoteInput (
 where
 
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
+import Imako.Web.Lucid (hxPost_, hxSwap_)
 import Lucid
 import Ob (getTodayNotePath, loadDailyNotesConfig)
 import System.Directory (doesFileExist)
 import System.FilePath ((</>))
-
--- Custom htmx attributes using term syntax
-hxPost_ :: Text -> Attributes
-hxPost_ = term "hx-post"
-
-hxSwap_ :: Text -> Attributes
-hxSwap_ = term "hx-swap"
 
 -- | Render the daily note input form (goes inside daily notes section)
 dailyNoteInputForm :: Html ()
