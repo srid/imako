@@ -12,9 +12,9 @@ import Data.Time (Day)
 import Imako.Core.Filter (Filter)
 import Imako.Core.Filter qualified as FilterDef
 import Imako.Core.FolderTree (FolderNode, buildFolderTree)
-import Ob (Task (..), TaskStatus (..), Vault)
-import Ob.Vault (getTasks)
-import System.FilePath (makeRelative)
+import Ob (DailyNote (..), Task (..), TaskStatus (..), Vault)
+import Ob.Vault (getDailyNotes, getTasks)
+import System.FilePath (makeRelative, takeBaseName)
 
 {- | The view model for the application
 
@@ -29,6 +29,10 @@ data AppView = AppView
   -- ^ Current date for date-based comparisons and filtering
   , vaultPath :: FilePath
   -- ^ Path to the vault root directory
+  , vaultName :: Text
+  -- ^ Name of the vault (derived from vaultPath)
+  , dailyNotes :: [DailyNote]
+  -- ^ All daily notes (today + recent), sorted most recent first
   }
   deriving stock (Show, Eq)
 
@@ -47,9 +51,14 @@ mkAppView today vaultPath vault =
           Map.empty
           (incomplete <> completedTasks)
       tree = buildFolderTree groupedAll
+      -- Daily notes: today + past 7 days, sorted most recent first
+      allDailyNotes = getDailyNotes vault
+      dailyNotes' = take 8 $ filter (\dn -> dn.day <= today) allDailyNotes
    in AppView
         { folderTree = tree
         , filters = FilterDef.filters
         , today = today
         , vaultPath = vaultPath
+        , vaultName = toText $ takeBaseName vaultPath
+        , dailyNotes = dailyNotes'
         }

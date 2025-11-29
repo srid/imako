@@ -24,6 +24,8 @@ library
   import:             warnings
   exposed-modules:
     Ob
+    Ob.DailyNotes
+    Ob.Link
     Ob.Markdown
     Ob.Note
     Ob.Task
@@ -38,6 +40,7 @@ library
 
   default-extensions:
     DataKinds
+    DeriveAnyClass
     DerivingStrategies
     DerivingVia
     DuplicateRecordFields
@@ -59,6 +62,7 @@ library
     , commonmark-simple
     , commonmark-wikilink
     , containers
+    , directory
     , filepath
     , lucid2
     , lvar                 >=0.2
@@ -68,9 +72,11 @@ library
     , pandoc-types
     , relude
     , stm
+    , text
     , time
     , unionmount
     , unliftio
+    , uri-encode
 
   hs-source-dirs:     src
   default-language:   GHC2021
@@ -97,6 +103,7 @@ test-suite ob-test
     ViewPatterns
 
   other-modules:
+    Ob.DailyNotesSpec
     Ob.Task.RecurrenceSpec
     Ob.TaskSpec
 

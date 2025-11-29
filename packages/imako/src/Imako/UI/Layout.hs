@@ -3,7 +3,6 @@ module Imako.UI.Layout (
 )
 where
 
-import Imako.UI.Inbox (inboxInputForm)
 import Imako.UI.PWA (pwaMeta)
 import Lucid
 
@@ -25,7 +24,8 @@ layout vaultPath mainContent =
       title_ "Imako"
       link_ [rel_ "icon", href_ "https://fav.farm/🌌"]
       pwaMeta
-      script_ [src_ "https://cdn.tailwindcss.com"] ("" :: Text)
+      -- Tailwind CSS with Typography plugin
+      script_ [src_ "https://cdn.tailwindcss.com?plugins=typography"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx.org@2.0.4"] ("" :: Text)
       script_ [src_ "https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"] ("" :: Text)
       script_ [src_ "/app.js"] ("" :: Text)
@@ -37,7 +37,5 @@ layout vaultPath mainContent =
             toHtml vaultPath
         -- Main content card
         div_ [class_ "bg-white dark:bg-gray-950 rounded-xl shadow-sm border border-indigo-600 dark:border-indigo-500 p-6 sm:p-8 -mt-px"] $ do
-          -- Inbox quick-add form (static, not swapped by SSE)
-          inboxInputForm
-          -- Tasks content (swapped by SSE)
+          -- Content (swapped by SSE)
           div_ [id_ "task-content", class_ "group", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent

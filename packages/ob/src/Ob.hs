@@ -7,11 +7,18 @@ module Ob (
   Task (..),
   TaskStatus (..),
   Vault (..),
+  DailyNote (..),
+  DailyNotesConfig (..),
   getVault,
   withLiveVault,
+  getTodayNotePath,
+  loadDailyNotesConfig,
+  obsidianOpenUrl,
 )
 where
 
+import Ob.DailyNotes (DailyNote (..), DailyNotesConfig (..), getTodayNotePath, loadDailyNotesConfig)
+import Ob.Link (obsidianOpenUrl)
 import Ob.Note (Note (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Vault (Vault (..), getVault, withLiveVault)

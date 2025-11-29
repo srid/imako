@@ -3,6 +3,7 @@ module Ob.Task (
   Task (..),
   TaskStatus (..),
   Priority (..),
+  TaskProperties (..),
   extractTasks,
   extractText,
   renderInlines,
