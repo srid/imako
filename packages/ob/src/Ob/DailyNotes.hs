@@ -8,12 +8,13 @@ module Ob.DailyNotes (
   loadDailyNotesConfig,
   isDailyNote,
   parseDailyNoteDate,
+  getTodayNotePath,
 ) where
 
 import Data.Aeson (FromJSON (..), (.:), (.:?))
 import Data.Aeson qualified as Aeson
 import Data.Text qualified as T
-import Data.Time (Day, defaultTimeLocale, parseTimeM)
+import Data.Time (Day, defaultTimeLocale, formatTime, parseTimeM)
 import System.FilePath (takeBaseName, takeDirectory, (</>))
 import Text.Pandoc.Definition (Pandoc)
 
@@ -80,3 +81,12 @@ momentToHaskellFormat = toString . go
       | otherwise = case T.uncons t of
           Nothing -> ""
           Just (c, rest) -> one c <> go rest
+
+-- | Get the expected file path for today's daily note
+getTodayNotePath :: DailyNotesConfig -> Day -> FilePath
+getTodayNotePath config day =
+  let haskellFormat = momentToHaskellFormat config.format
+      filename = formatTime defaultTimeLocale haskellFormat day <> ".md"
+   in case config.folder of
+        Nothing -> filename
+        Just folder -> folder </> filename

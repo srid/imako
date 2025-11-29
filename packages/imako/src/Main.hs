@@ -9,10 +9,10 @@ import Data.LVar qualified as LVar
 import Data.Time (Day, defaultTimeLocale, getZonedTime, localDay, parseTimeM, zonedTimeToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
+import Imako.UI.DailyNoteInput (AppendResult (..), appendToDailyNote)
 import Imako.UI.DailyNotes (renderDailyNoteWithSidebar, renderThisMoment)
 import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (renderFolderTree)
-import Imako.UI.Inbox (appendToInbox)
 import Imako.UI.Layout (layout)
 import Imako.UI.PWA (imakoManifest)
 import Imako.UI.Tasks (fileTreeItem)
@@ -20,7 +20,7 @@ import Imako.Web.Lucid (runAppHtml)
 import Imako.Web.Static (mkStaticMiddleware)
 import Lucid
 import Main.Utf8 qualified as Utf8
-import Network.HTTP.Types (status200)
+import Network.HTTP.Types (status200, status400)
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Handler.WarpTLS.Simple (TLSConfig (..), startWarpServer)
@@ -62,10 +62,17 @@ mkApp vaultPath vaultVar = do
           mainContent = toHtmlRaw $ runAppHtml view renderMainContent
       S.html $ renderText $ layout (toText vaultPath) mainContent
 
-    S.post "/inbox/add" $ do
-      taskText <- S.formParam "text"
-      liftIO $ appendToInbox vaultPath taskText
-      S.text "OK"
+    S.post "/thought/add" $ do
+      thought <- S.formParam "text"
+      result <- liftIO $ appendToDailyNote vaultPath thought
+      case result of
+        Success -> S.text "OK"
+        NoDailyNotesConfig -> do
+          S.status status400
+          S.text "Daily notes not configured in Obsidian"
+        NoDailyNoteExists -> do
+          S.status status400
+          S.text "Today's daily note does not exist"
 
     -- HTMX endpoint for daily note content switching
     S.get "/daily/:day" $ do

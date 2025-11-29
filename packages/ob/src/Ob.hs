@@ -11,10 +11,12 @@ module Ob (
   DailyNotesConfig (..),
   getVault,
   withLiveVault,
+  getTodayNotePath,
+  loadDailyNotesConfig,
 )
 where
 
-import Ob.DailyNotes (DailyNote (..), DailyNotesConfig (..))
+import Ob.DailyNotes (DailyNote (..), DailyNotesConfig (..), getTodayNotePath, loadDailyNotesConfig)
 import Ob.Note (Note (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Vault (Vault (..), getVault, withLiveVault)

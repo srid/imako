@@ -3,7 +3,6 @@ module Imako.UI.Layout (
 )
 where
 
-import Imako.UI.Inbox (inboxInputForm)
 import Imako.UI.PWA (pwaMeta)
 import Lucid
 
@@ -38,7 +37,5 @@ layout vaultPath mainContent =
             toHtml vaultPath
         -- Main content card
         div_ [class_ "bg-white dark:bg-gray-950 rounded-xl shadow-sm border border-indigo-600 dark:border-indigo-500 p-6 sm:p-8 -mt-px"] $ do
-          -- Inbox quick-add form (static, not swapped by SSE)
-          inboxInputForm
-          -- Tasks content (swapped by SSE)
+          -- Content (swapped by SSE)
           div_ [id_ "task-content", class_ "group", hxExt_ "sse", sseConnect_ "/events", sseSwap_ "message"] mainContent

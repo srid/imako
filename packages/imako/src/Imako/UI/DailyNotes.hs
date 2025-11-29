@@ -13,6 +13,7 @@ module Imako.UI.DailyNotes (
 import Data.List qualified as List
 import Data.Time (Day, defaultTimeLocale, formatTime)
 import Imako.Core (AppView (..))
+import Imako.UI.DailyNoteInput (dailyNoteInputForm)
 import Imako.UI.Tasks (obsidianEditButton)
 import Imako.Web.Lucid (hxGet_, hxSwapOob_, hxSwap_, hxTarget_, liftHtml)
 import Lucid
@@ -26,6 +27,9 @@ renderThisMoment :: (MonadReader AppView m) => HtmlT m ()
 renderThisMoment = do
   view <- ask
   div_ [class_ "mb-6"] $ do
+    -- Daily note input form at the top
+    liftHtml dailyNoteInputForm
+
     -- Sidebar layout: dates on left, content on right (max height with scroll)
     div_ [class_ "flex max-h-96 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden"] $ do
       -- Left sidebar: vertical date tabs
