@@ -14,9 +14,10 @@ module Ob.DailyNotes (
 
 import Data.Aeson (FromJSON (..), (.!=), (.:?))
 import Data.Aeson qualified as Aeson
-import Data.Text qualified as T
 import Data.Time (Day, defaultTimeLocale, formatTime, parseTimeM)
 import System.FilePath (takeBaseName, takeDirectory, (</>))
+import Text.Megaparsec (Parsec, anySingle, eof, parse, try)
+import Text.Megaparsec.Char (string)
 import Text.Pandoc.Definition (Pandoc)
 
 -- | Configuration for Obsidian's daily notes plugin
@@ -66,20 +67,26 @@ parseDailyNoteDate config path =
 
 -- | Convert moment.js date format to Haskell's time format
 momentToHaskellFormat :: Text -> String
-momentToHaskellFormat = toString . go
-  where
-    go :: Text -> Text
-    go t
-      | "YYYY" `T.isPrefixOf` t = "%Y" <> go (T.drop 4 t)
-      | "YY" `T.isPrefixOf` t = "%y" <> go (T.drop 2 t)
-      | "MMMM" `T.isPrefixOf` t = "%B" <> go (T.drop 4 t)
-      | "MMM" `T.isPrefixOf` t = "%b" <> go (T.drop 3 t)
-      | "MM" `T.isPrefixOf` t = "%m" <> go (T.drop 2 t)
-      | "DD" `T.isPrefixOf` t = "%d" <> go (T.drop 2 t)
-      | "D" `T.isPrefixOf` t = "%-d" <> go (T.drop 1 t)
-      | otherwise = case T.uncons t of
-          Nothing -> ""
-          Just (c, rest) -> one c <> go rest
+momentToHaskellFormat input =
+  case parse formatParser "" input of
+    Left _ -> "" -- Should not happen with this parser
+    Right result -> result
+
+type Parser = Parsec Void Text
+
+formatParser :: Parser String
+formatParser = concat <$> many formatToken <* eof
+
+formatToken :: Parser String
+formatToken =
+  try (string "YYYY" $> "%Y")
+    <|> try (string "YY" $> "%y")
+    <|> try (string "MMMM" $> "%B")
+    <|> try (string "MMM" $> "%b")
+    <|> try (string "MM" $> "%m")
+    <|> try (string "DD" $> "%d")
+    <|> try (string "D" $> "%-d")
+    <|> (pure <$> anySingle)
 
 -- | Get the expected file path for today's daily note
 getTodayNotePath :: DailyNotesConfig -> Day -> FilePath
