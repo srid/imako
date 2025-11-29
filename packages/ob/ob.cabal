@@ -25,6 +25,7 @@ library
   exposed-modules:
     Ob
     Ob.DailyNotes
+    Ob.Link
     Ob.Markdown
     Ob.Note
     Ob.Task
@@ -69,9 +70,11 @@ library
     , pandoc-types
     , relude
     , stm
+    , text
     , time
     , unionmount
     , unliftio
+    , uri-encode
 
   hs-source-dirs:     src
   default-language:   GHC2021

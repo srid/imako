@@ -12,18 +12,18 @@ import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
 import Imako.Web.Lucid (liftHtml)
 import Lucid
+import Ob (obsidianOpenUrl)
 import Ob.Task (Priority (..), Task (..), TaskStatus (..), renderInlines)
 import Ob.Task.Properties (TaskProperties (..))
 import Ob.Task.Recurrence (formatRecurrence)
-import System.FilePath (takeBaseName, takeFileName)
+import System.FilePath (takeFileName)
 import Web.TablerIcons.Outline qualified as Icon
 
 -- | Render an Obsidian edit button that opens a file in the Obsidian app
 obsidianEditButton :: (MonadReader AppView m) => FilePath -> HtmlT m ()
 obsidianEditButton relativePath = do
-  vaultPath <- asks (.vaultPath)
-  let vaultName = toText $ takeBaseName vaultPath
-      obsidianUrl = "obsidian://open?vault=" <> vaultName <> "&file=" <> toText relativePath
+  vaultName <- asks (.vaultName)
+  let obsidianUrl = obsidianOpenUrl vaultName relativePath
   a_ [href_ obsidianUrl, class_ "p-1 rounded hover:bg-indigo-200 dark:hover:bg-indigo-800 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors [&>svg]:w-4 [&>svg]:h-4", title_ "Edit in Obsidian", onclick_ "event.stopPropagation()"] $
     toHtmlRaw Icon.edit
 
