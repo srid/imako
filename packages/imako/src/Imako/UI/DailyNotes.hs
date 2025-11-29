@@ -21,17 +21,11 @@ import Text.Pandoc (def, runPure, writeHtml5String)
 import Text.Pandoc.Definition (Pandoc)
 import Web.TablerIcons.Outline qualified as Icon
 
--- | Render the "This Moment" section with sidebar layout
+-- | Render the daily notes section with sidebar layout
 renderThisMoment :: (MonadReader AppView m) => HtmlT m ()
 renderThisMoment = do
   view <- ask
   div_ [class_ "mb-6"] $ do
-    -- Section header
-    div_ [class_ "flex items-center gap-2 mb-3"] $ do
-      div_ [class_ "text-indigo-500 dark:text-indigo-400"] $
-        toHtmlRaw Icon.sun
-      h2_ [class_ "text-lg font-semibold text-gray-800 dark:text-gray-200"] "This Moment"
-
     -- Sidebar layout: dates on left, content on right (max height with scroll)
     div_ [class_ "flex max-h-96 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden"] $ do
       -- Left sidebar: vertical date tabs
