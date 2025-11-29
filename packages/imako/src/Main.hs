@@ -113,14 +113,15 @@ main = do
           TLSDisabled -> "http"
           _ -> "https"
         url = protocol <> "://" <> options.host <> ":" <> show options.port
-    runEff . runLogActionStdout options.logLevel $ log Info $ "Starting web server on " <> url
-    Ob.withLiveVault options.path $ \vaultVar -> do
-      app <- mkApp options.path vaultVar
-
-      let settings =
-            Warp.defaultSettings
-              & Warp.setHost (fromString $ toString options.host)
-              & Warp.setPort options.port
-              & Warp.setTimeout 600 -- 10 minutes (for long SSE connections)
-          tlsStateDir = options.path </> ".imako"
-      liftIO $ startWarpServer settings tlsStateDir options.tlsConfig app
+    runEff . runLogActionStdout options.logLevel $ do
+      withLogContext [("context", "App")] $ do
+        log Info $ "Starting web server on " <> url
+        Ob.withLiveVault options.path $ \vaultVar -> do
+          app <- liftIO $ mkApp options.path vaultVar
+          let settings =
+                Warp.defaultSettings
+                  & Warp.setHost (fromString $ toString options.host)
+                  & Warp.setPort options.port
+                  & Warp.setTimeout 600 -- 10 minutes (for long SSE connections)
+              tlsStateDir = options.path </> ".imako"
+          liftIO $ startWarpServer settings tlsStateDir options.tlsConfig app

@@ -8,9 +8,8 @@ module Ob.Vault (
 where
 
 import Effectful (Eff, IOE, withEffToIO, (:>))
-import Effectful qualified
 import Effectful.Colog (Log)
-import Effectful.Colog.Simple (LogContext, Severity (..), log, runLogActionStdout, withLogContext)
+import Effectful.Colog.Simple (LogContext, Severity (..), log, withLogContext)
 import Effectful.Internal.Monad (Limit (Unlimited), Persistence (Ephemeral), UnliftStrategy (ConcUnlift))
 import Effectful.Reader.Static qualified as ER
 
@@ -33,35 +32,40 @@ newtype Vault = Vault
 getTasks :: Vault -> [Task]
 getTasks vault = concatMap tasks (Map.elems vault.notes)
 
--- | Like `withVault` but returns the current snapshot, without monitoring it.
-getVault :: FilePath -> IO Vault
+{- | Like `withVault` but returns the current snapshot, without monitoring it.
+| Like `withVault` but returns the current snapshot, without monitoring it.
+-}
+getVault :: (ER.Reader LogContext :> es, Log (RichMessage IO) :> es, IOE :> es) => FilePath -> Eff es Vault
 getVault path = do
-  Effectful.runEff . runLogActionStdout Info $ do
-    Effectful.Colog.Simple.withLogContext [("context", "Vault")] $ do
-      (notesMap, _) <- mountVault path
-      log Info $ "Model ready; initial docs = " <> show (Map.size notesMap) <> "; sample = " <> show (take 4 $ Map.keys notesMap)
-      pure $ Vault notesMap
+  Effectful.Colog.Simple.withLogContext [("context", "Vault")] $ do
+    (notesMap, _) <- mountVault path
+    log Info $ "Model ready; initial docs = " <> show (Map.size notesMap) <> "; sample = " <> show (take 4 $ Map.keys notesMap)
+    pure $ Vault notesMap
 
 {- | Calls `f` with a `LVar` of `Vault` reflecting its current state in real-time.
 
 Uses `System.UnionMount` to monitor the filesystem for changes.
 -}
-withLiveVault :: FilePath -> (LVar Vault -> IO ()) -> IO ()
+
+{- | Calls `f` with a `LVar` of `Vault` reflecting its current state in real-time.
+
+Uses `System.UnionMount` to monitor the filesystem for changes.
+-}
+withLiveVault :: (ER.Reader LogContext :> es, Log (RichMessage IO) :> es, IOE :> es) => FilePath -> (LVar Vault -> IO ()) -> Eff es ()
 withLiveVault path f = do
-  Effectful.runEff . runLogActionStdout Info $ do
-    Effectful.Colog.Simple.withLogContext [("context", "Vault")] $ do
-      (notesMap0, modelF) <- mountVault path
-      let initialVault = Vault notesMap0
-      log Info $ "Model ready; total docs = " <> show (Map.size notesMap0)
-      modelVar <- LVar.new initialVault
+  Effectful.Colog.Simple.withLogContext [("context", "Vault")] $ do
+    (notesMap0, modelF) <- mountVault path
+    let initialVault = Vault notesMap0
+    log Info $ "Model ready; total docs = " <> show (Map.size notesMap0)
+    modelVar <- LVar.new initialVault
+    withEffToIO (ConcUnlift Ephemeral Unlimited) $ \runInIO -> do
       liftIO $ concurrently_ (f modelVar) $ do
-        modelF $ \newNotesMap -> do
-          Effectful.runEff . runLogActionStdout Info $ do
-            Effectful.Colog.Simple.withLogContext [("context", "Vault")] $ do
-              let newVault = Vault newNotesMap
-              let newTasks = getTasks newVault
-              log Info $ "Model updated; total docs = " <> show (Map.size newNotesMap) <> "; total tasks = " <> show (length newTasks)
-              liftIO $ LVar.set modelVar newVault
+        modelF $ \newNotesMap -> runInIO $ do
+          Effectful.Colog.Simple.withLogContext [("context", "Vault")] $ do
+            let newVault = Vault newNotesMap
+            let newTasks = getTasks newVault
+            log Info $ "Model updated; total docs = " <> show (Map.size newNotesMap) <> "; total tasks = " <> show (length newTasks)
+            liftIO $ LVar.set modelVar newVault
 
 mountVault ::
   (ER.Reader LogContext :> es, Log (RichMessage IO) :> es, IOE :> es) =>
