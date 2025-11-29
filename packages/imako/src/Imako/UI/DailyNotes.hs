@@ -33,19 +33,19 @@ renderThisMoment = do
         toHtmlRaw Icon.sun
       h2_ [class_ "text-lg font-semibold text-gray-800 dark:text-gray-200"] "This Moment"
 
-    -- Sidebar layout: dates on left, content on right
-    div_ [class_ "flex bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden"] $ do
+    -- Sidebar layout: dates on left, content on right (max height with scroll)
+    div_ [class_ "flex max-h-96 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden"] $ do
       -- Left sidebar: vertical date tabs
       liftHtml $ renderDateSidebar view.today view.today view.dailyNotes
 
       -- Right content: selected note (defaults to today)
-      div_ [id_ "daily-note-content", class_ "flex-1 p-4"] $
+      div_ [id_ "daily-note-content", class_ "flex-1 p-4 overflow-y-auto"] $
         renderNoteContentOnly view.today
 
 -- | Render the vertical date sidebar with HTMX tab switching
 renderDateSidebar :: Day -> Day -> [DailyNote] -> Html ()
 renderDateSidebar today selectedDay notes = do
-  nav_ [id_ "daily-note-sidebar", class_ "w-24 flex-shrink-0 bg-indigo-100/50 dark:bg-indigo-900/20 border-r border-indigo-200 dark:border-indigo-800 py-2"] $
+  nav_ [id_ "daily-note-sidebar", class_ "w-20 flex-shrink-0 bg-indigo-100/50 dark:bg-indigo-900/20 border-r border-indigo-200 dark:border-indigo-800 py-1"] $
     renderDateButtons today selectedDay notes
 
 -- | Render the date tab buttons (shared between initial render and OOB updates)
@@ -54,7 +54,7 @@ renderDateButtons today selectedDay notes = do
   forM_ notes $ \note -> do
     let isToday = note.day == today
         isSelected = note.day == selectedDay
-        baseClasses = "block w-full px-3 py-2 text-center transition-colors cursor-pointer"
+        baseClasses = "block w-full px-2 py-1.5 text-center transition-colors cursor-pointer text-sm"
         selectedClasses = "bg-indigo-500 text-white font-medium"
         unselectedClasses = "text-gray-600 dark:text-gray-400 hover:bg-indigo-200/50 dark:hover:bg-indigo-800/30 hover:text-gray-900 dark:hover:text-gray-200"
     button_
@@ -64,12 +64,10 @@ renderDateButtons today selectedDay notes = do
       , class_ $ baseClasses <> " " <> if isSelected then selectedClasses else unselectedClasses
       ]
       $ do
-        div_ [class_ "text-xs font-medium"] $
-          toHtml (formatDayName note.day)
-        div_ [class_ $ "text-lg " <> if isSelected then "font-bold" else ""] $
-          toHtml (formatDayNumber note.day)
-        when isToday $
-          div_ [class_ $ "text-xs " <> if isSelected then "opacity-80" else "text-indigo-500 dark:text-indigo-400"] "Today"
+        -- Compact: "Sat 29" or "Sat 29 •" for today
+        span_ [class_ "font-medium"] $ toHtml (formatDayName note.day)
+        span_ $ toHtml (" " <> formatDayNumber note.day)
+        when isToday $ span_ [class_ "ml-0.5"] "•"
 
 -- | Render content for a specific day (internal, just the note content)
 renderNoteContentOnly :: (MonadReader AppView m) => Day -> HtmlT m ()
@@ -94,7 +92,7 @@ renderDailyNoteWithSidebar selectedDay = do
 -- | Render sidebar with hx-swap-oob for out-of-band update
 renderDateSidebarOob :: Day -> Day -> [DailyNote] -> Html ()
 renderDateSidebarOob today selectedDay notes = do
-  nav_ [id_ "daily-note-sidebar", hxSwapOob_ "true", class_ "w-24 flex-shrink-0 bg-indigo-100/50 dark:bg-indigo-900/20 border-r border-indigo-200 dark:border-indigo-800 py-2"] $
+  nav_ [id_ "daily-note-sidebar", hxSwapOob_ "true", class_ "w-20 flex-shrink-0 bg-indigo-100/50 dark:bg-indigo-900/20 border-r border-indigo-200 dark:border-indigo-800 py-1"] $
     renderDateButtons today selectedDay notes
 
 -- | Render a daily note with its content
