@@ -12,8 +12,9 @@ import Data.Time (Day)
 import Imako.Core.Filter (Filter)
 import Imako.Core.Filter qualified as FilterDef
 import Imako.Core.FolderTree (FolderNode, buildFolderTree)
-import Ob (Task (..), TaskStatus (..), Vault)
-import Ob.Vault (getTasks)
+import Ob (DailyNote (..), Task (..), TaskStatus (..), Vault)
+import Ob.Task (TaskProperties (..))
+import Ob.Vault (getDailyNotes, getTasks)
 import System.FilePath (makeRelative)
 
 {- | The view model for the application
@@ -29,6 +30,12 @@ data AppView = AppView
   -- ^ Current date for date-based comparisons and filtering
   , vaultPath :: FilePath
   -- ^ Path to the vault root directory
+  , todayNote :: Maybe DailyNote
+  -- ^ Today's daily note (the focal point of "this moment")
+  , recentNotes :: [DailyNote]
+  -- ^ Recent daily notes (past 7 days, excluding today) for context
+  , todayTasks :: [Task]
+  -- ^ Tasks due today (for unified "this moment" view)
   }
   deriving stock (Show, Eq)
 
@@ -47,9 +54,25 @@ mkAppView today vaultPath vault =
           Map.empty
           (incomplete <> completedTasks)
       tree = buildFolderTree groupedAll
+      -- Daily notes processing
+      allDailyNotes = getDailyNotes vault
+      todayNote' = List.find (\dn -> dn.day == today) allDailyNotes
+      -- Recent notes: past 7 days excluding today, sorted most recent first
+      recentNotes' = take 7 $ filter (\dn -> dn.day < today) allDailyNotes
+      -- Tasks due today (for unified "this moment" view)
+      todayTasks' = filter (isDueToday today) incomplete
    in AppView
         { folderTree = tree
         , filters = FilterDef.filters
         , today = today
         , vaultPath = vaultPath
+        , todayNote = todayNote'
+        , recentNotes = recentNotes'
+        , todayTasks = todayTasks'
         }
+
+-- | Check if a task is due today
+isDueToday :: Day -> Task -> Bool
+isDueToday today task =
+  task.properties.dueDate == Just today
+    || task.properties.scheduledDate == Just today

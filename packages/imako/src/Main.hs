@@ -9,6 +9,7 @@ import Data.LVar qualified as LVar
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.CLI qualified as CLI
 import Imako.Core (AppView (..), mkAppView)
+import Imako.UI.DailyNotes (renderThisMoment)
 import Imako.UI.Filters (renderFilterBar)
 import Imako.UI.FolderTree (renderFolderTree)
 import Imako.UI.Inbox (appendToInbox)
@@ -30,7 +31,10 @@ import Web.Scotty qualified as S
 
 renderMainContent :: (MonadReader AppView m) => HtmlT m ()
 renderMainContent = do
-  -- Filter Bar
+  -- "This Moment" section - today's note + tasks due today
+  renderThisMoment
+
+  -- Filter Bar for tasks
   renderFilterBar
 
   -- Tasks section with hierarchical folder structure

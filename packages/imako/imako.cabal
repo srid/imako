@@ -99,6 +99,7 @@ executable imako
     Imako.Core
     Imako.Core.Filter
     Imako.Core.FolderTree
+    Imako.UI.DailyNotes
     Imako.UI.Filters
     Imako.UI.FolderTree
     Imako.UI.Inbox

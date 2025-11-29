@@ -24,6 +24,7 @@ library
   import:             warnings
   exposed-modules:
     Ob
+    Ob.DailyNotes
     Ob.Markdown
     Ob.Note
     Ob.Task

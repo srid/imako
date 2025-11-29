@@ -7,11 +7,14 @@ module Ob (
   Task (..),
   TaskStatus (..),
   Vault (..),
+  DailyNote (..),
+  DailyNotesConfig (..),
   getVault,
   withLiveVault,
 )
 where
 
+import Ob.DailyNotes (DailyNote (..), DailyNotesConfig (..))
 import Ob.Note (Note (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Vault (Vault (..), getVault, withLiveVault)
