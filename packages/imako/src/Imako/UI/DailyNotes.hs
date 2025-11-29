@@ -13,10 +13,10 @@ module Imako.UI.DailyNotes (
 import Data.List qualified as List
 import Data.Time (Day, defaultTimeLocale, formatTime)
 import Imako.Core (AppView (..))
-import Imako.UI.Tasks (obsidianEditButton)
 import Imako.Web.Lucid (hxGet_, hxSwapOob_, hxSwap_, hxTarget_, liftHtml)
 import Lucid
 import Ob (DailyNote (..))
+import System.FilePath (takeBaseName)
 import Text.Pandoc (def, runPure, writeHtml5String)
 import Text.Pandoc.Definition (Pandoc)
 import Web.TablerIcons.Outline qualified as Icon
@@ -97,13 +97,18 @@ renderDateSidebarOob today selectedDay notes = do
 -- | Render a daily note with its content
 renderNoteView :: (MonadReader AppView m) => Bool -> DailyNote -> HtmlT m ()
 renderNoteView _isToday note = do
-  -- Edit button (top right)
-  div_ [class_ "group/note flex justify-end mb-2"] $
-    obsidianEditButton note.notePath
+  vaultPath <- asks (.vaultPath)
+  let vaultName = toText $ takeBaseName vaultPath
+      obsidianUrl = "obsidian://open?vault=" <> vaultName <> "&file=" <> toText note.notePath
+  -- Container with relative positioning for edit button
+  div_ [class_ "relative"] $ do
+    -- Edit button (absolute top right, always visible)
+    a_ [href_ obsidianUrl, class_ "absolute top-0 right-0 p-1 rounded hover:bg-indigo-200 dark:hover:bg-indigo-800 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors [&>svg]:w-4 [&>svg]:h-4", title_ "Edit in Obsidian"] $
+      toHtmlRaw Icon.edit
 
-  -- Note content rendered from Pandoc
-  div_ [class_ "prose prose-sm dark:prose-invert max-w-none"] $
-    toHtmlRaw (renderPandoc note.noteContent)
+    -- Note content rendered from Pandoc
+    div_ [class_ "prose prose-sm dark:prose-invert max-w-none"] $
+      toHtmlRaw (renderPandoc note.noteContent)
 
 -- | Render Pandoc document to HTML
 renderPandoc :: Pandoc -> Text
