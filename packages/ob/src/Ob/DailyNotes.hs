@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+
 {- | Daily notes configuration and types for Obsidian notebooks.
 
 Reads configuration from .obsidian/daily-notes.json.
@@ -12,27 +14,26 @@ module Ob.DailyNotes (
   momentToHaskellFormat,
 ) where
 
-import Data.Aeson (FromJSON (..), (.:), (.:?))
+import Data.Aeson (FromJSON)
 import Data.Aeson qualified as Aeson
 import Data.Text qualified as T
 import Data.Time (Day, defaultTimeLocale, formatTime, parseTimeM)
 import System.FilePath (takeBaseName, takeDirectory, (</>))
 import Text.Pandoc.Definition (Pandoc)
 
+-- | Default date format for daily notes (moment.js style)
+defaultFormat :: Text
+defaultFormat = "YYYY-MM-DD"
+
 -- | Configuration for Obsidian's daily notes plugin
 data DailyNotesConfig = DailyNotesConfig
   { folder :: Maybe FilePath
   -- ^ Folder where daily notes are stored (relative to vault root)
-  , format :: Text
-  -- ^ Date format string (moment.js style, e.g., "YYYY-MM-DD")
+  , format :: Maybe Text
+  -- ^ Date format string (moment.js style, e.g., "YYYY-MM-DD"). Defaults to "YYYY-MM-DD".
   }
   deriving stock (Show, Eq, Generic)
-
-instance FromJSON DailyNotesConfig where
-  parseJSON = Aeson.withObject "DailyNotesConfig" $ \o ->
-    DailyNotesConfig
-      <$> o .:? "folder"
-      <*> (o .: "format" <|> pure "YYYY-MM-DD")
+  deriving anyclass (FromJSON)
 
 -- | A daily note with its associated date and content
 data DailyNote = DailyNote
@@ -63,7 +64,7 @@ isDailyNote config path =
 parseDailyNoteDate :: DailyNotesConfig -> FilePath -> Maybe Day
 parseDailyNoteDate config path =
   let baseName = takeBaseName path
-      haskellFormat = momentToHaskellFormat config.format
+      haskellFormat = momentToHaskellFormat $ fromMaybe defaultFormat config.format
    in parseTimeM True defaultTimeLocale haskellFormat baseName
 
 -- | Convert moment.js date format to Haskell's time format
@@ -86,7 +87,7 @@ momentToHaskellFormat = toString . go
 -- | Get the expected file path for today's daily note
 getTodayNotePath :: DailyNotesConfig -> Day -> FilePath
 getTodayNotePath config day =
-  let haskellFormat = momentToHaskellFormat config.format
+  let haskellFormat = momentToHaskellFormat $ fromMaybe defaultFormat config.format
       filename = formatTime defaultTimeLocale haskellFormat day <> ".md"
    in case config.folder of
         Nothing -> filename
