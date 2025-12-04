@@ -12,7 +12,7 @@ import Control.Monad.Logger (LogLevel (..), MonadLogger, filterLogger, runStdout
 import Data.LVar (LVar)
 import Data.LVar qualified as LVar
 import Data.Map.Strict qualified as Map
-import Ob.DailyNotes (DailyNote (..), DailyNotesConfig, isDailyNote, loadDailyNotesConfig, parseDailyNoteDate)
+import Ob.DailyNotes (DailyNote (..), DailyNotesConfig, loadDailyNotesConfig, mkDailyNote)
 import Ob.Note (Note (..), parseNote)
 import Ob.Task (Task)
 import System.FilePath ((</>))
@@ -37,12 +37,7 @@ getDailyNotes vault = case vault.dailyNotesConfig of
   Just config ->
     let matchingNotes =
           mapMaybe
-            ( \(path, note) -> do
-                -- Only include notes that match both folder and date format
-                guard $ isDailyNote config path
-                day <- parseDailyNoteDate config path
-                pure $ DailyNote day path note.content
-            )
+            (\(path, note) -> mkDailyNote config path note.content)
             (Map.toList vault.notes)
      in sortOn (Down . (.day)) matchingNotes
 

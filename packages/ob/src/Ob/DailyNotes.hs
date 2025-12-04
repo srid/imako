@@ -6,6 +6,7 @@ module Ob.DailyNotes (
   DailyNotesConfig (..),
   DailyNote (..),
   loadDailyNotesConfig,
+  mkDailyNote,
   isDailyNote,
   parseDailyNoteDate,
   getTodayNotePath,
@@ -62,6 +63,15 @@ loadDailyNotesConfig vaultPath = do
         Left err -> error $ "Failed to parse " <> toText configPath <> ": " <> toText err
         Right config -> pure $ Just config
     else pure Nothing
+
+{- | Try to construct a DailyNote from a file path and content
+Returns Nothing if the path doesn't match the daily notes pattern
+-}
+mkDailyNote :: DailyNotesConfig -> FilePath -> Pandoc -> Maybe DailyNote
+mkDailyNote config path content = do
+  guard $ isDailyNote config path
+  day <- parseDailyNoteDate config path
+  pure $ DailyNote day path content
 
 -- | Check if a file path matches the daily notes pattern
 isDailyNote :: DailyNotesConfig -> FilePath -> Bool
