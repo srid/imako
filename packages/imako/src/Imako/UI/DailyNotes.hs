@@ -18,8 +18,9 @@ import Imako.UI.Tasks (obsidianEditButton)
 import Imako.Web.Lucid (hxGet_, hxSwapOob_, hxSwap_, hxTarget_, liftHtml)
 import Lucid
 import Ob (DailyNote (..))
-import Text.Pandoc (def, runPure, writeHtml5String)
+import Text.Pandoc (runPure, writeHtml5String)
 import Text.Pandoc.Definition (Pandoc)
+import Text.Pandoc.Options (WrapOption (..), WriterOptions (..), def, writerWrapText)
 import Web.TablerIcons.Outline qualified as Icon
 
 -- | Render the daily notes section with sidebar layout
@@ -108,9 +109,10 @@ renderNoteView _isToday note = do
 -- | Render Pandoc document to HTML
 renderPandoc :: Pandoc -> Text
 renderPandoc doc =
-  case runPure (writeHtml5String def doc) of
-    Left _ -> ""
-    Right html -> html
+  let writerOptions = def {writerWrapText = WrapNone}
+   in case runPure (writeHtml5String writerOptions doc) of
+        Left _ -> ""
+        Right html -> html
 
 -- | Render placeholder when no note exists for the selected day
 renderNoNoteForDay :: Day -> Html ()
