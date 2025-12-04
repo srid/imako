@@ -111,7 +111,7 @@ renderPandoc :: Pandoc -> Text
 renderPandoc doc =
   let writerOptions = def {writerWrapText = WrapNone}
    in case runPure (writeHtml5String writerOptions doc) of
-        Left _ -> ""
+        Left err -> "<div class='text-red-600 dark:text-red-400 p-4 border border-red-300 dark:border-red-700 rounded'>Error rendering content: " <> show err <> "</div>"
         Right html -> html
 
 -- | Render placeholder when no note exists for the selected day
