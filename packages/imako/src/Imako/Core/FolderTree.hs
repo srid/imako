@@ -1,9 +1,17 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Imako.Core.FolderTree where
+module Imako.Core.FolderTree (
+  FolderNode (..),
+  buildFolderTree,
+  hasDueTasks,
+  isTaskDue,
+) where
 
 import Data.Map.Strict qualified as Map
+import Data.Time (Day)
 import Ob (Task)
+import Ob.Task (TaskProperties (..))
+import Ob.Task qualified
 import System.FilePath (splitDirectories)
 
 -- | Hierarchical folder structure for organizing tasks
@@ -35,3 +43,20 @@ buildFolderTree = Map.foldlWithKey' insertFile emptyNode
           existingSubfolder = Map.findWithDefault emptyNode subfolderName node.subfolders
           updatedSubfolder = insertPath existingSubfolder rest tasks
        in node {subfolders = Map.insert subfolderName updatedSubfolder node.subfolders}
+
+-- | Check if a task is due (incomplete/in-progress and due date <= today)
+isTaskDue :: Day -> Task -> Bool
+isTaskDue today task =
+  task.status `elem` [Ob.Task.Incomplete, Ob.Task.InProgress]
+    && maybe False (<= today) task.properties.dueDate
+
+-- | Recursively check if folder node has any due tasks
+hasDueTasks :: Day -> FolderNode -> Bool
+hasDueTasks today node =
+  let
+    -- Check files in this folder
+    filesDue = any (any (isTaskDue today)) (Map.elems node.files)
+    -- Check subfolders
+    subfoldersDue = any (hasDueTasks today) (Map.elems node.subfolders)
+   in
+    filesDue || subfoldersDue

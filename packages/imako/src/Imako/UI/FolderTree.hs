@@ -7,7 +7,7 @@ where
 
 import Data.Map.Strict qualified as Map
 import Imako.Core (AppView (..))
-import Imako.Core.FolderTree (FolderNode (..))
+import Imako.Core.FolderTree (FolderNode (..), hasDueTasks)
 import Lucid
 import Ob.Task (Task)
 import Web.TablerIcons.Outline qualified as Icon
@@ -34,6 +34,10 @@ renderFolder :: (MonadReader AppView m) => FilePath -> (FilePath -> [Task] -> Ht
 renderFolder vaultPath renderLeaf currentPath folderName subNode = do
   let fullPath = if currentPath == "" then folderName else currentPath <> "/" <> folderName
 
+  -- Check for due tasks
+  today <- asks (.today)
+  let hasDue = hasDueTasks today subNode
+
   details_ [class_ "group/folder", open_ "", term "data-folder-path" fullPath] $ do
     summary_ [class_ "list-none cursor-pointer -mx-2 px-2 py-1 rounded-md bg-slate-600 dark:bg-gray-200 hover:bg-slate-500 dark:hover:bg-gray-300 flex items-center gap-2 text-sm font-medium text-white dark:text-gray-900 select-none transition-colors"] $ do
       -- Chevron
@@ -44,6 +48,10 @@ renderFolder vaultPath renderLeaf currentPath folderName subNode = do
       div_ [class_ "flex items-center gap-1.5"] $ do
         div_ [class_ "text-gray-300 dark:text-gray-700"] $ toHtmlRaw Icon.folder
         span_ $ toHtml folderName
+
+      -- Due indicator
+      when hasDue $
+        div_ [class_ "w-2 h-2 rounded-full bg-red-500 ml-auto mr-1", title_ "Contains due tasks"] mempty
 
     -- Folder contents (indented)
     div_ [class_ "pl-4 mt-2 flex flex-col gap-2"] $

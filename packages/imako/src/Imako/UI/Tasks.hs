@@ -10,6 +10,7 @@ where
 import Data.Time (defaultTimeLocale, formatTime)
 import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
+import Imako.Core.FolderTree (isTaskDue)
 import Imako.Web.Lucid (liftHtml)
 import Lucid
 import Ob (obsidianOpenUrl)
@@ -30,11 +31,15 @@ obsidianEditButton relativePath = do
 -- | Render a file as a tree node containing tasks
 fileTreeItem :: (MonadReader AppView m) => FilePath -> [Task] -> HtmlT m ()
 fileTreeItem sourceFile tasks = do
+  view <- ask
   let filename = takeFileName sourceFile
       -- Calculate completion stats
       total = length tasks
       completed = length $ filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       progress = if total == 0 then 0 else (fromIntegral completed / fromIntegral total) * 100 :: Double
+
+      -- Check for due tasks
+      hasDue = any (isTaskDue view.today) tasks
 
   details_ [class_ "group/file", open_ "", term "data-folder-path" (toText sourceFile)] $ do
     summary_ [class_ "list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md bg-slate-600 dark:bg-gray-200 hover:bg-slate-500 dark:hover:bg-gray-300 flex items-center gap-2 text-sm font-medium text-white dark:text-gray-900 select-none transition-colors mb-1"] $ do
@@ -46,6 +51,10 @@ fileTreeItem sourceFile tasks = do
       div_ [class_ "flex items-center gap-2 flex-1 min-w-0"] $ do
         div_ [class_ "text-gray-300 dark:text-gray-700"] $ toHtmlRaw Icon.file
         span_ [class_ "truncate"] $ toHtml filename
+
+        -- Due indicator
+        when hasDue $
+          div_ [class_ "w-2 h-2 rounded-full bg-red-500 flex-shrink-0", title_ "Contains due tasks"] mempty
 
         -- Progress bar (mini)
         when (total > 0) $
