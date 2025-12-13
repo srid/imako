@@ -5,6 +5,7 @@ module Imako.Core.FolderTree (
   buildFolderTree,
   hasDueTasks,
   isTaskDue,
+  flattenTree,
 ) where
 
 import Data.Map.Strict qualified as Map
@@ -60,3 +61,20 @@ hasDueTasks today node =
     subfoldersDue = any (hasDueTasks today) (Map.elems node.subfolders)
    in
     filesDue || subfoldersDue
+
+-- | Recursively flatten folder ancestry where possible
+flattenTree :: FolderNode -> FolderNode
+flattenTree node =
+  let flattenedSubs = Map.map flattenTree node.subfolders
+      -- Check if a child folder can be merged with its parent
+      -- (i.e. if the child has no files and exactly one subfolder)
+      collapse :: (Text, FolderNode) -> (Text, FolderNode)
+      collapse (name, n)
+        | Map.null n.files && Map.size n.subfolders == 1 =
+            case Map.toList n.subfolders of
+              [(childName, childNode)] -> collapse (name <> "/" <> childName, childNode)
+              _ -> (name, n) -- Should not happen
+        | otherwise = (name, n)
+
+      collapsedSubsList = map collapse (Map.toList flattenedSubs)
+   in node {subfolders = Map.fromList collapsedSubsList}

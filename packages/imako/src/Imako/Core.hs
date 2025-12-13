@@ -12,6 +12,7 @@ import Data.Time (Day)
 import Imako.Core.Filter (Filter)
 import Imako.Core.Filter qualified as FilterDef
 import Imako.Core.FolderTree (FolderNode, buildFolderTree)
+import Imako.Core.FolderTree qualified as FolderTree
 import Ob (DailyNote (..), Task (..), TaskStatus (..), Vault)
 import Ob.Vault (getDailyNotes, getTasks)
 import System.FilePath (makeRelative, takeBaseName)
@@ -50,7 +51,7 @@ mkAppView today vaultPath vault =
           )
           Map.empty
           (incomplete <> completedTasks)
-      tree = buildFolderTree groupedAll
+      tree = FolderTree.flattenTree $ buildFolderTree groupedAll
       -- Daily notes: today + past 7 days, sorted most recent first
       allDailyNotes = getDailyNotes vault
       dailyNotes' = take 8 $ filter (\dn -> dn.day <= today) allDailyNotes
