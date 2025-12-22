@@ -70,8 +70,8 @@ renderDateButtons today selectedDay notes = do
       , class_ $ baseClasses <> " " <> if isSelected then selectedClasses else unselectedClasses
       ]
       $ do
-        -- Compact: "Sat 29" or "Sat 29 •" for today
-        span_ [class_ "font-medium"] $ toHtml (formatDayName note.day)
+        -- Compact: "Dec 22" or "Dec 22 •" for today
+        span_ [class_ "font-medium"] $ toHtml (formatMonthShort note.day)
         span_ $ toHtml (" " <> formatDayNumber note.day)
         when isToday $ span_ [class_ "ml-0.5"] "•"
 
@@ -137,9 +137,9 @@ renderNoNoteForDay day = do
 formatDay :: Day -> Text
 formatDay = toText . formatTime defaultTimeLocale "%A, %b %-d"
 
--- | Format day name (e.g., "Sat")
-formatDayName :: Day -> Text
-formatDayName = toText . formatTime defaultTimeLocale "%a"
+-- | Format month short name (e.g., "Dec")
+formatMonthShort :: Day -> Text
+formatMonthShort = toText . formatTime defaultTimeLocale "%b"
 
 -- | Format day number (e.g., "29")
 formatDayNumber :: Day -> Text
