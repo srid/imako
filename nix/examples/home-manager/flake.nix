@@ -118,8 +118,8 @@
             # Check if the service is listening on port 4009
             machine.wait_for_open_port(4009)
 
-            # Test frontend is served (index.html)
-            machine.succeed("curl -k -f https://localhost:4009")
+            # Test frontend is served (index.html with Imako reference)
+            machine.succeed("curl -k -f https://localhost:4009 | grep -q 'Imako'")
 
             # Test API endpoint returns JSON
             machine.succeed("curl -k -f https://localhost:4009/api/view | grep -q 'vaultPath'")
