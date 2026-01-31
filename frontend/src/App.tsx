@@ -15,6 +15,14 @@ const Icons = {
   calendarStart: "▶",
   repeat: "🔁",
   tag: "🏷️",
+  edit: "✏️",
+};
+
+// Generate obsidian:// URL to open a file in Obsidian
+const obsidianOpenUrl = (vaultName: string, relativePath: string): string => {
+  const encodedVault = encodeURIComponent(vaultName);
+  const encodedPath = encodeURIComponent(relativePath);
+  return `obsidian://open?vault=${encodedVault}&file=${encodedPath}`;
 };
 
 // LocalStorage keys
@@ -276,6 +284,16 @@ const FileNode: Component<{ filename: string; tasks: Task[]; today: string; path
           <span class="text-xs text-gray-400 font-normal">
             {completed()}/{total()}
           </span>
+
+          {/* Edit link */}
+          <a
+            href={obsidianOpenUrl(vault.vaultName, `${props.path}/${props.filename}`)}
+            class="ml-2 opacity-0 group-hover/file:opacity-100 transition-opacity text-gray-400 hover:text-white"
+            title="Open in Obsidian"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {Icons.edit}
+          </a>
         </summary>
 
         {/* Tasks list */}
