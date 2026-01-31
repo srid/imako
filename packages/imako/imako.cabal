@@ -51,41 +51,19 @@ common shared
     , aeson
     , async
     , base
-    , commonmark-simple
     , containers
-    , data-default
     , directory
     , filepath
-    , filepattern
-    , htmx
-    , htmx-lucid
-    , htmx-servant
-    , http-types
-    , lucid2
-    , lvar                   >=0.2
-    , monad-logger
-    , mtl
+    , lvar                  >=0.2
     , ob
-    , optics-core
     , optparse-applicative
-    , pandoc
-    , pandoc-types
-    , profunctors
-    , relude                 >=1.0
-    , scotty
+    , relude                >=1.0
     , servant
-    , servant-event-stream
     , servant-server
-    , shower
-    , tabler-icons
     , text
     , time
-    , unionmount             >=0.3
-    , unliftio-core
     , wai
     , wai-app-static
-    , wai-extra
-    , wai-middleware-static
     , wai-websockets
     , warp
     , warp-tls-simple
