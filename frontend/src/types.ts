@@ -1,6 +1,22 @@
 /**
  * TypeScript types matching the Haskell backend.
- * These mirror the ToJSON instances in the Haskell code.
+ *
+ * IMPORTANT: These types must be kept in sync with the Haskell ToJSON instances.
+ *
+ * Source files:
+ *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs
+ *   - Priority, TaskProperties: packages/ob/src/Ob/Task/Properties.hs
+ *   - FolderNode: packages/imako/src/Imako/Core/FolderTree.hs
+ *   - Filter: packages/imako/src/Imako/Core/Filter.hs
+ *   - DailyNote: packages/ob/src/Ob/DailyNotes.hs
+ *   - AppView: packages/imako/src/Imako/Core.hs
+ *
+ * When adding/modifying types:
+ *   1. Update the Haskell ToJSON instance
+ *   2. Update this file to match
+ *   3. Verify with: curl -s https://localhost:4009/api/view | jq
+ *
+ * TODO: Consider auto-generating with aeson-typescript or similar.
  */
 
 export type TaskStatus = "Incomplete" | "InProgress" | "Completed" | "Cancelled";
