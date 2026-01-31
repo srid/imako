@@ -19,6 +19,8 @@ import Ob qualified
 import Options.Applicative (execParser)
 import Servant
 import System.FilePath ((</>))
+import WaiAppStatic.Storage.Filesystem (defaultWebAppSettings)
+import WaiAppStatic.Types (ssIndices, unsafeToPiece)
 
 -- | Full API: JSON endpoints + static file serving
 type FullAPI = ImakoAPI :<|> Raw
@@ -32,7 +34,12 @@ mkApp vaultPath vaultVar = do
     lookupEnv "IMAKO_FRONTEND_PATH" >>= \case
       Just p -> pure p
       Nothing -> pure "frontend/dist"
-  let static = serveDirectoryWebApp frontendPath
+  -- Configure static file settings to serve index.html for root
+  let settings =
+        (defaultWebAppSettings $ fromString frontendPath)
+          { ssIndices = [unsafeToPiece "index.html"]
+          }
+      static = serveDirectoryWith settings
       app = serve (Proxy @FullAPI) (api :<|> static)
       wsHandler = wsApp vaultPath vaultVar
   pure $ websocketsOr WS.defaultConnectionOptions wsHandler app

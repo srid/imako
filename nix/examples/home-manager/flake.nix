@@ -93,10 +93,10 @@
             machine.start()
             machine.wait_for_unit("multi-user.target")
 
-            # Create vault directory with a test note
+            # Create vault directory with a test note containing a task
             machine.succeed("mkdir -p /home/testuser/notes")
             machine.succeed("chown -R testuser:users /home/testuser/notes")
-            machine.succeed("echo '# Test Note' > /home/testuser/notes/test.md")
+            machine.succeed("echo '# Test Note\n\n- [ ] Sample task' > /home/testuser/notes/test.md")
             machine.succeed("chown testuser:users /home/testuser/notes/test.md")
 
             # Enable lingering for testuser to allow user services to run
@@ -118,11 +118,15 @@
             # Check if the service is listening on port 4009
             machine.wait_for_open_port(4009)
 
-            # Test HTTP response
+            # Test frontend is served (index.html)
             machine.succeed("curl -k -f https://localhost:4009")
 
-            print("✅ Imako home-manager service is running and responding to HTTP requests")
+            # Test API endpoint returns JSON
+            machine.succeed("curl -k -f https://localhost:4009/api/view | grep -q 'vaultPath'")
+
+            print("✅ Imako home-manager service is running, serving frontend and API")
           '';
+
         };
       };
     };
