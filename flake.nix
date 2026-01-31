@@ -20,16 +20,6 @@
     commonmark-wikilink.url = "github:srid/commonmark-wikilink";
     commonmark-wikilink.flake = false;
 
-    htmx.url = "github:JonathanLorimer/htmx";
-    htmx.flake = false;
-    co-log-effectful.url = "github:eldritch-cookie/co-log-effectful";
-    htmx-extensions.url = "github:juspay/htmx-extensions/sse-unload"; # https://github.com/bigskysoftware/htmx-extensions/pull/147
-    htmx-extensions.flake = false;
-    # https://github.com/bflyblue/servant-event-stream/pull/13
-    servant-event-stream.url = "github:bflyblue/servant-event-stream";
-    servant-event-stream.flake = false;
-    tabler-icons.url = "github:juspay/tabler-icons-hs";
-    tabler-icons.flake = false;
     warp-tls-simple.url = "github:srid/warp-tls-simple";
     warp-tls-simple.flake = false;
   };

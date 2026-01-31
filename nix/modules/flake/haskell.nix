@@ -24,12 +24,6 @@
         lvar.source = inputs.lvar;
         commonmark-simple.source = inputs.commonmark-simple;
         commonmark-wikilink.source = inputs.commonmark-wikilink;
-
-        htmx.source = inputs.htmx + /htmx;
-        htmx-lucid.source = inputs.htmx + /htmx-lucid;
-        htmx-servant.source = inputs.htmx + /htmx-servant;
-        servant-event-stream.source = inputs.servant-event-stream;
-        tabler-icons.source = inputs.tabler-icons;
       };
 
       settings = {

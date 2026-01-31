@@ -22,8 +22,6 @@ extra-source-files:
   LICENSE
   README.md
 
-data-files:         static/**/*.js
-
 common shared
   ghc-options:
     -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
@@ -83,12 +81,3 @@ executable imako
     Imako.Core
     Imako.Core.Filter
     Imako.Core.FolderTree
-    Imako.UI.DailyNoteInput
-    Imako.UI.DailyNotes
-    Imako.UI.Filters
-    Imako.UI.FolderTree
-    Imako.UI.Layout
-    Imako.UI.PWA
-    Imako.UI.Tasks
-    Imako.Web.Lucid
-    Imako.Web.Static
