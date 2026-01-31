@@ -7,7 +7,7 @@ import Data.Time (fromGregorian)
 import NeatInterpolation (text)
 import Ob.Markdown (parseMarkdown)
 import Ob.Task
-import Ob.Task.Properties (TaskProperties (..))
+import Ob.Task.Properties ()
 import Ob.Task.Recurrence (formatRecurrence)
 import Test.Hspec
 

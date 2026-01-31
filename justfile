@@ -22,3 +22,15 @@ run:
 # Run tests
 test:
     cabal test all
+
+# Install frontend dependencies
+frontend-install:
+    cd frontend && npm install
+
+# Run frontend dev server (with proxy to backend)
+frontend-dev:
+    cd frontend && npm run dev
+
+# Build frontend for production
+frontend-build:
+    cd frontend && npm run build

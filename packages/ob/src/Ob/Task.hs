@@ -10,6 +10,7 @@ module Ob.Task (
 )
 where
 
+import Data.Aeson (ToJSON (..), object, (.=))
 import Data.Time (Day)
 import Lucid
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
@@ -25,7 +26,8 @@ data TaskStatus
     Cancelled
   | -- | [x] Done
     Completed
-  deriving (Show, Eq)
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 {- | Parent task context containing task hierarchy information.
 
@@ -53,7 +55,23 @@ data Task = Task
   , parentContext :: ParentContext
   -- ^ Parent task hierarchy: descriptions (for breadcrumbs) and start dates (for filtering)
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
+
+-- | Custom ToJSON instance that extracts text from Pandoc inlines
+instance ToJSON Task where
+  toJSON task =
+    object
+      [ "description" .= extractText task.description
+      , "sourceNote" .= task.sourceNote
+      , "status" .= task.status
+      , "dueDate" .= task.properties.dueDate
+      , "scheduledDate" .= task.properties.scheduledDate
+      , "startDate" .= task.properties.startDate
+      , "completedDate" .= task.properties.completedDate
+      , "priority" .= task.properties.priority
+      , "tags" .= task.properties.tags
+      , "parentBreadcrumbs" .= map fst task.parentContext
+      ]
 
 -- | Extract tasks from a Pandoc document
 extractTasks :: FilePath -> Pandoc -> [Task]

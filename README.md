@@ -19,13 +19,19 @@ Project origin: https://x.com/sridca/status/1896560964088271161
 In Nix devShell,
 
 ```sh
-# Or, `just run` if you are Srid.
+# Start the backend API server
 just NOTEBOOK=$HOME/mynotes run
+
+# In another terminal, start the frontend dev server
+just frontend-dev
 ```
+
+Open http://localhost:5173 to view the app.
 
 ## Repository architecture
 
-Imako is written in Haskell. This repository hosts multiple packages:
+Imako is written in Haskell with a SolidJS frontend. This repository hosts:
 
 - `packages/ob`: Haskell library for working with Obsidian vaults
-- `packages/imako`: Main Imako application (uses `ob` package)
+- `packages/imako`: Main Imako backend (API + WebSocket server)
+- `frontend/`: SolidJS SPA (Vite + Tailwind v4)

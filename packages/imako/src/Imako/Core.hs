@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Imako.Core (
@@ -5,6 +6,8 @@ module Imako.Core (
   mkAppView,
 )
 where
+
+import Data.Aeson (ToJSON)
 
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
@@ -35,7 +38,8 @@ data AppView = AppView
   , dailyNotes :: [DailyNote]
   -- ^ All daily notes (today + recent), sorted most recent first
   }
-  deriving stock (Show, Eq)
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 -- | Pure function to transform raw Vault data into AppView
 mkAppView :: Day -> FilePath -> Vault -> AppView

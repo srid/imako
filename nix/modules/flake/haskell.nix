@@ -4,7 +4,7 @@
     inputs.haskell-flake.flakeModule
     (inputs.warp-tls-simple + /flake-module.nix)
   ];
-  perSystem = { self', lib, ... }: {
+  perSystem = { self', lib, pkgs, ... }: {
     haskellProjects.default = {
       projectFlakeName = "imako-monorepo";
       # To avoid unnecessary rebuilds, we filter projectRoot:
@@ -45,8 +45,20 @@
       autoWire = [ "packages" "apps" "checks" ]; # Wire all but the devShell
     };
 
+    # Wrapped imako package with bundled frontend
+    packages.imako-with-frontend = pkgs.symlinkJoin {
+      name = "imako-with-frontend";
+      paths = [ self'.packages.imako ];
+      buildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        # Wrap the imako binary to include frontend/dist
+        wrapProgram $out/bin/imako \
+          --set IMAKO_FRONTEND_PATH ${self'.packages.imako-frontend}
+      '';
+    };
+
     # Default package & app.
-    packages.default = self'.packages.imako;
+    packages.default = self'.packages.imako-with-frontend;
     apps.default = self'.apps.imako;
   };
 }

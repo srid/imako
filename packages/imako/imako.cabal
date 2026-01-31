@@ -52,6 +52,7 @@ common shared
     , async
     , base
     , commonmark-simple
+    , containers
     , data-default
     , directory
     , filepath
@@ -84,8 +85,10 @@ common shared
     , wai
     , wai-extra
     , wai-middleware-static
+    , wai-websockets
     , warp
     , warp-tls-simple
+    , websockets
     , with-utf8
 
   hs-source-dirs:     src
@@ -95,6 +98,8 @@ executable imako
   import:        shared
   main-is:       Main.hs
   other-modules:
+    Imako.API
+    Imako.API.WebSocket
     Imako.CLI
     Imako.Core
     Imako.Core.Filter

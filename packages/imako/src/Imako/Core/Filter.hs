@@ -2,6 +2,7 @@
 
 module Imako.Core.Filter where
 
+import Data.Aeson (ToJSON (..), object, (.=))
 import Data.Time (Day, addDays)
 import Ob (Task (..))
 import Ob.Task (TaskStatus (..))
@@ -23,8 +24,10 @@ instance Show Filter where
   show f = "Filter {filterId = \"" <> toString f.filterId <> "\", filterLabel = \"" <> toString f.filterLabel <> "\"}"
 
 instance Eq Filter where
-  -- Compare by filterId since predicates can't be compared
   (==) f1 f2 = f1.filterId == f2.filterId
+
+instance ToJSON Filter where
+  toJSON f = object ["filterId" .= f.filterId, "filterLabel" .= f.filterLabel]
 
 -- | All available filters
 filters :: [Filter]

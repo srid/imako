@@ -13,7 +13,7 @@ module Ob.DailyNotes (
   momentToHaskellFormat,
 ) where
 
-import Data.Aeson (FromJSON (..), (.!=), (.:?))
+import Data.Aeson (FromJSON (..), ToJSON (..), object, (.!=), (.:?), (.=))
 import Data.Aeson qualified as Aeson
 import Data.Time (Day, defaultTimeLocale, formatTime, parseTimeM)
 import System.Directory (doesFileExist)
@@ -47,6 +47,9 @@ data DailyNote = DailyNote
   -- ^ The parsed content of the note
   }
   deriving stock (Show, Eq)
+
+instance ToJSON DailyNote where
+  toJSON dn = object ["day" .= dn.day, "notePath" .= dn.notePath]
 
 {- | Load daily notes configuration from the vault
 Returns Nothing if the config file doesn't exist.

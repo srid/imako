@@ -13,6 +13,7 @@ module Ob.Task.Recurrence (
   formatRecurrence,
 ) where
 
+import Data.Aeson (ToJSON (..), toJSON)
 import Data.Text qualified as T
 import Text.Megaparsec
 import Text.Megaparsec.Char
@@ -24,7 +25,10 @@ data Recurrence = Recurrence
   , whenDone :: Bool
   -- ^ If True, next occurrence is calculated from completion date rather than original date
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
+
+instance ToJSON Recurrence where
+  toJSON = toJSON . formatRecurrence
 
 -- | The core recurrence pattern
 data RecurrenceRule

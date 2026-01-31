@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Imako.Core.FolderTree (
@@ -8,6 +9,7 @@ module Imako.Core.FolderTree (
   flattenTree,
 ) where
 
+import Data.Aeson (ToJSON)
 import Data.Map.Strict qualified as Map
 import Data.Time (Day)
 import Ob (Task)
@@ -15,12 +17,12 @@ import Ob.Task (TaskProperties (..))
 import Ob.Task qualified
 import System.FilePath (splitDirectories)
 
--- | Hierarchical folder structure for organizing tasks
 data FolderNode = FolderNode
   { subfolders :: Map Text FolderNode
   , files :: Map Text [Task]
   }
-  deriving stock (Show, Eq)
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 -- | Build a folder tree from a map of file paths to task lists
 buildFolderTree :: Map FilePath [Task] -> FolderNode

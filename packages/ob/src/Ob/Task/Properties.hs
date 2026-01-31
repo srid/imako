@@ -9,6 +9,7 @@ module Ob.Task.Properties (
 )
 where
 
+import Data.Aeson (ToJSON (..), object, (.=))
 import Data.Text qualified as T
 import Data.Time (Day, defaultTimeLocale, parseTimeM)
 import Ob.Task.Recurrence (Recurrence, parseRecurrence)
@@ -21,7 +22,8 @@ data Priority
   | Normal -- (no symbol)
   | Low -- 🔽
   | Lowest -- ⏬
-  deriving (Show, Eq, Ord)
+  deriving stock (Show, Eq, Ord, Generic)
+  deriving anyclass (ToJSON)
 
 -- | State for collecting task properties while parsing
 data TaskProperties = TaskProperties
@@ -34,7 +36,19 @@ data TaskProperties = TaskProperties
   , tags :: [Text]
   , recurrence :: Maybe Recurrence
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
+
+instance ToJSON TaskProperties where
+  toJSON p =
+    object
+      [ "startDate" .= p.startDate
+      , "scheduledDate" .= p.scheduledDate
+      , "dueDate" .= p.dueDate
+      , "completedDate" .= p.completedDate
+      , "priority" .= p.priority
+      , "tags" .= p.tags
+      , "recurrence" .= p.recurrence
+      ]
 
 -- | Initial task properties
 initialTaskProperties :: TaskProperties
