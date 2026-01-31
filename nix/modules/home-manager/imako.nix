@@ -11,9 +11,10 @@ in
 
     package = mkOption {
       type = types.package;
-      description = "The Imako package to use";
-      example = literalExpression "inputs.imako.packages.\${pkgs.system}.imako";
+      description = "The Imako package to use (default includes bundled frontend)";
+      example = literalExpression "inputs.imako.packages.\${pkgs.system}.default";
     };
+
 
     vaultDir = mkOption {
       type = types.str;

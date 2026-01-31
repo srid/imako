@@ -1,4 +1,4 @@
-import { Component, onMount, For, Show, createSignal } from "solid-js";
+import { Component, onMount, For, Show, createSignal, createEffect } from "solid-js";
 import { vault, connectVault, fetchVault } from "./store";
 import type { FolderNode, Task, Filter } from "./types";
 
@@ -17,8 +17,28 @@ const Icons = {
   tag: "🏷️",
 };
 
-// Filter state - tracks which filters are active
-const [activeFilters, setActiveFilters] = createSignal<Set<string>>(new Set());
+// LocalStorage keys
+const STORAGE_KEYS = {
+  filters: "imako-filters",
+  collapsed: "imako-collapsed",
+};
+
+// Filter state - tracks which filters are active (persisted)
+const loadFilters = (): Set<string> => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.filters);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const [activeFilters, setActiveFilters] = createSignal<Set<string>>(loadFilters());
+
+// Persist filters whenever they change
+createEffect(() => {
+  localStorage.setItem(STORAGE_KEYS.filters, JSON.stringify([...activeFilters()]));
+});
 
 const toggleFilter = (filterId: string) => {
   setActiveFilters((prev) => {
@@ -27,6 +47,37 @@ const toggleFilter = (filterId: string) => {
       next.delete(filterId);
     } else {
       next.add(filterId);
+    }
+    return next;
+  });
+};
+
+// Collapse state - tracks which nodes are collapsed (persisted)
+const loadCollapsed = (): Set<string> => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.collapsed);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const [collapsedNodes, setCollapsedNodes] = createSignal<Set<string>>(loadCollapsed());
+
+// Persist collapsed state whenever it changes
+createEffect(() => {
+  localStorage.setItem(STORAGE_KEYS.collapsed, JSON.stringify([...collapsedNodes()]));
+});
+
+const isCollapsed = (nodeId: string): boolean => collapsedNodes().has(nodeId);
+
+const toggleCollapse = (nodeId: string) => {
+  setCollapsedNodes((prev) => {
+    const next = new Set(prev);
+    if (next.has(nodeId)) {
+      next.delete(nodeId);
+    } else {
+      next.add(nodeId);
     }
     return next;
   });
@@ -45,6 +96,7 @@ const isTaskVisible = (task: Task, today: string): boolean => {
   if (isPast && !showPast) return false;
   return true;
 };
+
 
 const FilterBar: Component<{ filters: Filter[] }> = (props) => {
   return (
@@ -181,7 +233,8 @@ const TaskItem: Component<{ task: Task; today: string }> = (props) => {
   );
 };
 
-const FileNode: Component<{ filename: string; tasks: Task[]; today: string }> = (props) => {
+const FileNode: Component<{ filename: string; tasks: Task[]; today: string; path: string }> = (props) => {
+  const nodeId = () => `file:${props.path}/${props.filename}`;
   const visibleTasks = () => props.tasks.filter((t) => isTaskVisible(t, props.today));
   const completed = () => props.tasks.filter((t) => t.status === "Completed" || t.status === "Cancelled").length;
   const total = () => props.tasks.length;
@@ -190,7 +243,11 @@ const FileNode: Component<{ filename: string; tasks: Task[]; today: string }> = 
 
   return (
     <Show when={visibleTasks().length > 0}>
-      <details open class="group/file">
+      <details open={!isCollapsed(nodeId())} onToggle={(e) => {
+        const isOpen = (e.target as HTMLDetailsElement).open;
+        if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
+        else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());
+      }} class="group/file">
         <summary class="list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md bg-slate-600 dark:bg-gray-700 hover:bg-slate-500 dark:hover:bg-gray-600 flex items-center gap-2 text-sm font-medium text-white select-none transition-colors mb-1">
           {/* Chevron */}
           <span class="w-4 h-4 flex items-center justify-center text-gray-400 transition-transform group-open/file:rotate-90">
@@ -230,6 +287,7 @@ const FileNode: Component<{ filename: string; tasks: Task[]; today: string }> = 
   );
 };
 
+
 // Helper to check if a folder node has any visible tasks (recursively)
 const folderHasVisibleTasks = (node: FolderNode, today: string): boolean => {
   // Check files in this folder
@@ -248,37 +306,47 @@ const folderHasVisibleTasks = (node: FolderNode, today: string): boolean => {
 };
 
 const FolderTree: Component<{ node: FolderNode; path?: string; today: string }> = (props) => {
+  const currentPath = () => props.path ?? "";
   const folders = () => Object.entries(props.node.subfolders);
   const files = () => Object.entries(props.node.files);
 
   return (
     <div class="flex flex-col gap-2">
       <For each={folders()}>
-        {([name, subnode]) => (
-          <Show when={folderHasVisibleTasks(subnode, props.today)}>
-            <details open class="group/folder">
-              <summary class="list-none cursor-pointer -mx-2 px-2 py-1 rounded-md bg-slate-600 dark:bg-gray-700 hover:bg-slate-500 dark:hover:bg-gray-600 flex items-center gap-2 text-sm font-medium text-white select-none transition-colors">
-                <span class="w-4 h-4 flex items-center justify-center text-gray-300 transition-transform group-open/folder:rotate-90">
-                  {Icons.chevronRight}
-                </span>
-                <span class="flex items-center gap-1.5">
-                  <span class="text-gray-300">{Icons.folder}</span>
-                  <span>{name}</span>
-                </span>
-              </summary>
-              <div class="pl-4 mt-2">
-                <FolderTree node={subnode} path={`${props.path ?? ""}/${name}`} today={props.today} />
-              </div>
-            </details>
-          </Show>
-        )}
+        {([name, subnode]) => {
+          const folderPath = () => `${currentPath()}/${name}`;
+          const nodeId = () => `folder:${folderPath()}`;
+          return (
+            <Show when={folderHasVisibleTasks(subnode, props.today)}>
+              <details open={!isCollapsed(nodeId())} onToggle={(e) => {
+                const isOpen = (e.target as HTMLDetailsElement).open;
+                if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
+                else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());
+              }} class="group/folder">
+                <summary class="list-none cursor-pointer -mx-2 px-2 py-1 rounded-md bg-slate-600 dark:bg-gray-700 hover:bg-slate-500 dark:hover:bg-gray-600 flex items-center gap-2 text-sm font-medium text-white select-none transition-colors">
+                  <span class="w-4 h-4 flex items-center justify-center text-gray-300 transition-transform group-open/folder:rotate-90">
+                    {Icons.chevronRight}
+                  </span>
+                  <span class="flex items-center gap-1.5">
+                    <span class="text-gray-300">{Icons.folder}</span>
+                    <span>{name}</span>
+                  </span>
+                </summary>
+                <div class="pl-4 mt-2">
+                  <FolderTree node={subnode} path={folderPath()} today={props.today} />
+                </div>
+              </details>
+            </Show>
+          );
+        }}
       </For>
       <For each={files()}>
-        {([filename, tasks]) => <FileNode filename={filename} tasks={tasks} today={props.today} />}
+        {([filename, tasks]) => <FileNode filename={filename} tasks={tasks} today={props.today} path={currentPath()} />}
       </For>
     </div>
   );
 };
+
 
 const App: Component = () => {
   onMount(async () => {
