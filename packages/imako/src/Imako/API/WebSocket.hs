@@ -19,7 +19,7 @@ import Ob qualified
 wsApp :: FilePath -> LVar.LVar Ob.Vault -> WS.ServerApp
 wsApp vaultPath vaultVar pending = do
   conn <- WS.acceptRequest pending
-  WS.withPingThread conn 30 pass $ infinitely $ do
+  WS.withPingThread conn 30 pass $ void $ infinitely $ do
     vault <-
       runConcurrently . asum . map Concurrently $
         [ listenDayChange >> LVar.get vaultVar
