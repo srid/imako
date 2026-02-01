@@ -44,12 +44,12 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string; today:
                 if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
                 else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());
               }} class="group/folder">
-                <summary class="list-none cursor-pointer -mx-2 px-2 py-1 rounded-md bg-slate-600 dark:bg-gray-700 hover:bg-slate-500 dark:hover:bg-gray-600 flex items-center gap-2 text-sm font-medium text-white select-none transition-colors">
-                  <span class="w-4 h-4 flex items-center justify-center text-gray-300 transition-transform group-open/folder:rotate-90">
+                <summary class="list-none cursor-pointer -mx-2 px-3 py-2 rounded-lg bg-amber-100 dark:bg-stone-800 hover:bg-amber-200 dark:hover:bg-stone-700 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-200 select-none transition-colors">
+                  <span class="w-4 h-4 flex items-center justify-center text-stone-400 dark:text-stone-500 transition-transform group-open/folder:rotate-90">
                     {Icons.chevronRight}
                   </span>
-                  <span class="flex items-center gap-1.5">
-                    <span class="text-gray-300">{Icons.folder}</span>
+                  <span class="flex items-center gap-2">
+                    <span class="text-amber-600 dark:text-amber-500">{Icons.folder}</span>
                     <span>{name}</span>
                   </span>
                 </summary>

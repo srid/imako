@@ -7,9 +7,9 @@ const TasksPage: Component = () => {
   return (
     <>
       {/* Header */}
-      <header class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{vault.vaultName || "Imako"}</h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">Today: {vault.today}</p>
+      <header class="mb-6">
+        <h1 class="text-3xl font-bold tracking-tight text-stone-800 dark:text-stone-100">{vault.vaultName || "Imako"}</h1>
+        <p class="text-stone-500 dark:text-stone-400 text-sm mt-1">Today: {vault.today}</p>
       </header>
 
       {/* Filter bar */}

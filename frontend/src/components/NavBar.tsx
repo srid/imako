@@ -2,21 +2,24 @@ import { A } from "@solidjs/router";
 
 export const NavBar = () => {
   return (
-    <nav class="flex gap-6 mb-6">
+    <nav class="flex gap-8 mb-8 border-b border-stone-200 dark:border-stone-700 pb-4">
       <A
         href="/tasks"
-        activeClass="text-indigo-600 dark:text-indigo-400 font-semibold"
-        inactiveClass="text-gray-600 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400"
+        activeClass="text-amber-700 dark:text-amber-400 font-semibold border-b-2 border-amber-500 -mb-[17px] pb-4"
+        inactiveClass="text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+        class="text-base"
       >
         Tasks
       </A>
       <A
         href="/notes"
-        activeClass="text-indigo-600 dark:text-indigo-400 font-semibold"
-        inactiveClass="text-gray-600 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400"
+        activeClass="text-amber-700 dark:text-amber-400 font-semibold border-b-2 border-amber-500 -mb-[17px] pb-4"
+        inactiveClass="text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+        class="text-base"
       >
         Notes
       </A>
     </nav>
   );
 };
+

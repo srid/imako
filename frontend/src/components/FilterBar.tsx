@@ -4,15 +4,15 @@ import { activeFilters, toggleFilter } from "@/state/filters";
 
 export const FilterBar: Component<{ filters: Filter[] }> = (props) => {
   return (
-    <div class="mb-4 flex items-center gap-2">
+    <div class="mb-6 flex items-center gap-2 flex-wrap">
       <For each={props.filters}>
         {(filter) => (
           <button
             onClick={() => toggleFilter(filter.filterId)}
-            class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+            class={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
               activeFilters().has(filter.filterId)
-                ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700"
             }`}
             aria-pressed={activeFilters().has(filter.filterId)}
           >
@@ -23,3 +23,4 @@ export const FilterBar: Component<{ filters: Filter[] }> = (props) => {
     </div>
   );
 };
+

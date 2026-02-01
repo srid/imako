@@ -30,15 +30,15 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
         if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
         else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());
       }} class="group/file">
-        <summary class="list-none cursor-pointer -mx-2 px-3 py-1.5 rounded-md bg-slate-600 dark:bg-gray-700 hover:bg-slate-500 dark:hover:bg-gray-600 flex items-center gap-2 text-sm font-medium text-white select-none transition-colors mb-1">
+        <summary class="list-none cursor-pointer -mx-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-stone-800/50 hover:bg-amber-100 dark:hover:bg-stone-800 border border-amber-200 dark:border-stone-700 flex items-center gap-2 text-sm font-medium text-stone-700 dark:text-stone-300 select-none transition-colors mb-2">
           {/* Chevron */}
-          <span class="w-4 h-4 flex items-center justify-center text-gray-400 transition-transform group-open/file:rotate-90">
+          <span class="w-4 h-4 flex items-center justify-center text-stone-400 dark:text-stone-500 transition-transform group-open/file:rotate-90">
             {Icons.chevronRight}
           </span>
 
           {/* Icon & Name */}
           <span class="flex items-center gap-2 flex-1 min-w-0">
-            <span class="text-gray-300">{Icons.file}</span>
+            <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>
             <span class="truncate">{props.filename}</span>
 
             {/* Due indicator */}
@@ -48,21 +48,21 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
 
             {/* Progress bar */}
             <Show when={stats().total > 0}>
-              <span class="ml-2 w-16 h-1 bg-slate-700 rounded-full overflow-hidden">
-                <span class="block h-full bg-slate-300" style={{ width: `${stats().progress}%` }} />
+              <span class="ml-2 w-16 h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+                <span class="block h-full bg-amber-500 rounded-full" style={{ width: `${stats().progress}%` }} />
               </span>
             </Show>
           </span>
 
           {/* Count */}
-          <span class="text-xs text-gray-400 font-normal">
+          <span class="text-xs text-stone-500 dark:text-stone-400 font-normal tabular-nums">
             {stats().completed}/{stats().total}
           </span>
 
           {/* Edit link */}
           <a
             href={obsidianOpenUrl(vault.vaultName, `${props.path}/${props.filename}`)}
-            class="ml-2 opacity-0 group-hover/file:opacity-100 transition-opacity text-gray-400 hover:text-white"
+            class="ml-2 opacity-0 group-hover/file:opacity-100 transition-opacity text-stone-400 hover:text-amber-600 dark:hover:text-amber-400"
             title="Open in Obsidian"
             onClick={(e) => e.stopPropagation()}
           >
