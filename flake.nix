@@ -28,10 +28,14 @@
   };
 
   outputs = inputs:
-    # This will import ./nix/modules/flake/*.nix
-    # cf. https://nixos-unified.org/autowiring.html#flake-parts
-    #
-    # To write your own Nix, add or edit files in ./nix/modules/flake-parts/
-    inputs.nixos-unified.lib.mkFlake
-      { inherit inputs; root = ./.; };
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        # Auto-imported modules from nixos-unified
+        (inputs.nixos-unified.lib.mkFlake { inherit inputs; root = ./.; }).flakeModules.default
+        # Domain-encapsulated module for generate-types
+        ./packages/generate-types/flake-module.nix
+      ];
+    };
 }
+
+

@@ -1,5 +1,6 @@
 import { Component, onMount, Show } from "solid-js";
-import { vault, connectVault, isConnected } from "@/store";
+import { vault, isConnected } from "@/store";
+import { connectVault } from "@/sync/websocket";
 import { FilterBar } from "@/components/FilterBar";
 import { FolderTree } from "@/components/FolderTree";
 import { VaultHeader } from "@/components/VaultHeader";

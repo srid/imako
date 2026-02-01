@@ -1,5 +1,13 @@
+/**
+ * Server-side vault state.
+ *
+ * This store holds the authoritative data from the Haskell backend,
+ * synced via WebSocket. For client-only UI state (filters, collapsed nodes),
+ * see the `state/` directory.
+ */
+
 import { createSignal } from "solid-js";
-import { createStore, reconcile } from "solid-js/store";
+import { createStore } from "solid-js/store";
 import type { AppView } from "@/types";
 
 const emptyAppView: AppView = {
@@ -11,36 +19,5 @@ const emptyAppView: AppView = {
   dailyNotes: [],
 };
 
-const [vault, setVault] = createStore<AppView>(emptyAppView);
-const [isConnected, setIsConnected] = createSignal(false);
-
-export { vault, isConnected };
-
-/**
- * Connect to the backend WebSocket and sync vault state.
- * The WebSocket sends initial state immediately upon connection.
- * Uses reconcile() for efficient fine-grained updates.
- */
-export function connectVault(): () => void {
-  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  const ws = new WebSocket(`${protocol}//${location.host}/ws`);
-
-  ws.onmessage = (event) => {
-    const data: AppView = JSON.parse(event.data);
-    setVault(reconcile(data));
-    setIsConnected(true);
-  };
-
-  ws.onerror = (error) => {
-    console.error("WebSocket error:", error);
-  };
-
-  ws.onclose = () => {
-    console.log("WebSocket closed, reconnecting in 3s...");
-    setIsConnected(false);
-    setTimeout(connectVault, 3000);
-  };
-
-  return () => ws.close();
-}
-
+export const [vault, setVault] = createStore<AppView>(emptyAppView);
+export const [isConnected, setIsConnected] = createSignal(false);
