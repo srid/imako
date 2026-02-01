@@ -1,25 +1,21 @@
 /**
- * TypeScript types matching the Haskell backend.
+ * AUTO-GENERATED TypeScript types from Haskell.
+ * DO NOT EDIT MANUALLY.
  *
- * IMPORTANT: These types must be kept in sync with the Haskell ToJSON instances.
+ * Regenerate with: cabal run generate-types > frontend/src/types.ts
+ * Or: just generate-types
  *
- * Source files:
+ * Source Haskell files:
  *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs
  *   - Priority, TaskProperties: packages/ob/src/Ob/Task/Properties.hs
  *   - FolderNode: packages/imako/src/Imako/Core/FolderTree.hs
  *   - Filter: packages/imako/src/Imako/Core/Filter.hs
  *   - DailyNote: packages/ob/src/Ob/DailyNotes.hs
  *   - AppView: packages/imako/src/Imako/Core.hs
- *
- * When adding/modifying types:
- *   1. Update the Haskell ToJSON instance
- *   2. Update this file to match
- *   3. Verify with: curl -s https://localhost:4009/api/view | jq
- *
- * TODO: Consider auto-generating with aeson-typescript or similar.
  */
 
-export type TaskStatus = "Incomplete" | "InProgress" | "Completed" | "Cancelled";
+
+export type TaskStatus = "Incomplete" | "InProgress" | "Cancelled" | "Completed";
 
 export type Priority = "Highest" | "High" | "Medium" | "Normal" | "Low" | "Lowest";
 
@@ -27,23 +23,27 @@ export interface Task {
   description: string;
   sourceNote: string;
   status: TaskStatus;
-  dueDate: string | null;
-  scheduledDate: string | null;
-  startDate: string | null;
-  completedDate: string | null;
+  dueDate?: string;
+  scheduledDate?: string;
+  startDate?: string;
+  completedDate?: string;
   priority: Priority;
   tags: string[];
   parentBreadcrumbs: string[];
 }
 
-export interface FolderNode {
-  subfolders: Record<string, FolderNode>;
-  files: Record<string, Task[]>;
-}
+export type Filter = IFilter;
 
-export interface Filter {
+export interface IFilter {
   filterId: string;
   filterLabel: string;
+}
+
+export type FolderNode = IFolderNode;
+
+export interface IFolderNode {
+  subfolders: {[k in string]: FolderNode};
+  files: {[k in string]: Task[]};
 }
 
 export interface DailyNote {
@@ -51,7 +51,9 @@ export interface DailyNote {
   notePath: string;
 }
 
-export interface AppView {
+export type AppView = IAppView;
+
+export interface IAppView {
   folderTree: FolderNode;
   filters: Filter[];
   today: string;

@@ -34,3 +34,9 @@ frontend-dev:
 # Build frontend for production
 frontend-build:
     cd frontend && npm run build
+
+# Generate TypeScript types from Haskell ToJSON instances
+generate-types:
+    cabal run generate-types | sed 's/^type /export type /; s/^interface /export interface /' > frontend/src/types.ts
+    echo "Generated frontend/src/types.ts"
+

@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "aeson-typescript": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1754073453,
+        "narHash": "sha256-uQEAxVXbF3KIJ9IPc9aywjIWTsUkyjIVsRd+xCbePuo=",
+        "owner": "codedownio",
+        "repo": "aeson-typescript",
+        "rev": "846f4de8d54278c49456a29803da6f01ab9b87f6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codedownio",
+        "repo": "aeson-typescript",
+        "type": "github"
+      }
+    },
     "commonmark-simple": {
       "flake": false,
       "locked": {
@@ -147,6 +163,7 @@
     },
     "root": {
       "inputs": {
+        "aeson-typescript": "aeson-typescript",
         "commonmark-simple": "commonmark-simple",
         "commonmark-wikilink": "commonmark-wikilink",
         "flake-parts": "flake-parts",

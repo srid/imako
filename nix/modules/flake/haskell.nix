@@ -24,10 +24,12 @@
         lvar.source = inputs.lvar;
         commonmark-simple.source = inputs.commonmark-simple;
         commonmark-wikilink.source = inputs.commonmark-wikilink;
+        aeson-typescript.source = inputs.aeson-typescript;
       };
 
       settings = {
         unionmount.jailbreak = true;
+        aeson-typescript.check = false; # Tests require tsc
       };
 
       # Development shell configuration

@@ -81,3 +81,12 @@ executable imako
     Imako.Core
     Imako.Core.Filter
     Imako.Core.FolderTree
+
+-- | Generate TypeScript types from Haskell ToJSON instances
+-- Usage: cabal run generate-types > frontend/src/types.ts
+executable generate-types
+  import:        shared
+  main-is:       GenerateTypes.hs
+  build-depends:
+    , aeson-typescript
+    , pandoc-types
