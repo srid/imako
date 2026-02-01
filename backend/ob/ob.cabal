@@ -26,6 +26,7 @@ library
     Ob
     Ob.DailyNotes
     Ob.Html
+    Ob.Json
     Ob.Link
     Ob.Markdown
     Ob.Note

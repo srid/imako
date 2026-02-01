@@ -66,7 +66,7 @@ export type NotesData = INotesData;
 
 export interface INotesData {
   notePath: string;
-  noteHtml: string;
+  noteAst: any;
 }
 
 export type QueryResponse = ITasksResponse | INotesResponse;

@@ -14,7 +14,7 @@ module Imako.API.Protocol (
 )
 where
 
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson (FromJSON, ToJSON, Value)
 import Data.Time (Day)
 import Imako.Core.FolderTree (FolderNode)
 
@@ -43,10 +43,10 @@ newtype TasksData = TasksData
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
--- | Notes-specific data (rendered note content)
+-- | Notes-specific data (structured AST for client rendering)
 data NotesData = NotesData
   { notePath :: FilePath
-  , noteHtml :: Text
+  , noteAst :: Value
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)

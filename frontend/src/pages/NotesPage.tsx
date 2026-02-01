@@ -1,6 +1,8 @@
 import { Component, onMount, Show, createMemo } from "solid-js";
 import { routeData } from "@/store";
 import { sendQuery } from "@/sync/websocket";
+import { AstRenderer } from "@/components/markdown";
+import type { AstNode } from "@/components/markdown";
 
 const NotesPage: Component = () => {
   onMount(() => {
@@ -24,11 +26,8 @@ const NotesPage: Component = () => {
             </h2>
           </div>
 
-          {/* Rendered markdown content */}
-          <div
-            class="prose prose-stone dark:prose-invert max-w-none"
-            innerHTML={data().noteHtml}
-          />
+          {/* Rendered markdown via AST */}
+          <AstRenderer ast={data().noteAst as AstNode} />
         </>
       )}
     </Show>
