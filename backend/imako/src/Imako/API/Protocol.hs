@@ -22,8 +22,8 @@ import Imako.Core.FolderTree (FolderNode)
 data Query
   = -- | Subscribe to tasks view
     TasksQuery
-  | -- | Subscribe to notes view
-    NotesQuery
+  | -- | Subscribe to a specific note (path is vault-relative)
+    NotesQuery FilePath
   deriving stock (Show, Eq, Generic)
   deriving anyclass (FromJSON)
 
@@ -43,9 +43,10 @@ newtype TasksData = TasksData
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
--- | Notes-specific data
-newtype NotesData = NotesData
-  { noteCount :: Int
+-- | Notes-specific data (rendered note content)
+data NotesData = NotesData
+  { notePath :: FilePath
+  , noteHtml :: Text
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)

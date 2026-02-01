@@ -4,7 +4,8 @@ import { sendQuery } from "@/sync/websocket";
 
 const NotesPage: Component = () => {
   onMount(() => {
-    sendQuery("NotesQuery");
+    // Request INBOX.md (configurable later)
+    sendQuery({ tag: "NotesQuery", contents: "INBOX.md" });
   });
 
   const notesData = createMemo(() => {
@@ -18,16 +19,16 @@ const NotesPage: Component = () => {
         <>
           {/* Subheader */}
           <div class="flex items-center justify-between gap-4 mb-6">
-            <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-200">Notes</h2>
-            <span class="text-sm text-stone-400 dark:text-stone-500">
-              {data().noteCount} notes in vault
-            </span>
+            <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-200">
+              {data().notePath}
+            </h2>
           </div>
 
-          {/* Content placeholder - will render INBOX.md in Phase 2 */}
-          <p class="text-stone-500 dark:text-stone-400">
-            Note rendering coming in Phase 2...
-          </p>
+          {/* Rendered markdown content */}
+          <div
+            class="prose prose-stone dark:prose-invert max-w-none"
+            innerHTML={data().noteHtml}
+          />
         </>
       )}
     </Show>

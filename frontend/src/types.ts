@@ -37,7 +37,16 @@ export interface IFolderNode {
   files: {[k in string]: Task[]};
 }
 
-export type Query = "TasksQuery" | "NotesQuery";
+export type Query = ITasksQuery | INotesQuery;
+
+export interface ITasksQuery {
+  tag: "TasksQuery";
+}
+
+export interface INotesQuery {
+  tag: "NotesQuery";
+  contents: string;
+}
 
 export type VaultInfo = IVaultInfo;
 
@@ -56,7 +65,8 @@ export interface ITasksData {
 export type NotesData = INotesData;
 
 export interface INotesData {
-  noteCount: number;
+  notePath: string;
+  noteHtml: string;
 }
 
 export type QueryResponse = ITasksResponse | INotesResponse;

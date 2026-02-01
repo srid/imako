@@ -25,7 +25,7 @@ import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
-import Ob (Task (..), TaskStatus (..), Vault)
+import Ob (Task (..), TaskStatus (..), Vault, noteToHtml)
 import Ob qualified
 import Ob.Vault (getTasks, notes)
 import System.FilePath (makeRelative, takeBaseName)
@@ -101,9 +101,13 @@ mkTasksData vaultPath appState =
       tree = FolderTree.flattenTree $ buildFolderTree groupedAll
    in TasksData {folderTree = tree}
 
--- | Build notes data from app state
-mkNotesData :: AppState -> NotesData
-mkNotesData appState = NotesData {noteCount = Map.size appState.vault.notes}
+-- | Build notes data by rendering the requested note to HTML
+mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
+mkNotesData _vaultPath vault reqPath =
+  let html = case Map.lookup reqPath vault.notes of
+        Just note -> Ob.noteToHtml note
+        Nothing -> "Note not found: " <> toText reqPath
+   in NotesData {notePath = reqPath, noteHtml = html}
 
 -- | Build server message for a query (pure - all state in AppState)
 mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage
@@ -112,5 +116,5 @@ mkServerMessage vaultPath appState query =
     { vaultInfo = mkVaultInfo vaultPath appState
     , response = case query of
         TasksQuery -> TasksResponse (mkTasksData vaultPath appState)
-        NotesQuery -> NotesResponse (mkNotesData appState)
+        NotesQuery path -> NotesResponse (mkNotesData vaultPath appState.vault path)
     }

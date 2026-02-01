@@ -25,6 +25,7 @@ library
   exposed-modules:
     Ob
     Ob.DailyNotes
+    Ob.Html
     Ob.Link
     Ob.Markdown
     Ob.Note

@@ -6,7 +6,7 @@ import { FolderTree } from "@/components/FolderTree";
 
 const TasksPage: Component = () => {
   onMount(() => {
-    sendQuery("TasksQuery");
+    sendQuery({ tag: "TasksQuery" });
   });
 
   const tasksData = createMemo(() => {

@@ -14,10 +14,12 @@ module Ob (
   getTodayNotePath,
   loadDailyNotesConfig,
   obsidianOpenUrl,
+  noteToHtml,
 )
 where
 
 import Ob.DailyNotes (DailyNote (..), DailyNotesConfig (..), getTodayNotePath, loadDailyNotesConfig)
+import Ob.Html (noteToHtml)
 import Ob.Link (obsidianOpenUrl)
 import Ob.Note (Note (..))
 import Ob.Task (Task (..), TaskStatus (..))
