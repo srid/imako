@@ -3,7 +3,23 @@
 
 @import "tailwindcss";
 
-/* Design System: Warm, approachable aesthetic */
+/*
+ * Theme Configuration
+ * Change these to switch the accent color throughout the app.
+ * Options: teal, indigo, rose, violet, sky, emerald, etc.
+ */
+@theme {
+  /* Accent colors - using teal */
+  --color-accent-50: oklch(0.98 0.014 180.72);    /* teal-50 */
+  --color-accent-100: oklch(0.95 0.051 180.8);    /* teal-100 */
+  --color-accent-200: oklch(0.91 0.096 180.43);   /* teal-200 */
+  --color-accent-400: oklch(0.78 0.114 181.7);    /* teal-400 */
+  --color-accent-500: oklch(0.7 0.14 182.50);     /* teal-500 */
+  --color-accent-600: oklch(0.6 0.118 184.7);     /* teal-600 */
+  --color-accent-700: oklch(0.51 0.096 186.39);   /* teal-700 */
+  --color-accent-800: oklch(0.44 0.078 188.22);   /* teal-800 */
+  --color-accent-900: oklch(0.27 0.046 192.52);   /* teal-900 */
+}
 
 @layer base {
   html {

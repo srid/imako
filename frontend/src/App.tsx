@@ -11,7 +11,7 @@ const Layout: Component<{ children?: any }> = (props) => {
     <div class="max-w-4xl mx-auto my-8 px-4">
       {/* Vault path label */}
       <div class="text-center">
-        <span class="inline-block px-4 py-1.5 text-xs font-medium tracking-wide bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 rounded-t-xl border border-b-0 border-amber-200 dark:border-amber-800">
+        <span class="inline-block px-4 py-1.5 text-xs font-medium tracking-wide bg-accent-100 dark:bg-accent-900/40 text-accent-800 dark:text-accent-200 rounded-t-xl border border-b-0 border-accent-200 dark:border-accent-800">
           {vault.vaultPath}
         </span>
       </div>
@@ -32,13 +32,13 @@ const App: Component = () => {
   });
 
   return (
-    <div class="min-h-screen bg-amber-50/50 dark:bg-stone-900 text-stone-800 dark:text-stone-200">
+    <div class="min-h-screen bg-accent-50/30 dark:bg-stone-900 text-stone-800 dark:text-stone-200">
       <Show
         when={isConnected()}
         fallback={
           <div class="flex items-center justify-center min-h-screen">
             <div class="text-center">
-              <div class="inline-block w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
+              <div class="inline-block w-8 h-8 border-4 border-accent-500 border-t-transparent rounded-full animate-spin mb-4" />
               <p class="text-stone-500 dark:text-stone-400">Connecting to vault...</p>
             </div>
           </div>

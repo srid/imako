@@ -30,7 +30,7 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
         if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
         else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());
       }} class="group/file">
-        <summary class="list-none cursor-pointer -mx-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-stone-800/50 hover:bg-amber-100 dark:hover:bg-stone-800 border border-amber-200 dark:border-stone-700 flex items-center gap-2 text-sm font-medium text-stone-700 dark:text-stone-300 select-none transition-colors mb-2">
+        <summary class="list-none cursor-pointer -mx-2 px-3 py-2 rounded-lg bg-accent-50 dark:bg-stone-800/50 hover:bg-accent-100 dark:hover:bg-stone-800 border border-accent-200 dark:border-stone-700 flex items-center gap-2 text-sm font-medium text-stone-700 dark:text-stone-300 select-none transition-colors mb-2">
           {/* Chevron */}
           <span class="w-4 h-4 flex items-center justify-center text-stone-400 dark:text-stone-500 transition-transform group-open/file:rotate-90">
             {Icons.chevronRight}
@@ -49,7 +49,7 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
             {/* Progress bar */}
             <Show when={stats().total > 0}>
               <span class="ml-2 w-16 h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
-                <span class="block h-full bg-amber-500 rounded-full" style={{ width: `${stats().progress}%` }} />
+                <span class="block h-full bg-accent-500 rounded-full" style={{ width: `${stats().progress}%` }} />
               </span>
             </Show>
           </span>
@@ -62,7 +62,7 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
           {/* Edit link */}
           <a
             href={obsidianOpenUrl(vault.vaultName, `${props.path}/${props.filename}`)}
-            class="ml-2 opacity-0 group-hover/file:opacity-100 transition-opacity text-stone-400 hover:text-amber-600 dark:hover:text-amber-400"
+            class="ml-2 opacity-0 group-hover/file:opacity-100 transition-opacity text-stone-400 hover:text-accent-600 dark:hover:text-accent-400"
             title="Open in Obsidian"
             onClick={(e) => e.stopPropagation()}
           >

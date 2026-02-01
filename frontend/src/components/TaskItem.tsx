@@ -24,7 +24,7 @@ export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
       switch (status) {
         case "Completed":
         case "Cancelled": return "text-stone-400";
-        case "InProgress": return "text-amber-500";
+        case "InProgress": return "text-accent-500";
         default: return "text-stone-400 hover:text-stone-600 dark:hover:text-stone-300";
       }
     })();
@@ -57,7 +57,7 @@ export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
 
   return (
     <Show when={computed().visible}>
-      <div class="group/task relative py-1.5 -mx-2 px-2 rounded-lg hover:bg-amber-50/50 dark:hover:bg-amber-900/10 flex items-start gap-2 text-sm transition-colors">
+      <div class="group/task relative py-1.5 -mx-2 px-2 rounded-lg hover:bg-accent-50/50 dark:hover:bg-accent-900/10 flex items-start gap-2 text-sm transition-colors">
         {/* Checkbox */}
         <span class={`w-5 h-5 flex-shrink-0 flex items-center justify-center ${computed().statusColor}`}>
           {computed().icon}
@@ -93,7 +93,7 @@ export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
 
               {/* Tags */}
               <Show when={props.task.tags.length > 0}>
-                <span class="flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                <span class="flex items-center gap-0.5 text-accent-600 dark:text-accent-400">
                   {Icons.tag} {props.task.tags.join(", ")}
                 </span>
               </Show>
