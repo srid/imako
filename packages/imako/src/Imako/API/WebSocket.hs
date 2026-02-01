@@ -19,16 +19,24 @@ import Ob qualified
 wsApp :: FilePath -> LVar.LVar Ob.Vault -> WS.ServerApp
 wsApp vaultPath vaultVar pending = do
   conn <- WS.acceptRequest pending
+  -- Send initial state immediately upon connection
+  sendCurrentView conn
+  -- Then listen for changes and push updates
   WS.withPingThread conn 30 pass $ void $ infinitely $ do
-    vault <-
+    void $
       runConcurrently . asum . map Concurrently $
         [ listenDayChange >> LVar.get vaultVar
         , LVar.listenNext vaultVar
         ]
-    today <- getLocalToday
-    let view = mkAppView today vaultPath vault
-    WS.sendTextData conn (encode view)
+    sendCurrentView conn
   where
+    sendCurrentView :: WS.Connection -> IO ()
+    sendCurrentView conn = do
+      vault <- LVar.get vaultVar
+      today <- getLocalToday
+      let view = mkAppView today vaultPath vault
+      WS.sendTextData conn (encode view)
+
     getLocalToday :: IO Day
     getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
 

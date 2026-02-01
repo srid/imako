@@ -56,8 +56,6 @@ common shared
     , ob
     , optparse-applicative
     , relude                >=1.0
-    , servant
-    , servant-server
     , text
     , time
     , wai
@@ -82,7 +80,6 @@ executable imako
   import:        shared
   main-is:       Main.hs
   other-modules:
-    Imako.API
     Imako.API.WebSocket
     Imako.CLI
     Imako.Core

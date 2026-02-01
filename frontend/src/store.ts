@@ -1,3 +1,4 @@
+import { createSignal } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import type { AppView } from "@/types";
 
@@ -11,11 +12,13 @@ const emptyAppView: AppView = {
 };
 
 const [vault, setVault] = createStore<AppView>(emptyAppView);
+const [isConnected, setIsConnected] = createSignal(false);
 
-export { vault };
+export { vault, isConnected };
 
 /**
  * Connect to the backend WebSocket and sync vault state.
+ * The WebSocket sends initial state immediately upon connection.
  * Uses reconcile() for efficient fine-grained updates.
  */
 export function connectVault(): () => void {
@@ -25,6 +28,7 @@ export function connectVault(): () => void {
   ws.onmessage = (event) => {
     const data: AppView = JSON.parse(event.data);
     setVault(reconcile(data));
+    setIsConnected(true);
   };
 
   ws.onerror = (error) => {
@@ -33,17 +37,10 @@ export function connectVault(): () => void {
 
   ws.onclose = () => {
     console.log("WebSocket closed, reconnecting in 3s...");
+    setIsConnected(false);
     setTimeout(connectVault, 3000);
   };
 
   return () => ws.close();
 }
 
-/**
- * Fetch initial vault state via REST API.
- */
-export async function fetchVault(): Promise<void> {
-  const response = await fetch("/api/view");
-  const data: AppView = await response.json();
-  setVault(reconcile(data));
-}
