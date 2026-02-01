@@ -6,6 +6,7 @@ module Main where
 import Data.LVar qualified as LVar
 import Imako.API.WebSocket (wsApp)
 import Imako.CLI qualified as CLI
+import Imako.Core qualified as Core
 import Main.Utf8 qualified as Utf8
 import Network.Wai (Application)
 import Network.Wai.Application.Static (staticApp)
@@ -33,7 +34,7 @@ mkApp vaultPath vaultVar = do
           { ssIndices = [unsafeToPiece "index.html"]
           }
       staticFileApp = staticApp settings
-      wsHandler = wsApp vaultPath vaultVar
+      wsHandler = wsApp vaultVar (Core.mkServerMessage vaultPath)
   pure $ websocketsOr WS.defaultConnectionOptions wsHandler staticFileApp
 
 main :: IO ()

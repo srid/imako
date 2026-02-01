@@ -4,14 +4,14 @@ module Imako.Core (
   mkVaultInfo,
   mkTasksData,
   mkNotesData,
+  mkServerMessage,
 )
 where
 
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Time (Day)
-import Imako.API.Protocol (NotesData (..), TasksData (..), VaultInfo (..))
-import Imako.Core.Filter qualified as FilterDef
+import Imako.API.Protocol (NotesData (..), Query (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
 import Ob (Task (..), TaskStatus (..), Vault)
@@ -43,10 +43,17 @@ mkTasksData today vaultPath vault =
       tree = FolderTree.flattenTree $ buildFolderTree groupedAll
    in TasksData
         { folderTree = tree
-        , filters = FilterDef.filters
         , today = today
         }
 
 -- | Build notes data from vault
 mkNotesData :: Vault -> NotesData
 mkNotesData vault = NotesData {noteCount = Map.size vault.notes}
+
+-- | Build server message for a query (wires together vault path and response building)
+mkServerMessage :: FilePath -> Day -> Vault -> Query -> ServerMessage
+mkServerMessage vaultPath today vault query =
+  let vaultInfo = mkVaultInfo vaultPath
+   in case query of
+        TasksQuery -> TasksResultMsg vaultInfo (mkTasksData today vaultPath vault)
+        NotesQuery -> NotesResultMsg vaultInfo (mkNotesData vault)

@@ -1,6 +1,12 @@
 import { usePersistedSet } from "@/hooks/usePersistedSet";
 import type { Task } from "@/types";
 
+/** Filter type - client-side only */
+export type Filter = "ShowFuture" | "ShowPast";
+
+/** All available filters */
+export const FILTERS: Filter[] = ["ShowFuture", "ShowPast"];
+
 // LocalStorage keys
 const STORAGE_KEYS = {
   filters: "imako-filters",

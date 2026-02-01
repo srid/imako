@@ -23,7 +23,7 @@ const TasksPage: Component = () => {
             <p class="text-sm text-stone-500 dark:text-stone-400">
               Today: <span class="font-medium text-stone-700 dark:text-stone-300">{data().today}</span>
             </p>
-            <FilterBar filters={data().filters} />
+            <FilterBar />
           </div>
 
           {/* Folder tree */}

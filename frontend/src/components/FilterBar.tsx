@@ -1,6 +1,5 @@
 import { Component, For } from "solid-js";
-import type { Filter } from "@/types";
-import { activeFilters, toggleFilter } from "@/state/filters";
+import { activeFilters, toggleFilter, FILTERS, type Filter } from "@/state/filters";
 
 /** Human-readable labels for filters */
 const FILTER_LABELS: Record<Filter, string> = {
@@ -8,10 +7,10 @@ const FILTER_LABELS: Record<Filter, string> = {
   ShowPast: "Past tasks",
 };
 
-export const FilterBar: Component<{ filters: Filter[] }> = (props) => {
+export const FilterBar: Component = () => {
   return (
     <div class="flex items-center gap-2 flex-wrap">
-      <For each={props.filters}>
+      <For each={FILTERS}>
         {(filter) => (
           <button
             onClick={() => toggleFilter(filter)}

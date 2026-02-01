@@ -9,7 +9,6 @@
  *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs
  *   - Priority: packages/ob/src/Ob/Task/Properties.hs
  *   - FolderNode: packages/imako/src/Imako/Core/FolderTree.hs
- *   - Filter: packages/imako/src/Imako/Core/Filter.hs
  *   - Protocol types: packages/imako/src/Imako/API/Protocol.hs
  */
 
@@ -31,8 +30,6 @@ export interface Task {
   parentBreadcrumbs: string[];
 }
 
-export type Filter = "ShowFuture" | "ShowPast";
-
 export type FolderNode = IFolderNode;
 
 export interface IFolderNode {
@@ -53,7 +50,6 @@ export type TasksData = ITasksData;
 
 export interface ITasksData {
   folderTree: FolderNode;
-  filters: Filter[];
   today: string;
 }
 

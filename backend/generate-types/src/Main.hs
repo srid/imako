@@ -23,11 +23,9 @@ import Data.List qualified
 import Data.Maybe qualified as M
 import Data.Time (Day)
 import Imako.API.Protocol (NotesData (..), Query (..), ServerMessage (..), TasksData (..), VaultInfo (..))
-import Imako.Core.Filter (Filter (..))
 import Imako.Core.FolderTree (FolderNode (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Task.Properties (Priority (..))
-import Text.Pandoc.Definition (Pandoc)
 
 -- | Helper to create a required TSField (works around relude/base Bool conflict)
 reqField :: String -> String -> TSField
@@ -40,7 +38,6 @@ optField name typ = TSField B.True name typ M.Nothing
 -- Derive TypeScript instances for types with generic ToJSON
 $(deriveTypeScript defaultOptions ''TaskStatus)
 $(deriveTypeScript defaultOptions ''Priority)
-$(deriveTypeScript defaultOptions ''Filter)
 
 -- Day is serialized as a string (ISO date)
 instance TypeScript Day where
@@ -88,7 +85,6 @@ main = do
         [ getTypeScriptDeclarations (Proxy @TaskStatus)
         , getTypeScriptDeclarations (Proxy @Priority)
         , getTypeScriptDeclarations (Proxy @Task)
-        , getTypeScriptDeclarations (Proxy @Filter)
         , getTypeScriptDeclarations (Proxy @FolderNode)
         , getTypeScriptDeclarations (Proxy @Query)
         , getTypeScriptDeclarations (Proxy @VaultInfo)
@@ -111,7 +107,6 @@ main = do
         , " *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs"
         , " *   - Priority: packages/ob/src/Ob/Task/Properties.hs"
         , " *   - FolderNode: packages/imako/src/Imako/Core/FolderTree.hs"
-        , " *   - Filter: packages/imako/src/Imako/Core/Filter.hs"
         , " *   - Protocol types: packages/imako/src/Imako/API/Protocol.hs"
         , " */"
         , ""

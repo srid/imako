@@ -75,7 +75,6 @@ library
   exposed-modules:
     Imako.API.Protocol
     Imako.Core
-    Imako.Core.Filter
     Imako.Core.FolderTree
 
 executable imako
@@ -86,5 +85,4 @@ executable imako
     Imako.API.WebSocket
     Imako.CLI
     Imako.Core
-    Imako.Core.Filter
     Imako.Core.FolderTree

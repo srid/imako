@@ -15,7 +15,6 @@ where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Time (Day)
-import Imako.Core.Filter (Filter)
 import Imako.Core.FolderTree (FolderNode)
 
 -- | Query sent from client to subscribe to data
@@ -35,10 +34,9 @@ data VaultInfo = VaultInfo
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
--- | Tasks-specific data (excludes vault info)
+-- | Tasks-specific data
 data TasksData = TasksData
   { folderTree :: FolderNode
-  , filters :: [Filter]
   , today :: Day
   }
   deriving stock (Show, Eq, Generic)
