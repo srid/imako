@@ -17,8 +17,26 @@ repl *ARGS:
 
 # Run ghcid -- auto-recompile and run `main` function
 run:
-    ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }}' --setup ":set args {{ NOTEBOOK }}"
+    ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }} imako:exe:imako' --setup ":set args {{ NOTEBOOK }}"
 
 # Run tests
 test:
     cabal test all
+
+# Install frontend dependencies
+frontend-install:
+    cd frontend && npm install
+
+# Run frontend dev server (with proxy to backend)
+frontend-dev:
+    cd frontend && npm run dev
+
+# Build frontend for production
+frontend-build:
+    cd frontend && npm run build
+
+# Generate TypeScript types from Haskell ToJSON instances
+generate-types:
+    cabal run generate-types | sed 's/^type /export type /; s/^interface /export interface /' > frontend/src/types.ts
+    echo "Generated frontend/src/types.ts"
+

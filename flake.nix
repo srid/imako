@@ -4,7 +4,6 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
-    nixos-unified.url = "github:srid/nixos-unified";
     haskell-flake.url = "github:srid/haskell-flake";
     fourmolu-nix.url = "github:jedimahdi/fourmolu-nix";
 
@@ -20,25 +19,26 @@
     commonmark-wikilink.url = "github:srid/commonmark-wikilink";
     commonmark-wikilink.flake = false;
 
-    htmx.url = "github:JonathanLorimer/htmx";
-    htmx.flake = false;
-    co-log-effectful.url = "github:eldritch-cookie/co-log-effectful";
-    htmx-extensions.url = "github:juspay/htmx-extensions/sse-unload"; # https://github.com/bigskysoftware/htmx-extensions/pull/147
-    htmx-extensions.flake = false;
-    # https://github.com/bflyblue/servant-event-stream/pull/13
-    servant-event-stream.url = "github:bflyblue/servant-event-stream";
-    servant-event-stream.flake = false;
-    tabler-icons.url = "github:juspay/tabler-icons-hs";
-    tabler-icons.flake = false;
+    aeson-typescript.url = "github:codedownio/aeson-typescript";
+    aeson-typescript.flake = false;
+
     warp-tls-simple.url = "github:srid/warp-tls-simple";
     warp-tls-simple.flake = false;
   };
 
   outputs = inputs:
-    # This will import ./nix/modules/flake/*.nix
-    # cf. https://nixos-unified.org/autowiring.html#flake-parts
-    #
-    # To write your own Nix, add or edit files in ./nix/modules/flake-parts/
-    inputs.nixos-unified.lib.mkFlake
-      { inherit inputs; root = ./.; };
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      imports = [
+        ./nix/devshell.nix
+        ./nix/pre-commit.nix
+        ./nix/home-manager/flake-module.nix
+        ./backend/flake-module.nix
+        ./backend/generate-types/flake-module.nix
+        ./frontend/flake-module.nix
+      ];
+      _module.args = {
+        root = ./.;
+      };
+    };
 }

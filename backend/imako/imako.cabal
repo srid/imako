@@ -1,0 +1,87 @@
+cabal-version:      2.4
+name:               imako
+version:            0.1.0.0
+license:            AGPL-3.0-or-later
+copyright:          2024 Sridhar Ratnakumar
+maintainer:         srid@srid.ca
+author:             Sridhar Ratnakumar
+category:           Web
+homepage:           https://github.com/srid/imako
+
+-- TODO: Before hackage release.
+-- A short (one-line) description of the package.
+synopsis:           Emanote's compainion optimized for journaling and planning
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+extra-source-files:
+  LICENSE
+  README.md
+
+common shared
+  ghc-options:
+    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-deriving-strategies -Wunused-foralls -Wunused-foralls
+    -fprint-explicit-foralls -fprint-explicit-kinds
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude, Relude.Container.One),
+    relude
+
+  default-extensions:
+    DataKinds
+    DerivingStrategies
+    DerivingVia
+    LambdaCase
+    MultiWayIf
+    NoStarIsType
+    OverloadedStrings
+    StrictData
+    TypeFamilies
+    ViewPatterns
+
+  build-depends:
+    , aeson
+    , async
+    , base
+    , containers
+    , directory
+    , filepath
+    , lvar                  >=0.2
+    , ob
+    , optparse-applicative
+    , relude                >=1.0
+    , text
+    , time
+    , wai
+    , wai-app-static
+    , wai-websockets
+    , warp
+    , warp-tls-simple
+    , websockets
+    , with-utf8
+
+  hs-source-dirs:     src
+  default-language:   GHC2021
+
+library
+  import:          shared
+  exposed-modules:
+    Imako.Core
+    Imako.Core.Filter
+    Imako.Core.FolderTree
+
+executable imako
+  import:        shared
+  main-is:       Main.hs
+  other-modules:
+    Imako.API.WebSocket
+    Imako.CLI
+    Imako.Core
+    Imako.Core.Filter
+    Imako.Core.FolderTree
