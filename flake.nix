@@ -31,10 +31,10 @@
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       imports = [
         ./nix/modules/flake/devshell.nix
-        ./nix/modules/flake/haskell.nix
-        ./nix/modules/flake/home-module.nix
         ./nix/modules/flake/pre-commit.nix
-        ./packages/generate-types/flake-module.nix
+        ./nix/modules/home-manager/flake-module.nix
+        ./backend/flake-module.nix
+        ./backend/generate-types/flake-module.nix
         ./frontend/flake-module.nix
       ];
       _module.args = {

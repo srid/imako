@@ -12,7 +12,7 @@
       projectRoot = builtins.toString (lib.fileset.toSource {
         inherit root;
         fileset = lib.fileset.unions [
-          (root + /packages)
+          (root + /backend)
           (root + /cabal.project)
           (root + /LICENSE)
           (root + /README.md)

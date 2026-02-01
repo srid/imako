@@ -1,4 +1,4 @@
-{ root, ... }:
+{ ... }:
 {
   perSystem = { pkgs, ... }:
     let
@@ -6,5 +6,9 @@
     in
     {
       packages.imako-frontend = frontend;
+      devShells.frontend = pkgs.mkShell {
+        name = "imako-frontend";
+        packages = with pkgs; [ nodejs ];
+      };
     };
 }
