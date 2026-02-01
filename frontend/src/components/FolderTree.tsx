@@ -1,8 +1,8 @@
 import { Component, For, Show } from "solid-js";
-import type { FolderNode as FolderNodeType, Task } from "../types";
-import { Icons } from "../utils/icons";
-import { isCollapsed, toggleCollapse, isTaskVisible } from "../state/filters";
-import { FileNode } from "./FileNode";
+import type { FolderNode as FolderNodeType, Task } from "@/types";
+import { Icons } from "@/utils/icons";
+import { isCollapsed, toggleCollapse, isTaskVisible } from "@/state/filters";
+import { FileNode } from "@/components/FileNode";
 
 /**
  * Helper to check if a folder node has any visible tasks (recursively)

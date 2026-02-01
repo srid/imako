@@ -1,8 +1,8 @@
 import { Component, onMount } from "solid-js";
-import { vault, connectVault, fetchVault } from "./store";
-import { FilterBar } from "./components/FilterBar";
-import { FolderTree } from "./components/FolderTree";
-import { VaultHeader } from "./components/VaultHeader";
+import { vault, connectVault, fetchVault } from "@/store";
+import { FilterBar } from "@/components/FilterBar";
+import { FolderTree } from "@/components/FolderTree";
+import { VaultHeader } from "@/components/VaultHeader";
 
 const App: Component = () => {
   onMount(async () => {

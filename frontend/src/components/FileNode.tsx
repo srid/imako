@@ -1,10 +1,10 @@
 import { Component, For, Show } from "solid-js";
-import type { Task } from "../types";
-import { Icons } from "../utils/icons";
-import { obsidianOpenUrl } from "../utils/obsidian";
-import { isCollapsed, toggleCollapse, isTaskVisible } from "../state/filters";
-import { TaskItem } from "./TaskItem";
-import { vault } from "../store";
+import type { Task } from "@/types";
+import { Icons } from "@/utils/icons";
+import { obsidianOpenUrl } from "@/utils/obsidian";
+import { isCollapsed, toggleCollapse, isTaskVisible } from "@/state/filters";
+import { TaskItem } from "@/components/TaskItem";
+import { vault } from "@/store";
 
 export const FileNode: Component<{ filename: string; tasks: Task[]; today: string; path: string }> = (props) => {
   const nodeId = () => `file:${props.path}/${props.filename}`;

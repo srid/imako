@@ -1,6 +1,6 @@
 import { Component, For } from "solid-js";
-import type { Filter } from "../types";
-import { activeFilters, toggleFilter } from "../state/filters";
+import type { Filter } from "@/types";
+import { activeFilters, toggleFilter } from "@/state/filters";
 
 export const FilterBar: Component<{ filters: Filter[] }> = (props) => {
   return (

@@ -1,8 +1,8 @@
 import { Component, Show } from "solid-js";
-import type { Task } from "../types";
-import { Icons } from "../utils/icons";
-import { formatDate, dateColor } from "../utils/dates";
-import { isTaskVisible } from "../state/filters";
+import type { Task } from "@/types";
+import { Icons } from "@/utils/icons";
+import { formatDate, dateColor } from "@/utils/dates";
+import { isTaskVisible } from "@/state/filters";
 
 export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
   const statusIcon = () => {

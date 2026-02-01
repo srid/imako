@@ -1,5 +1,5 @@
-import { usePersistedSet } from "../hooks/usePersistedSet";
-import type { Task } from "../types";
+import { usePersistedSet } from "@/hooks/usePersistedSet";
+import type { Task } from "@/types";
 
 // LocalStorage keys
 const STORAGE_KEYS = {

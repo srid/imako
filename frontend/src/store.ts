@@ -1,5 +1,5 @@
 import { createStore, reconcile } from "solid-js/store";
-import type { AppView } from "./types";
+import type { AppView } from "@/types";
 
 const emptyAppView: AppView = {
   folderTree: { subfolders: {}, files: {} },
