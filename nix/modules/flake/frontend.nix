@@ -10,7 +10,7 @@
       # Check that frontend/src/types.ts is up to date with Haskell types
       checks.types-ts-up-to-date = pkgs.runCommand "types-ts-up-to-date"
         {
-          buildInputs = [ self'.packages.imako pkgs.gnused ];
+          buildInputs = [ self'.packages.generate-types pkgs.gnused ];
         } ''
         # Generate fresh types
         generate-types | sed 's/^type /export type /; s/^interface /export interface /' > generated.ts
