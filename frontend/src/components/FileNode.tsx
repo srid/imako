@@ -1,4 +1,4 @@
-import { Component, For, Show } from "solid-js";
+import { Component, For, Show, createMemo } from "solid-js";
 import type { Task } from "@/types";
 import { Icons } from "@/utils/icons";
 import { obsidianOpenUrl } from "@/utils/obsidian";
@@ -8,14 +8,23 @@ import { vault } from "@/store";
 
 export const FileNode: Component<{ filename: string; tasks: Task[]; today: string; path: string }> = (props) => {
   const nodeId = () => `file:${props.path}/${props.filename}`;
-  const visibleTasks = () => props.tasks.filter((t) => isTaskVisible(t, props.today));
-  const completed = () => props.tasks.filter((t) => t.status === "Completed" || t.status === "Cancelled").length;
-  const total = () => props.tasks.length;
-  const progress = () => (total() === 0 ? 0 : (completed() / total()) * 100);
-  const hasDue = () => props.tasks.some((t) => t.dueDate && t.dueDate <= props.today);
+
+  // Computed task stats
+  const stats = createMemo(() => {
+    const visible = props.tasks.filter((t) => isTaskVisible(t, props.today));
+    const completed = props.tasks.filter((t) => t.status === "Completed" || t.status === "Cancelled").length;
+    const total = props.tasks.length;
+    return {
+      visible,
+      completed,
+      total,
+      progress: total === 0 ? 0 : (completed / total) * 100,
+      hasDue: props.tasks.some((t) => t.dueDate && t.dueDate <= props.today),
+    };
+  });
 
   return (
-    <Show when={visibleTasks().length > 0}>
+    <Show when={stats().visible.length > 0}>
       <details open={!isCollapsed(nodeId())} onToggle={(e) => {
         const isOpen = (e.target as HTMLDetailsElement).open;
         if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
@@ -33,21 +42,21 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
             <span class="truncate">{props.filename}</span>
 
             {/* Due indicator */}
-            <Show when={hasDue()}>
+            <Show when={stats().hasDue}>
               <span class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" title="Contains due tasks" />
             </Show>
 
             {/* Progress bar */}
-            <Show when={total() > 0}>
+            <Show when={stats().total > 0}>
               <span class="ml-2 w-16 h-1 bg-slate-700 rounded-full overflow-hidden">
-                <span class="block h-full bg-slate-300" style={{ width: `${progress()}%` }} />
+                <span class="block h-full bg-slate-300" style={{ width: `${stats().progress}%` }} />
               </span>
             </Show>
           </span>
 
           {/* Count */}
           <span class="text-xs text-gray-400 font-normal">
-            {completed()}/{total()}
+            {stats().completed}/{stats().total}
           </span>
 
           {/* Edit link */}

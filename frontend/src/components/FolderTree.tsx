@@ -1,4 +1,4 @@
-import { Component, For, Show } from "solid-js";
+import { Component, For, Show, createMemo } from "solid-js";
 import type { FolderNode as FolderNodeType, Task } from "@/types";
 import { Icons } from "@/utils/icons";
 import { isCollapsed, toggleCollapse, isTaskVisible } from "@/state/filters";
@@ -24,15 +24,18 @@ const folderHasVisibleTasks = (node: FolderNodeType, today: string): boolean => 
 };
 
 export const FolderTree: Component<{ node: FolderNodeType; path?: string; today: string }> = (props) => {
-  const currentPath = () => props.path ?? "";
-  const folders = () => Object.entries(props.node.subfolders);
-  const files = () => Object.entries(props.node.files);
+  // Computed folder data
+  const data = createMemo(() => ({
+    currentPath: props.path ?? "",
+    folders: Object.entries(props.node.subfolders),
+    files: Object.entries(props.node.files),
+  }));
 
   return (
     <div class="flex flex-col gap-2">
-      <For each={folders()}>
+      <For each={data().folders}>
         {([name, subnode]) => {
-          const folderPath = () => `${currentPath()}/${name}`;
+          const folderPath = () => `${data().currentPath}/${name}`;
           const nodeId = () => `folder:${folderPath()}`;
           return (
             <Show when={folderHasVisibleTasks(subnode, props.today)}>
@@ -58,8 +61,8 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string; today:
           );
         }}
       </For>
-      <For each={files()}>
-        {([filename, tasks]) => <FileNode filename={filename} tasks={tasks} today={props.today} path={currentPath()} />}
+      <For each={data().files}>
+        {([filename, tasks]) => <FileNode filename={filename} tasks={tasks} today={props.today} path={data().currentPath} />}
       </For>
     </div>
   );
