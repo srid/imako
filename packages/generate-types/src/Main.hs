@@ -18,7 +18,9 @@ module Main where
 import Data.Aeson (defaultOptions)
 import Data.Aeson.TypeScript.Internal (TSDeclaration (..), TSField (..))
 import Data.Aeson.TypeScript.TH
+import Data.Bool qualified as B
 import Data.List qualified
+import Data.Maybe qualified as M
 import Data.Time (Day)
 import Imako.Core (AppView (..))
 import Imako.Core.Filter (Filter (..))
@@ -27,6 +29,14 @@ import Ob.DailyNotes (DailyNote (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Task.Properties (Priority (..))
 import Text.Pandoc.Definition (Pandoc)
+
+-- | Helper to create a required TSField (works around relude/base Bool conflict)
+reqField :: String -> String -> TSField
+reqField name typ = TSField B.False name typ M.Nothing
+
+-- | Helper to create an optional TSField
+optField :: String -> String -> TSField
+optField name typ = TSField B.True name typ M.Nothing
 
 -- Derive TypeScript instances for types with generic ToJSON
 $(deriveTypeScript defaultOptions ''TaskStatus)
@@ -52,18 +62,18 @@ instance TypeScript Task where
         { interfaceName = "Task"
         , interfaceGenericVariables = []
         , interfaceMembers =
-            [ TSField False "description" "string" Nothing
-            , TSField False "sourceNote" "string" Nothing
-            , TSField False "status" "TaskStatus" Nothing
-            , TSField True "dueDate" "string" Nothing
-            , TSField True "scheduledDate" "string" Nothing
-            , TSField True "startDate" "string" Nothing
-            , TSField True "completedDate" "string" Nothing
-            , TSField False "priority" "Priority" Nothing
-            , TSField False "tags" "string[]" Nothing
-            , TSField False "parentBreadcrumbs" "string[]" Nothing
+            [ reqField "description" "string"
+            , reqField "sourceNote" "string"
+            , reqField "status" "TaskStatus"
+            , optField "dueDate" "string"
+            , optField "scheduledDate" "string"
+            , optField "startDate" "string"
+            , optField "completedDate" "string"
+            , reqField "priority" "Priority"
+            , reqField "tags" "string[]"
+            , reqField "parentBreadcrumbs" "string[]"
             ]
-        , interfaceDoc = Nothing
+        , interfaceDoc = M.Nothing
         }
     ]
 
@@ -75,10 +85,10 @@ instance TypeScript DailyNote where
         { interfaceName = "DailyNote"
         , interfaceGenericVariables = []
         , interfaceMembers =
-            [ TSField False "day" "string" Nothing -- Day is serialized as ISO string
-            , TSField False "notePath" "string" Nothing
+            [ reqField "day" "string" -- Day is serialized as ISO string
+            , reqField "notePath" "string"
             ]
-        , interfaceDoc = Nothing
+        , interfaceDoc = M.Nothing
         }
     ]
 

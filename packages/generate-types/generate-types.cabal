@@ -1,0 +1,32 @@
+cabal-version: 3.0
+name:          generate-types
+version:       0.1.0.0
+synopsis:      Generate TypeScript types from Haskell ToJSON instances
+license:       AGPL-3.0-only
+author:        Sridhar Ratnakumar
+maintainer:    srid@srid.ca
+
+executable generate-types
+  default-language:   GHC2021
+  default-extensions:
+    DerivingStrategies
+    OverloadedStrings
+    TypeFamilies
+
+  ghc-options:        -Wall -Wno-orphans
+  main-is:            Main.hs
+  hs-source-dirs:     src
+  build-depends:
+    , aeson
+    , aeson-typescript
+    , base
+    , imako
+    , ob
+    , pandoc-types
+    , relude
+    , time
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude, Relude.Container.One),
+    relude

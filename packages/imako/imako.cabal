@@ -71,6 +71,13 @@ common shared
   hs-source-dirs:     src
   default-language:   GHC2021
 
+library
+  import:          shared
+  exposed-modules:
+    Imako.Core
+    Imako.Core.Filter
+    Imako.Core.FolderTree
+
 executable imako
   import:        shared
   main-is:       Main.hs
@@ -81,12 +88,3 @@ executable imako
     Imako.Core
     Imako.Core.Filter
     Imako.Core.FolderTree
-
--- | Generate TypeScript types from Haskell ToJSON instances
--- Usage: cabal run generate-types > frontend/src/types.ts
-executable generate-types
-  import:        shared
-  main-is:       GenerateTypes.hs
-  build-depends:
-    , aeson-typescript
-    , pandoc-types

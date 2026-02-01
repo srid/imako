@@ -1,6 +1,7 @@
 packages:
   ./packages/imako
   ./packages/ob
+  ./packages/generate-types
 
 -- Nix won't recognize the settings below, because haskell-flake doesn't.
 
