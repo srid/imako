@@ -56,6 +56,7 @@ common shared
     , ob
     , optparse-applicative
     , relude                >=1.0
+    , stm
     , text
     , time
     , wai
@@ -72,16 +73,16 @@ common shared
 library
   import:          shared
   exposed-modules:
+    Imako.API.Protocol
     Imako.Core
-    Imako.Core.Filter
     Imako.Core.FolderTree
 
 executable imako
   import:        shared
   main-is:       Main.hs
   other-modules:
+    Imako.API.Protocol
     Imako.API.WebSocket
     Imako.CLI
     Imako.Core
-    Imako.Core.Filter
     Imako.Core.FolderTree

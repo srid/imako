@@ -7,11 +7,9 @@
  *
  * Source Haskell files:
  *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs
- *   - Priority, TaskProperties: packages/ob/src/Ob/Task/Properties.hs
+ *   - Priority: packages/ob/src/Ob/Task/Properties.hs
  *   - FolderNode: packages/imako/src/Imako/Core/FolderTree.hs
- *   - Filter: packages/imako/src/Imako/Core/Filter.hs
- *   - DailyNote: packages/ob/src/Ob/DailyNotes.hs
- *   - AppView: packages/imako/src/Imako/Core.hs
+ *   - Protocol types: packages/imako/src/Imako/API/Protocol.hs
  */
 
 
@@ -32,13 +30,6 @@ export interface Task {
   parentBreadcrumbs: string[];
 }
 
-export type Filter = IFilter;
-
-export interface IFilter {
-  filterId: string;
-  filterLabel: string;
-}
-
 export type FolderNode = IFolderNode;
 
 export interface IFolderNode {
@@ -46,18 +37,43 @@ export interface IFolderNode {
   files: {[k in string]: Task[]};
 }
 
-export interface DailyNote {
-  day: string;
-  notePath: string;
-}
+export type Query = "TasksQuery" | "NotesQuery";
 
-export type AppView = IAppView;
+export type VaultInfo = IVaultInfo;
 
-export interface IAppView {
-  folderTree: FolderNode;
-  filters: Filter[];
-  today: string;
+export interface IVaultInfo {
   vaultPath: string;
   vaultName: string;
-  dailyNotes: DailyNote[];
+  today: string;
+}
+
+export type TasksData = ITasksData;
+
+export interface ITasksData {
+  folderTree: FolderNode;
+}
+
+export type NotesData = INotesData;
+
+export interface INotesData {
+  noteCount: number;
+}
+
+export type QueryResponse = ITasksResponse | INotesResponse;
+
+export interface ITasksResponse {
+  tag: "TasksResponse";
+  contents: TasksData;
+}
+
+export interface INotesResponse {
+  tag: "NotesResponse";
+  contents: NotesData;
+}
+
+export type ServerMessage = IServerMessage;
+
+export interface IServerMessage {
+  vaultInfo: VaultInfo;
+  response: QueryResponse;
 }

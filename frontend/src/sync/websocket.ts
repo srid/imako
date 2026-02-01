@@ -1,27 +1,30 @@
 /**
  * WebSocket synchronization for vault data.
  *
- * Establishes a WebSocket connection to the backend and syncs vault state
- * in real-time. The backend pushes updates whenever files change.
+ * Establishes a WebSocket connection to the backend and syncs state
+ * in real-time. Client sends Query, server responds with ServerMessage.
  */
 
-import { reconcile } from "solid-js/store";
-import type { AppView } from "@/types";
-import { setVault, setIsConnected } from "@/store";
+import type { Query, ServerMessage } from "@/types";
+import { setVaultInfo, setRouteData, setIsConnected } from "@/store";
+
+let ws: WebSocket | null = null;
 
 /**
- * Connect to the backend WebSocket and sync vault state.
- * The WebSocket sends initial state immediately upon connection.
- * Uses reconcile() for efficient fine-grained updates.
+ * Connect to the backend WebSocket.
+ * Call sendQuery() after connection to subscribe to data.
  */
 export function connectVault(): () => void {
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  const ws = new WebSocket(`${protocol}//${location.host}/ws`);
+  ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+  ws.onopen = () => {
+    setIsConnected(true);
+  };
 
   ws.onmessage = (event) => {
-    const data: AppView = JSON.parse(event.data);
-    setVault(reconcile(data));
-    setIsConnected(true);
+    const msg: ServerMessage = JSON.parse(event.data);
+    handleServerMessage(msg);
   };
 
   ws.onerror = (error) => {
@@ -31,8 +34,38 @@ export function connectVault(): () => void {
   ws.onclose = () => {
     console.log("WebSocket closed, reconnecting in 3s...");
     setIsConnected(false);
+    ws = null;
     setTimeout(connectVault, 3000);
   };
 
-  return () => ws.close();
+  return () => {
+    ws?.close();
+    ws = null;
+  };
+}
+
+/**
+ * Send a query to the backend to subscribe to specific data.
+ */
+export function sendQuery(query: Query): void {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(query));
+  }
+}
+
+/**
+ * Handle incoming server messages and update stores.
+ * ServerMessage has { vaultInfo, response } structure.
+ */
+function handleServerMessage(msg: ServerMessage): void {
+  // Update shared vault info
+  setVaultInfo(msg.vaultInfo);
+
+  // Update route-specific data based on response type
+  const response = msg.response;
+  if (response.tag === "TasksResponse") {
+    setRouteData({ tag: "tasks", data: response.contents });
+  } else if (response.tag === "NotesResponse") {
+    setRouteData({ tag: "notes", data: response.contents });
+  }
 }

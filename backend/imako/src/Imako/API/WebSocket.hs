@@ -1,49 +1,57 @@
-{- | WebSocket handler for real-time vault updates.
+{-# OPTIONS_GHC -Wno-x-partial #-}
 
-Pushes AppView to connected clients whenever the vault changes.
+{- HLINT ignore "Use infinitely" -}
+
+{- | Generic WebSocket handler for real-time data updates.
+
+Receives queries from clients and pushes corresponding results.
+The response building is passed in as a handler function.
 -}
 module Imako.API.WebSocket (
   wsApp,
-) where
+)
+where
 
-import Control.Concurrent (threadDelay)
-import Control.Concurrent.Async (Concurrently (..), runConcurrently)
-import Data.Aeson (encode)
+import Control.Concurrent.Async (race_)
+import Control.Concurrent.STM qualified as STM
+import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.LVar qualified as LVar
-import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
-import Imako.Core (mkAppView)
 import Network.WebSockets qualified as WS
-import Ob qualified
 
--- | WebSocket server application that broadcasts vault changes
-wsApp :: FilePath -> LVar.LVar Ob.Vault -> WS.ServerApp
-wsApp vaultPath vaultVar pending = do
+{- | Generic WebSocket server application.
+
+Takes:
+- An LVar with live state
+- A handler function that builds responses from (state, query)
+-}
+wsApp ::
+  (FromJSON q, ToJSON msg) =>
+  LVar.LVar state ->
+  (state -> q -> IO msg) ->
+  WS.ServerApp
+wsApp stateVar mkMessage pending = do
   conn <- WS.acceptRequest pending
-  -- Send initial state immediately upon connection
-  sendCurrentView conn
-  -- Then listen for changes and push updates
-  WS.withPingThread conn 30 pass $ void $ infinitely $ do
-    void $
-      runConcurrently . asum . map Concurrently $
-        [ listenDayChange >> LVar.get vaultVar
-        , LVar.listenNext vaultVar
-        ]
-    sendCurrentView conn
+  currentQuery <- STM.newTVarIO (Nothing :: Maybe q)
+
+  WS.withPingThread conn 30 pass $ do
+    race_
+      (receiveMessages conn currentQuery)
+      (listenForChanges conn currentQuery)
   where
-    sendCurrentView :: WS.Connection -> IO ()
-    sendCurrentView conn = do
-      vault <- LVar.get vaultVar
-      today <- getLocalToday
-      let view = mkAppView today vaultPath vault
-      WS.sendTextData conn (encode view)
+    receiveMessages conn currentQuery = forever $ do
+      msg <- WS.receiveData conn
+      case decode msg of
+        Just query -> do
+          STM.atomically $ STM.writeTVar currentQuery (Just query)
+          sendResultForQuery conn query
+        Nothing -> pass
 
-    getLocalToday :: IO Day
-    getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
+    listenForChanges conn currentQuery = forever $ do
+      void $ LVar.listenNext stateVar
+      mQuery <- STM.readTVarIO currentQuery
+      whenJust mQuery (sendResultForQuery conn)
 
-    listenDayChange :: IO ()
-    listenDayChange = do
-      startDay <- getLocalToday
-      fix $ \loop -> do
-        threadDelay (60 * 1000000)
-        currentDay <- getLocalToday
-        when (currentDay == startDay) loop
+    sendResultForQuery conn query = do
+      st <- LVar.get stateVar
+      msg <- mkMessage st query
+      WS.sendTextData conn (encode msg)

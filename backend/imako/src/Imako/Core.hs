@@ -1,50 +1,93 @@
-{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
+{- HLINT ignore "Use infinitely" -}
+
 module Imako.Core (
-  AppView (..),
-  mkAppView,
+  -- * App State
+  AppState (..),
+  withAppState,
+
+  -- * Message building
+  mkVaultInfo,
+  mkTasksData,
+  mkNotesData,
+  mkServerMessage,
 )
 where
 
-import Data.Aeson (ToJSON)
-
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.Async (race_, withAsync)
+import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
-import Data.Time (Day)
-import Imako.Core.Filter (Filter)
-import Imako.Core.Filter qualified as FilterDef
-import Imako.Core.FolderTree (FolderNode, buildFolderTree)
+import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
+import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
+import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
-import Ob (DailyNote (..), Task (..), TaskStatus (..), Vault)
-import Ob.Vault (getDailyNotes, getTasks)
+import Ob (Task (..), TaskStatus (..), Vault)
+import Ob qualified
+import Ob.Vault (getTasks, notes)
 import System.FilePath (makeRelative, takeBaseName)
 
-{- | The view model for the application
-
-Represents the processed state of the vault data, ready for UI rendering.
--}
-data AppView = AppView
-  { folderTree :: FolderNode
-  -- ^ Tasks organized in a hierarchical folder tree structure
-  , filters :: [Filter]
-  -- ^ Available filters for task visibility
+-- | Application state combining vault data with runtime context
+data AppState = AppState
+  { vault :: Vault
   , today :: Day
-  -- ^ Current date for date-based comparisons and filtering
-  , vaultPath :: FilePath
-  -- ^ Path to the vault root directory
-  , vaultName :: Text
-  -- ^ Name of the vault (derived from vaultPath)
-  , dailyNotes :: [DailyNote]
-  -- ^ All daily notes (today + recent), sorted most recent first
   }
-  deriving stock (Show, Eq, Generic)
-  deriving anyclass (ToJSON)
 
--- | Pure function to transform raw Vault data into AppView
-mkAppView :: Day -> FilePath -> Vault -> AppView
-mkAppView today vaultPath vault =
-  let tasks = getTasks vault
+-- | Get today's date
+getLocalToday :: IO Day
+getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
+
+{- | Run with a live AppState that updates on:
+- Vault file changes
+- Day boundary crossings
+-}
+withAppState :: FilePath -> (LVar.LVar AppState -> IO ()) -> IO ()
+withAppState path f = do
+  Ob.withLiveVault path $ \vaultVar -> do
+    initialVault <- LVar.get vaultVar
+    initialToday <- getLocalToday
+    appStateVar <- LVar.new (AppState initialVault initialToday)
+
+    -- Run user action alongside watchers
+    withAsync (f appStateVar) $ \_ -> do
+      race_
+        (watchVaultChanges vaultVar appStateVar)
+        (watchDayChanges appStateVar)
+  where
+    -- Forward vault changes to AppState
+    watchVaultChanges vaultVar appStateVar = forever $ do
+      newVault <- LVar.listenNext vaultVar
+      LVar.modify appStateVar (\s -> s {vault = newVault})
+
+    -- Update AppState on day boundary
+    watchDayChanges appStateVar = forever $ do
+      startDay <- getLocalToday
+      waitForDayChange startDay
+      newDay <- getLocalToday
+      LVar.modify appStateVar (\s -> AppState s.vault newDay)
+
+    waitForDayChange startDay = fix $ \loop -> do
+      threadDelay (60 * 1000000) -- Check every minute
+      currentDay <- getLocalToday
+      when (currentDay == startDay) loop
+
+-- | Build vault info from path and app state
+mkVaultInfo :: FilePath -> AppState -> VaultInfo
+mkVaultInfo path appState =
+  let todayVal = appState.today
+   in VaultInfo
+        { vaultPath = path
+        , vaultName = toText $ takeBaseName path
+        , today = todayVal
+        }
+
+-- | Build tasks data from app state
+mkTasksData :: FilePath -> AppState -> TasksData
+mkTasksData vaultPath appState =
+  let tasks = getTasks appState.vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       groupedAll =
@@ -56,14 +99,18 @@ mkAppView today vaultPath vault =
           Map.empty
           (incomplete <> completedTasks)
       tree = FolderTree.flattenTree $ buildFolderTree groupedAll
-      -- Daily notes: today + past 7 days, sorted most recent first
-      allDailyNotes = getDailyNotes vault
-      dailyNotes' = take 8 $ filter (\dn -> dn.day <= today) allDailyNotes
-   in AppView
-        { folderTree = tree
-        , filters = FilterDef.filters
-        , today = today
-        , vaultPath = vaultPath
-        , vaultName = toText $ takeBaseName vaultPath
-        , dailyNotes = dailyNotes'
-        }
+   in TasksData {folderTree = tree}
+
+-- | Build notes data from app state
+mkNotesData :: AppState -> NotesData
+mkNotesData appState = NotesData {noteCount = Map.size appState.vault.notes}
+
+-- | Build server message for a query (pure - all state in AppState)
+mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage
+mkServerMessage vaultPath appState query =
+  ServerMessage
+    { vaultInfo = mkVaultInfo vaultPath appState
+    , response = case query of
+        TasksQuery -> TasksResponse (mkTasksData vaultPath appState)
+        NotesQuery -> NotesResponse (mkNotesData appState)
+    }
