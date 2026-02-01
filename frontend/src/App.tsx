@@ -1,29 +1,22 @@
 import { Component, onMount, Show } from "solid-js";
 import { Router, Route, Navigate } from "@solidjs/router";
-import { vault, isConnected } from "@/store";
+import { isConnected } from "@/store";
 import { connectVault } from "@/sync/websocket";
-import { NavBar } from "@/components/NavBar";
+import { Header } from "@/components/Header";
 import TasksPage from "@/pages/TasksPage";
 import NotesPage from "@/pages/NotesPage";
 
 const Layout: Component<{ children?: any }> = (props) => {
   return (
     <div class="max-w-4xl mx-auto my-8 px-4">
-      {/* Vault path label */}
-      <div class="text-center">
-        <span class="inline-block px-4 py-1.5 text-xs font-medium tracking-wide bg-accent-100 dark:bg-accent-900/40 text-accent-800 dark:text-accent-200 rounded-t-xl border border-b-0 border-accent-200 dark:border-accent-800">
-          {vault.vaultPath}
-        </span>
-      </div>
-
-      {/* Main content card */}
-      <div class="bg-white dark:bg-stone-950 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-700 p-6 sm:p-8 -mt-px">
-        <NavBar />
+      <div class="bg-white dark:bg-stone-950 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-700 p-6 sm:p-8">
+        <Header />
         {props.children}
       </div>
     </div>
   );
 };
+
 
 
 const App: Component = () => {

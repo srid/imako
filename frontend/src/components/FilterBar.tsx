@@ -4,7 +4,7 @@ import { activeFilters, toggleFilter } from "@/state/filters";
 
 export const FilterBar: Component<{ filters: Filter[] }> = (props) => {
   return (
-    <div class="mb-6 flex items-center gap-2 flex-wrap">
+    <div class="flex items-center gap-2 flex-wrap">
       <For each={props.filters}>
         {(filter) => (
           <button
