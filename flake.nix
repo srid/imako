@@ -30,8 +30,8 @@
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       imports = [
-        ./nix/flake/devshell.nix
-        ./nix/flake/pre-commit.nix
+        ./nix/devshell.nix
+        ./nix/pre-commit.nix
         ./nix/home-manager/flake-module.nix
         ./backend/flake-module.nix
         ./backend/generate-types/flake-module.nix
