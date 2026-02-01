@@ -32,15 +32,15 @@ initialClientState = ClientState Nothing
 {- | Generic WebSocket server application.
 
 Takes:
-- An LVar with live data
-- A handler function that builds responses given (Day, vault, query)
+- An LVar with live state
+- A handler function that builds responses given (Day, state, query)
 -}
 wsApp ::
   (FromJSON q, ToJSON msg) =>
-  LVar.LVar vault ->
-  (Day -> vault -> q -> msg) ->
+  LVar.LVar state ->
+  (Day -> state -> q -> msg) ->
   WS.ServerApp
-wsApp vaultVar mkMessage pending = do
+wsApp stateVar mkMessage pending = do
   conn <- WS.acceptRequest pending
   clientState <- STM.newTVarIO initialClientState
 
@@ -60,16 +60,16 @@ wsApp vaultVar mkMessage pending = do
     listenForChanges conn clientState = forever $ do
       void $
         runConcurrently . asum . map Concurrently $
-          [ listenDayChange >> LVar.get vaultVar
-          , LVar.listenNext vaultVar
+          [ listenDayChange >> LVar.get stateVar
+          , LVar.listenNext stateVar
           ]
       clientSt <- STM.readTVarIO clientState
       whenJust clientSt.currentQuery (sendResultForQuery conn)
 
     sendResultForQuery conn query = do
-      vault <- LVar.get vaultVar
+      state <- LVar.get stateVar
       today <- getLocalToday
-      let msg = mkMessage today vault query
+      let msg = mkMessage today state query
       WS.sendTextData conn (encode msg)
 
     getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
