@@ -7,6 +7,9 @@
  *   - TypeScript types provide static type checking on the client
  *
  * Both sides use discriminated unions with a "type" field for pattern matching.
+ * Field names are 1:1 with Haskell - no hidden transformations.
+ * Naming convention: `inlines` for [InlineNode], `blocks` for [BlockNode], 
+ * `items` for [[BlockNode]], `text` for Text content.
  */
 
 /**
@@ -14,17 +17,17 @@
  * Matches Haskell BlockNode in Ob.Json.
  */
 export type BlockNode =
-  | { type: "paragraph"; content: InlineNode[] }
-  | { type: "heading"; level: number; content: InlineNode[] }
+  | { type: "paragraph"; inlines: InlineNode[] }
+  | { type: "heading"; level: number; inlines: InlineNode[] }
   | { type: "bulletList"; items: BlockNode[][] }
   | { type: "orderedList"; items: BlockNode[][] }
   | { type: "codeBlock"; language: string; code: string }
-  | { type: "blockquote"; content: BlockNode[] }
+  | { type: "blockQuote"; blocks: BlockNode[] }
   | { type: "horizontalRule" }
-  | { type: "task"; done: boolean; content: InlineNode[] }
-  | { type: "div"; content: BlockNode[] }
-  | { type: "rawBlock"; format: string; content: string }
-  | { type: "definitionList"; items: unknown[] }; // TODO: proper typing
+  | { type: "task"; done: boolean; inlines: InlineNode[] }
+  | { type: "div"; blocks: BlockNode[] }
+  | { type: "rawBlock"; format: string; text: string }
+  | { type: "definitionList"; definitions: unknown[] }; // TODO: proper typing
 
 /**
  * Inline-level nodes - text formatting, links, code spans.
@@ -32,22 +35,22 @@ export type BlockNode =
  */
 export type InlineNode =
   | { type: "text"; text: string }
-  | { type: "emphasis"; content: InlineNode[] }
-  | { type: "strong"; content: InlineNode[] }
-  | { type: "underline"; content: InlineNode[] }
-  | { type: "code"; code: string }
-  | { type: "link"; url: string; content: InlineNode[] }
+  | { type: "emph"; inlines: InlineNode[] }
+  | { type: "strong"; inlines: InlineNode[] }
+  | { type: "underline"; inlines: InlineNode[] }
+  | { type: "codeInline"; code: string }
+  | { type: "link"; url: string; inlines: InlineNode[] }
   | { type: "image"; url: string; title: string; alt: InlineNode[] }
-  | { type: "wikilink"; target: string; display: string | null }
-  | { type: "strikeout"; content: InlineNode[] }
-  | { type: "superscript"; content: InlineNode[] }
-  | { type: "subscript"; content: InlineNode[] }
-  | { type: "smallCaps"; content: InlineNode[] }
-  | { type: "quoted"; quoteType: string; content: InlineNode[] }
-  | { type: "math"; mathType: string; content: string }
-  | { type: "rawInline"; format: string; content: string }
-  | { type: "note"; content: BlockNode[] }
-  | { type: "span"; content: InlineNode[] }
+  | { type: "wikiLink"; target: string; display: string | null }
+  | { type: "strikeout"; inlines: InlineNode[] }
+  | { type: "superscript"; inlines: InlineNode[] }
+  | { type: "subscript"; inlines: InlineNode[] }
+  | { type: "smallCaps"; inlines: InlineNode[] }
+  | { type: "quoted"; quoteType: string; inlines: InlineNode[] }
+  | { type: "math"; mathType: string; text: string }
+  | { type: "rawInline"; format: string; text: string }
+  | { type: "note"; blocks: BlockNode[] }
+  | { type: "span"; inlines: InlineNode[] }
   | { type: "lineBreak" };
 
 /**

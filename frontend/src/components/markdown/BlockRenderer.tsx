@@ -16,24 +16,24 @@ export const BlockRenderer: Component<{ nodes: BlockNode[] }> = (props) => {
           <Match when={node.type === "paragraph" && node}>
             {(n) => (
               <p class="text-stone-700 dark:text-stone-300">
-                <InlineRenderer nodes={(n() as { content: InlineNode[] }).content} />
+                <InlineRenderer nodes={(n() as { inlines: InlineNode[] }).inlines} />
               </p>
             )}
           </Match>
 
           <Match when={node.type === "heading" && node}>
             {(n) => {
-              const h = n() as { level: number; content: InlineNode[] };
+              const h = n() as { level: number; inlines: InlineNode[] };
               const classes = "font-bold mt-4 mb-2 text-stone-800 dark:text-stone-100";
               switch (h.level) {
                 case 1:
-                  return <h1 class={`text-2xl ${classes}`}><InlineRenderer nodes={h.content} /></h1>;
+                  return <h1 class={`text-2xl ${classes}`}><InlineRenderer nodes={h.inlines} /></h1>;
                 case 2:
-                  return <h2 class={`text-xl ${classes}`}><InlineRenderer nodes={h.content} /></h2>;
+                  return <h2 class={`text-xl ${classes}`}><InlineRenderer nodes={h.inlines} /></h2>;
                 case 3:
-                  return <h3 class={`text-lg ${classes}`}><InlineRenderer nodes={h.content} /></h3>;
+                  return <h3 class={`text-lg ${classes}`}><InlineRenderer nodes={h.inlines} /></h3>;
                 default:
-                  return <h4 class={`text-base ${classes}`}><InlineRenderer nodes={h.content} /></h4>;
+                  return <h4 class={`text-base ${classes}`}><InlineRenderer nodes={h.inlines} /></h4>;
               }
             }}
           </Match>
@@ -76,10 +76,10 @@ export const BlockRenderer: Component<{ nodes: BlockNode[] }> = (props) => {
             }}
           </Match>
 
-          <Match when={node.type === "blockquote" && node}>
+          <Match when={node.type === "blockQuote" && node}>
             {(n) => (
               <blockquote class="border-l-4 border-amber-400 dark:border-amber-600 pl-4 my-2 italic text-stone-600 dark:text-stone-400">
-                <BlockRenderer nodes={(n() as { content: BlockNode[] }).content} />
+                <BlockRenderer nodes={(n() as { blocks: BlockNode[] }).blocks} />
               </blockquote>
             )}
           </Match>
@@ -90,7 +90,7 @@ export const BlockRenderer: Component<{ nodes: BlockNode[] }> = (props) => {
 
           <Match when={node.type === "task" && node}>
             {(n) => {
-              const task = n() as { done: boolean; content: InlineNode[] };
+              const task = n() as { done: boolean; inlines: InlineNode[] };
               return (
                 <div class="flex items-start gap-2">
                   <input
@@ -100,7 +100,7 @@ export const BlockRenderer: Component<{ nodes: BlockNode[] }> = (props) => {
                     class="mt-1 h-4 w-4 rounded border-stone-400 dark:border-stone-500 accent-amber-500"
                   />
                   <span class={task.done ? "line-through text-stone-400 dark:text-stone-500" : "text-stone-700 dark:text-stone-300"}>
-                    <InlineRenderer nodes={task.content} />
+                    <InlineRenderer nodes={task.inlines} />
                   </span>
                 </div>
               );
@@ -110,7 +110,7 @@ export const BlockRenderer: Component<{ nodes: BlockNode[] }> = (props) => {
           <Match when={node.type === "div" && node}>
             {(n) => (
               <div>
-                <BlockRenderer nodes={(n() as { content: BlockNode[] }).content} />
+                <BlockRenderer nodes={(n() as { blocks: BlockNode[] }).blocks} />
               </div>
             )}
           </Match>
@@ -149,7 +149,7 @@ const ListItemRenderer: Component<{ blocks: BlockNode[] }> = (props) => {
         <div class="flex items-start gap-2 ml-4 text-stone-700 dark:text-stone-300">
           <span class="text-stone-400 select-none">•</span>
           <span>
-            <InlineRenderer nodes={(firstBlock() as { content: InlineNode[] }).content} />
+            <InlineRenderer nodes={(firstBlock() as { inlines: InlineNode[] }).inlines} />
           </span>
         </div>
       </Match>

@@ -1,14 +1,34 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 {- |
 JSON AST serialization for Pandoc documents with Obsidian semantics.
 
-These types (AstNode, BlockNode, InlineNode) define the JSON structure sent
-over the websocket to the frontend. The frontend has matching TypeScript types
-in @frontend/src/components/markdown/types.ts@ that mirror this structure.
+== Why separate AST types?
 
-The duplication is intentional: Haskell types define the source of truth for
-serialization, TypeScript types provide static type checking on the client.
+We don't reuse Pandoc's AST directly because:
+
+1. We add Obsidian-specific nodes ('TaskNode', 'WikiLinkNode')
+2. We produce a clean discriminated union format for TypeScript
+
+== Why TypeScript mirrors these types?
+
+The frontend (@frontend/src/components/markdown/types.ts@) defines matching
+types. Haskell is source of truth, TypeScript provides client type checking.
+
+== JSON Format
+
+Uses @genericToJSON@ with 'TaggedObject' encoding to produce:
+
+@
+{"type": "paragraph", "content": [...]}
+{"type": "heading", "level": 2, "content": [...]}
+@
+
+This format works with TypeScript discriminated unions.
+
+Uses DuplicateRecordFields + fieldLabelModifier to normalize field names
+for the frontend (e.g., "inlineContent" -> "content").
 -}
 module Ob.Json (
   noteToAst,
@@ -18,9 +38,26 @@ module Ob.Json (
 )
 where
 
-import Data.Aeson (ToJSON (..), object, (.=))
+import Data.Aeson (Options (..), SumEncoding (..), ToJSON (..), defaultOptions, genericToJSON)
+import Data.Char (toLower)
+import Data.List (stripPrefix)
 import Ob.Note (Note (..))
 import Text.Pandoc.Definition qualified as P
+
+-- | JSON options for discriminated union format
+astOptions :: Options
+astOptions =
+  defaultOptions
+    { sumEncoding = TaggedObject "type" "contents"
+    , constructorTagModifier = lcFirst . dropNodeSuffix
+    , allNullaryToStringTag = False
+    , tagSingleConstructors = True
+    }
+  where
+    dropNodeSuffix s = fromMaybe s (stripSuffix "Node" s)
+    stripSuffix suffix s = reverse <$> stripPrefix (reverse suffix) (reverse s)
+    lcFirst [] = []
+    lcFirst (c : cs) = toLower c : cs
 
 -- | Top-level AST node containing rendered markdown blocks
 newtype AstNode = AstNode
@@ -30,111 +67,51 @@ newtype AstNode = AstNode
   deriving anyclass (ToJSON)
 
 {- | Block-level AST nodes (paragraphs, headings, lists, etc.)
-JSON uses @{type: "...", ...}@ format for frontend discriminated unions
+Uses DuplicateRecordFields: `inlines` for [InlineNode], `blocks` for [BlockNode], `items` for [[BlockNode]].
 -}
 data BlockNode
-  = ParagraphNode [InlineNode]
-  | HeadingNode Int [InlineNode] -- level, content
-  | BulletListNode [[BlockNode]]
-  | OrderedListNode [[BlockNode]]
-  | CodeBlockNode Text Text -- language, code
-  | BlockQuoteNode [BlockNode]
+  = ParagraphNode {inlines :: [InlineNode]}
+  | HeadingNode {level :: Int, inlines :: [InlineNode]}
+  | BulletListNode {items :: [[BlockNode]]}
+  | OrderedListNode {items :: [[BlockNode]]}
+  | CodeBlockNode {language :: Text, code :: Text}
+  | BlockQuoteNode {blocks :: [BlockNode]}
   | HorizontalRuleNode
-  | TaskNode Bool [InlineNode] -- done, content
-  | DivNode [BlockNode]
-  | RawBlockNode Text Text -- format, content
-  | DefinitionListNode [([InlineNode], [[BlockNode]])]
+  | TaskNode {done :: Bool, inlines :: [InlineNode]}
+  | DivNode {blocks :: [BlockNode]}
+  | RawBlockNode {format :: Text, text :: Text}
+  | DefinitionListNode {definitions :: [([InlineNode], [[BlockNode]])]}
   deriving stock (Show, Eq, Generic)
 
--- Custom ToJSON for discriminated union format: {type: "...", ...fields}
 instance ToJSON BlockNode where
-  toJSON = \case
-    ParagraphNode inlines ->
-      object ["type" .= ("paragraph" :: Text), "content" .= inlines]
-    HeadingNode lvl inlines ->
-      object ["type" .= ("heading" :: Text), "level" .= lvl, "content" .= inlines]
-    BulletListNode items ->
-      object ["type" .= ("bulletList" :: Text), "items" .= items]
-    OrderedListNode items ->
-      object ["type" .= ("orderedList" :: Text), "items" .= items]
-    CodeBlockNode lang code ->
-      object ["type" .= ("codeBlock" :: Text), "language" .= lang, "code" .= code]
-    BlockQuoteNode blks ->
-      object ["type" .= ("blockquote" :: Text), "content" .= blks]
-    HorizontalRuleNode ->
-      object ["type" .= ("horizontalRule" :: Text)]
-    TaskNode done inlines ->
-      object ["type" .= ("task" :: Text), "done" .= done, "content" .= inlines]
-    DivNode blks ->
-      object ["type" .= ("div" :: Text), "content" .= blks]
-    RawBlockNode fmt content ->
-      object ["type" .= ("rawBlock" :: Text), "format" .= fmt, "content" .= content]
-    DefinitionListNode defs ->
-      object ["type" .= ("definitionList" :: Text), "items" .= defs]
+  toJSON = genericToJSON astOptions
 
 {- | Inline-level AST nodes (text, emphasis, links, etc.)
-JSON uses @{type: "...", ...}@ format for frontend discriminated unions
+Uses DuplicateRecordFields: `inlines` for [InlineNode], `blocks` for [BlockNode].
 -}
 data InlineNode
-  = TextNode Text
-  | EmphNode [InlineNode]
-  | StrongNode [InlineNode]
-  | UnderlineNode [InlineNode]
-  | CodeNode Text
-  | LinkNode Text [InlineNode] -- url, content
-  | ImageNode Text Text [InlineNode] -- url, title, alt
-  | WikiLinkNode Text (Maybe Text) -- target, display
-  | StrikeoutNode [InlineNode]
-  | SuperscriptNode [InlineNode]
-  | SubscriptNode [InlineNode]
-  | SmallCapsNode [InlineNode]
-  | QuotedNode Text [InlineNode] -- quoteType, content
-  | MathNode Text Text -- mathType, content
-  | RawInlineNode Text Text -- format, content
-  | NoteNode [BlockNode] -- footnote content
-  | SpanNode [InlineNode]
+  = TextNode {text :: Text}
+  | EmphNode {inlines :: [InlineNode]}
+  | StrongNode {inlines :: [InlineNode]}
+  | UnderlineNode {inlines :: [InlineNode]}
+  | CodeInlineNode {code :: Text}
+  | LinkNode {url :: Text, inlines :: [InlineNode]}
+  | ImageNode {url :: Text, title :: Text, alt :: [InlineNode]}
+  | WikiLinkNode {target :: Text, display :: Maybe Text}
+  | StrikeoutNode {inlines :: [InlineNode]}
+  | SuperscriptNode {inlines :: [InlineNode]}
+  | SubscriptNode {inlines :: [InlineNode]}
+  | SmallCapsNode {inlines :: [InlineNode]}
+  | QuotedNode {quoteType :: Text, inlines :: [InlineNode]}
+  | MathNode {mathType :: Text, text :: Text}
+  | RawInlineNode {format :: Text, text :: Text}
+  | NoteNode {blocks :: [BlockNode]}
+  | SpanNode {inlines :: [InlineNode]}
   | LineBreakNode
   deriving stock (Show, Eq, Generic)
 
--- Custom ToJSON for discriminated union format
 instance ToJSON InlineNode where
-  toJSON = \case
-    TextNode t ->
-      object ["type" .= ("text" :: Text), "text" .= t]
-    EmphNode inlines ->
-      object ["type" .= ("emphasis" :: Text), "content" .= inlines]
-    StrongNode inlines ->
-      object ["type" .= ("strong" :: Text), "content" .= inlines]
-    UnderlineNode inlines ->
-      object ["type" .= ("underline" :: Text), "content" .= inlines]
-    CodeNode code ->
-      object ["type" .= ("code" :: Text), "code" .= code]
-    LinkNode url inlines ->
-      object ["type" .= ("link" :: Text), "url" .= url, "content" .= inlines]
-    ImageNode url title alt ->
-      object ["type" .= ("image" :: Text), "url" .= url, "title" .= title, "alt" .= alt]
-    WikiLinkNode target display ->
-      object ["type" .= ("wikilink" :: Text), "target" .= target, "display" .= display]
-    StrikeoutNode inlines ->
-      object ["type" .= ("strikeout" :: Text), "content" .= inlines]
-    SuperscriptNode inlines ->
-      object ["type" .= ("superscript" :: Text), "content" .= inlines]
-    SubscriptNode inlines ->
-      object ["type" .= ("subscript" :: Text), "content" .= inlines]
-    SmallCapsNode inlines ->
-      object ["type" .= ("smallCaps" :: Text), "content" .= inlines]
-    QuotedNode qtype inlines ->
-      object ["type" .= ("quoted" :: Text), "quoteType" .= qtype, "content" .= inlines]
-    MathNode mathType content ->
-      object ["type" .= ("math" :: Text), "mathType" .= mathType, "content" .= content]
-    RawInlineNode fmt content ->
-      object ["type" .= ("rawInline" :: Text), "format" .= fmt, "content" .= content]
-    NoteNode blks ->
-      object ["type" .= ("note" :: Text), "content" .= blks]
-    SpanNode inlines ->
-      object ["type" .= ("span" :: Text), "content" .= inlines]
-    LineBreakNode ->
-      object ["type" .= ("lineBreak" :: Text)]
+  toJSON = genericToJSON astOptions
 
 -- | Convert a Note to JSON AST
 noteToAst :: Note -> AstNode
@@ -154,7 +131,7 @@ convertBlock = \case
     [CodeBlockNode (fromMaybe "" $ viaNonEmpty head classes) codeText]
   P.BlockQuote blks -> [BlockQuoteNode (concatMap convertBlock blks)]
   P.HorizontalRule -> [HorizontalRuleNode]
-  P.RawBlock fmt rawContent -> [RawBlockNode (show fmt) rawContent]
+  P.RawBlock fmt rawCont -> [RawBlockNode (show fmt) rawCont]
   P.DefinitionList defs ->
     [DefinitionListNode [(convertInlines t, map (concatMap convertBlock) ds) | (t, ds) <- defs]]
   P.Div _ blks -> [DivNode (concatMap convertBlock blks)]
@@ -211,7 +188,7 @@ convertInline = \case
   P.Superscript inlines -> [SuperscriptNode (convertInlines inlines)]
   P.Subscript inlines -> [SubscriptNode (convertInlines inlines)]
   P.SmallCaps inlines -> [SmallCapsNode (convertInlines inlines)]
-  P.Code _ codeText -> [CodeNode codeText]
+  P.Code _ codeText -> [CodeInlineNode codeText]
   P.Link _ inlines (linkUrl, _) -> [LinkNode linkUrl (convertInlines inlines)]
   P.Image _ altInlines (imgUrl, imgTitle) -> [ImageNode imgUrl imgTitle (convertInlines altInlines)]
   P.Span (_, ["wikilink"], _) [P.Str wlTarget] -> [WikiLinkNode wlTarget Nothing]

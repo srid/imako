@@ -12,21 +12,21 @@ export const InlineRenderer: Component<{ nodes: InlineNode[] }> = (props) => {
           <Match when={node.type === "text" && node}>
             {(n) => <>{(n() as { text: string }).text}</>}
           </Match>
-          <Match when={node.type === "emphasis" && node}>
+          <Match when={node.type === "emph" && node}>
             {(n) => (
               <em>
-                <InlineRenderer nodes={(n() as { content: InlineNode[] }).content} />
+                <InlineRenderer nodes={(n() as { inlines: InlineNode[] }).inlines} />
               </em>
             )}
           </Match>
           <Match when={node.type === "strong" && node}>
             {(n) => (
               <strong>
-                <InlineRenderer nodes={(n() as { content: InlineNode[] }).content} />
+                <InlineRenderer nodes={(n() as { inlines: InlineNode[] }).inlines} />
               </strong>
             )}
           </Match>
-          <Match when={node.type === "code" && node}>
+          <Match when={node.type === "codeInline" && node}>
             {(n) => (
               <code class="bg-stone-100 dark:bg-stone-800 px-1 rounded text-sm">
                 {(n() as { code: string }).code}
@@ -35,7 +35,7 @@ export const InlineRenderer: Component<{ nodes: InlineNode[] }> = (props) => {
           </Match>
           <Match when={node.type === "link" && node}>
             {(n) => {
-              const link = n() as { url: string; content: InlineNode[] };
+              const link = n() as { url: string; inlines: InlineNode[] };
               return (
                 <a
                   href={link.url}
@@ -43,12 +43,12 @@ export const InlineRenderer: Component<{ nodes: InlineNode[] }> = (props) => {
                   target="_blank"
                   rel="noopener"
                 >
-                  <InlineRenderer nodes={link.content} />
+                  <InlineRenderer nodes={link.inlines} />
                 </a>
               );
             }}
           </Match>
-          <Match when={node.type === "wikilink" && node}>
+          <Match when={node.type === "wikiLink" && node}>
             {(n) => {
               const wl = n() as { target: string; display: string | null };
               return (
@@ -61,7 +61,7 @@ export const InlineRenderer: Component<{ nodes: InlineNode[] }> = (props) => {
           <Match when={node.type === "strikeout" && node}>
             {(n) => (
               <del>
-                <InlineRenderer nodes={(n() as { content: InlineNode[] }).content} />
+                <InlineRenderer nodes={(n() as { inlines: InlineNode[] }).inlines} />
               </del>
             )}
           </Match>
