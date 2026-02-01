@@ -1,5 +1,5 @@
 import { A } from "@solidjs/router";
-import { vault } from "@/store";
+import { vaultInfo } from "@/store";
 
 export const Header = () => {
   return (
@@ -7,7 +7,7 @@ export const Header = () => {
       {/* Left: Vault name + Navigation */}
       <div class="flex items-center gap-6">
         <h1 class="text-lg font-bold text-stone-800 dark:text-stone-100">
-          {vault.vaultName || "Vault"}
+          {vaultInfo.vaultName || "Vault"}
         </h1>
         <nav class="flex gap-4">
           <A
@@ -30,8 +30,8 @@ export const Header = () => {
       </div>
 
       {/* Right: Vault path */}
-      <span class="text-xs text-stone-400 dark:text-stone-500 truncate max-w-[200px] hidden sm:block" title={vault.vaultPath}>
-        {vault.vaultPath}
+      <span class="text-xs text-stone-400 dark:text-stone-500 truncate max-w-[200px] hidden sm:block" title={vaultInfo.vaultPath}>
+        {vaultInfo.vaultPath}
       </span>
     </header>
   );

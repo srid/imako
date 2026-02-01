@@ -37,6 +37,7 @@ frontend-build:
 
 # Generate TypeScript types from Haskell ToJSON instances
 generate-types:
-    cabal run generate-types | sed 's/^type /export type /; s/^interface /export interface /' > frontend/src/types.ts
+    cabal build generate-types
+    cabal run generate-types 2>/dev/null | sed 's/^type /export type /; s/^interface /export interface /' > frontend/src/types.ts
     echo "Generated frontend/src/types.ts"
 

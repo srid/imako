@@ -1,28 +1,20 @@
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Imako.Core.Filter where
+module Imako.Core.Filter (
+  Filter (..),
+  filters,
+)
+where
 
-import Data.Aeson (ToJSON)
+import Data.Aeson (FromJSON, ToJSON)
 
--- | A filter for task visibility (filtering happens client-side)
-data Filter = Filter
-  { filterId :: Text
-  -- ^ Unique identifier for the filter (camelCase, used as storage key)
-  , filterLabel :: Text
-  -- ^ Human-readable label for the filter button
-  }
+-- | Available task filters (sum type)
+data Filter
+  = ShowFuture
+  | ShowPast
   deriving stock (Show, Eq, Generic)
-  deriving anyclass (ToJSON)
+  deriving anyclass (FromJSON, ToJSON)
 
 -- | All available filters
 filters :: [Filter]
-filters =
-  [ Filter
-      { filterId = "showFuture"
-      , filterLabel = "Future tasks"
-      }
-  , Filter
-      { filterId = "showPast"
-      , filterLabel = "Past tasks"
-      }
-  ]
+filters = [ShowFuture, ShowPast]

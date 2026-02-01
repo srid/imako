@@ -25,8 +25,8 @@ export const isTaskVisible = (task: Task, today: string): boolean => {
   const isFuture = task.startDate && task.startDate > today;
   const isPast = task.status === "Completed" || task.status === "Cancelled";
 
-  const showFuture = isFilterActive("showFuture");
-  const showPast = isFilterActive("showPast");
+  const showFuture = isFilterActive("ShowFuture");
+  const showPast = isFilterActive("ShowPast");
 
   if (isFuture && !showFuture) return false;
   if (isPast && !showPast) return false;

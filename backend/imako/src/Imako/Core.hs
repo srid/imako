@@ -1,49 +1,34 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Imako.Core (
-  AppView (..),
-  mkAppView,
+  mkVaultInfo,
+  mkTasksData,
+  mkNotesData,
 )
 where
-
-import Data.Aeson (ToJSON)
 
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Time (Day)
-import Imako.Core.Filter (Filter)
+import Imako.API.Protocol (NotesData (..), TasksData (..), VaultInfo (..))
 import Imako.Core.Filter qualified as FilterDef
-import Imako.Core.FolderTree (FolderNode, buildFolderTree)
+import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
-import Ob (DailyNote (..), Task (..), TaskStatus (..), Vault)
-import Ob.Vault (getDailyNotes, getTasks)
+import Ob (Task (..), TaskStatus (..), Vault)
+import Ob.Vault (getTasks, notes)
 import System.FilePath (makeRelative, takeBaseName)
 
-{- | The view model for the application
+-- | Build vault info from path
+mkVaultInfo :: FilePath -> VaultInfo
+mkVaultInfo path =
+  VaultInfo
+    { vaultPath = path
+    , vaultName = toText $ takeBaseName path
+    }
 
-Represents the processed state of the vault data, ready for UI rendering.
--}
-data AppView = AppView
-  { folderTree :: FolderNode
-  -- ^ Tasks organized in a hierarchical folder tree structure
-  , filters :: [Filter]
-  -- ^ Available filters for task visibility
-  , today :: Day
-  -- ^ Current date for date-based comparisons and filtering
-  , vaultPath :: FilePath
-  -- ^ Path to the vault root directory
-  , vaultName :: Text
-  -- ^ Name of the vault (derived from vaultPath)
-  , dailyNotes :: [DailyNote]
-  -- ^ All daily notes (today + recent), sorted most recent first
-  }
-  deriving stock (Show, Eq, Generic)
-  deriving anyclass (ToJSON)
-
--- | Pure function to transform raw Vault data into AppView
-mkAppView :: Day -> FilePath -> Vault -> AppView
-mkAppView today vaultPath vault =
+-- | Build tasks data from vault
+mkTasksData :: Day -> FilePath -> Vault -> TasksData
+mkTasksData today vaultPath vault =
   let tasks = getTasks vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
@@ -56,14 +41,12 @@ mkAppView today vaultPath vault =
           Map.empty
           (incomplete <> completedTasks)
       tree = FolderTree.flattenTree $ buildFolderTree groupedAll
-      -- Daily notes: today + past 7 days, sorted most recent first
-      allDailyNotes = getDailyNotes vault
-      dailyNotes' = take 8 $ filter (\dn -> dn.day <= today) allDailyNotes
-   in AppView
+   in TasksData
         { folderTree = tree
         , filters = FilterDef.filters
         , today = today
-        , vaultPath = vaultPath
-        , vaultName = toText $ takeBaseName vaultPath
-        , dailyNotes = dailyNotes'
         }
+
+-- | Build notes data from vault
+mkNotesData :: Vault -> NotesData
+mkNotesData vault = NotesData {noteCount = Map.size vault.notes}

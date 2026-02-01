@@ -22,10 +22,9 @@ import Data.Bool qualified as B
 import Data.List qualified
 import Data.Maybe qualified as M
 import Data.Time (Day)
-import Imako.Core (AppView (..))
+import Imako.API.Protocol (NotesData (..), Query (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.Filter (Filter (..))
 import Imako.Core.FolderTree (FolderNode (..))
-import Ob.DailyNotes (DailyNote (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Task.Properties (Priority (..))
 import Text.Pandoc.Definition (Pandoc)
@@ -47,11 +46,6 @@ $(deriveTypeScript defaultOptions ''Filter)
 instance TypeScript Day where
   getTypeScriptType _ = "string"
   getTypeScriptDeclarations _ = [] -- No separate declaration needed
-
--- Pandoc isn't used in JSON output, but we need an instance for DailyNote
-instance TypeScript Pandoc where
-  getTypeScriptType _ = "never"
-  getTypeScriptDeclarations _ = []
 
 -- Task has a custom ToJSON, so we need to manually define what it looks like
 -- This matches the JSON output from Task.hs ToJSON instance
@@ -77,24 +71,12 @@ instance TypeScript Task where
         }
     ]
 
--- DailyNote has a custom ToJSON that only outputs day and notePath
-instance TypeScript DailyNote where
-  getTypeScriptType _ = "DailyNote"
-  getTypeScriptDeclarations _ =
-    [ TSInterfaceDeclaration
-        { interfaceName = "DailyNote"
-        , interfaceGenericVariables = []
-        , interfaceMembers =
-            [ reqField "day" "string" -- Day is serialized as ISO string
-            , reqField "notePath" "string"
-            ]
-        , interfaceDoc = M.Nothing
-        }
-    ]
-
--- Now we can derive FolderNode and AppView since Task and DailyNote have TypeScript instances
 $(deriveTypeScript defaultOptions ''FolderNode)
-$(deriveTypeScript defaultOptions ''AppView)
+$(deriveTypeScript defaultOptions ''Query)
+$(deriveTypeScript defaultOptions ''VaultInfo)
+$(deriveTypeScript defaultOptions ''TasksData)
+$(deriveTypeScript defaultOptions ''NotesData)
+$(deriveTypeScript defaultOptions ''ServerMessage)
 
 main :: IO ()
 main = do
@@ -108,8 +90,11 @@ main = do
         , getTypeScriptDeclarations (Proxy @Task)
         , getTypeScriptDeclarations (Proxy @Filter)
         , getTypeScriptDeclarations (Proxy @FolderNode)
-        , getTypeScriptDeclarations (Proxy @DailyNote)
-        , getTypeScriptDeclarations (Proxy @AppView)
+        , getTypeScriptDeclarations (Proxy @Query)
+        , getTypeScriptDeclarations (Proxy @VaultInfo)
+        , getTypeScriptDeclarations (Proxy @TasksData)
+        , getTypeScriptDeclarations (Proxy @NotesData)
+        , getTypeScriptDeclarations (Proxy @ServerMessage)
         ]
 
     header :: String
@@ -124,11 +109,10 @@ main = do
         , " *"
         , " * Source Haskell files:"
         , " *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs"
-        , " *   - Priority, TaskProperties: packages/ob/src/Ob/Task/Properties.hs"
+        , " *   - Priority: packages/ob/src/Ob/Task/Properties.hs"
         , " *   - FolderNode: packages/imako/src/Imako/Core/FolderTree.hs"
         , " *   - Filter: packages/imako/src/Imako/Core/Filter.hs"
-        , " *   - DailyNote: packages/ob/src/Ob/DailyNotes.hs"
-        , " *   - AppView: packages/imako/src/Imako/Core.hs"
+        , " *   - Protocol types: packages/imako/src/Imako/API/Protocol.hs"
         , " */"
         , ""
         ]
