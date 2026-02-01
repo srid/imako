@@ -22,7 +22,7 @@ import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
-import Imako.API.Protocol (NotesData (..), Query (..), ServerMessage (..), TasksData (..), VaultInfo (..))
+import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
 import Ob (Task (..), TaskStatus (..), Vault)
@@ -108,7 +108,9 @@ mkNotesData appState = NotesData {noteCount = Map.size appState.vault.notes}
 -- | Build server message for a query (pure - all state in AppState)
 mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage
 mkServerMessage vaultPath appState query =
-  let vaultInfo = mkVaultInfo vaultPath appState
-   in case query of
-        TasksQuery -> TasksResultMsg vaultInfo (mkTasksData vaultPath appState)
-        NotesQuery -> NotesResultMsg vaultInfo (mkNotesData appState)
+  ServerMessage
+    { vaultInfo = mkVaultInfo vaultPath appState
+    , response = case query of
+        TasksQuery -> TasksResponse (mkTasksData vaultPath appState)
+        NotesQuery -> NotesResponse (mkNotesData appState)
+    }

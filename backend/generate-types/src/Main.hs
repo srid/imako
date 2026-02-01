@@ -22,7 +22,7 @@ import Data.Bool qualified as B
 import Data.List qualified
 import Data.Maybe qualified as M
 import Data.Time (Day)
-import Imako.API.Protocol (NotesData (..), Query (..), ServerMessage (..), TasksData (..), VaultInfo (..))
+import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (FolderNode (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Task.Properties (Priority (..))
@@ -73,6 +73,7 @@ $(deriveTypeScript defaultOptions ''Query)
 $(deriveTypeScript defaultOptions ''VaultInfo)
 $(deriveTypeScript defaultOptions ''TasksData)
 $(deriveTypeScript defaultOptions ''NotesData)
+$(deriveTypeScript defaultOptions ''QueryResponse)
 $(deriveTypeScript defaultOptions ''ServerMessage)
 
 main :: IO ()
@@ -90,6 +91,7 @@ main = do
         , getTypeScriptDeclarations (Proxy @VaultInfo)
         , getTypeScriptDeclarations (Proxy @TasksData)
         , getTypeScriptDeclarations (Proxy @NotesData)
+        , getTypeScriptDeclarations (Proxy @QueryResponse)
         , getTypeScriptDeclarations (Proxy @ServerMessage)
         ]
 

@@ -7,6 +7,7 @@ Defines Query (from client) and Result (to client) types.
 module Imako.API.Protocol (
   Query (..),
   ServerMessage (..),
+  QueryResponse (..),
   VaultInfo (..),
   TasksData (..),
   NotesData (..),
@@ -49,9 +50,17 @@ newtype NotesData = NotesData
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
--- | Server message sent to client (always includes vault info)
-data ServerMessage
-  = TasksResultMsg VaultInfo TasksData
-  | NotesResultMsg VaultInfo NotesData
+-- | Query-specific response data (one variant per query type)
+data QueryResponse
+  = TasksResponse TasksData
+  | NotesResponse NotesData
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
+
+-- | Server message sent to client (vault info + query-specific response)
+data ServerMessage = ServerMessage
+  { vaultInfo :: VaultInfo
+  , response :: QueryResponse
+  }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)

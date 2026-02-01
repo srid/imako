@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedRecordDot #-}
 {-# OPTIONS_GHC -Wno-x-partial #-}
 
 {- HLINT ignore "Use infinitely" -}
@@ -19,14 +18,6 @@ import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.LVar qualified as LVar
 import Network.WebSockets qualified as WS
 
--- | Client state tracking current query subscription
-newtype ClientState q = ClientState
-  { currentQuery :: Maybe q
-  }
-
-initialClientState :: ClientState q
-initialClientState = ClientState Nothing
-
 {- | Generic WebSocket server application.
 
 Takes:
@@ -40,25 +31,25 @@ wsApp ::
   WS.ServerApp
 wsApp stateVar mkMessage pending = do
   conn <- WS.acceptRequest pending
-  clientState <- STM.newTVarIO initialClientState
+  currentQuery <- STM.newTVarIO (Nothing :: Maybe q)
 
   WS.withPingThread conn 30 pass $ do
     race_
-      (receiveMessages conn clientState)
-      (listenForChanges conn clientState)
+      (receiveMessages conn currentQuery)
+      (listenForChanges conn currentQuery)
   where
-    receiveMessages conn clientState = forever $ do
+    receiveMessages conn currentQuery = forever $ do
       msg <- WS.receiveData conn
       case decode msg of
         Just query -> do
-          STM.atomically $ STM.writeTVar clientState (ClientState (Just query))
+          STM.atomically $ STM.writeTVar currentQuery (Just query)
           sendResultForQuery conn query
         Nothing -> pass
 
-    listenForChanges conn clientState = forever $ do
+    listenForChanges conn currentQuery = forever $ do
       void $ LVar.listenNext stateVar
-      clientSt <- STM.readTVarIO clientState
-      whenJust clientSt.currentQuery (sendResultForQuery conn)
+      mQuery <- STM.readTVarIO currentQuery
+      whenJust mQuery (sendResultForQuery conn)
 
     sendResultForQuery conn query = do
       st <- LVar.get stateVar

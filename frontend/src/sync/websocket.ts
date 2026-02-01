@@ -5,7 +5,7 @@
  * in real-time. Client sends Query, server responds with ServerMessage.
  */
 
-import type { Query, ServerMessage, VaultInfo, TasksData, NotesData } from "@/types";
+import type { Query, ServerMessage } from "@/types";
 import { setVaultInfo, setRouteData, setIsConnected } from "@/store";
 
 let ws: WebSocket | null = null;
@@ -54,17 +54,18 @@ export function sendQuery(query: Query): void {
 }
 
 /**
- * Handle incoming server messages and update appropriate stores.
- * ServerMessage contents is a tuple: [VaultInfo, Data]
+ * Handle incoming server messages and update stores.
+ * ServerMessage has { vaultInfo, response } structure.
  */
 function handleServerMessage(msg: ServerMessage): void {
-  if (msg.tag === "TasksResultMsg") {
-    const [info, data] = msg.contents as [VaultInfo, TasksData];
-    setVaultInfo(info);
-    setRouteData({ tag: "tasks", data });
-  } else if (msg.tag === "NotesResultMsg") {
-    const [info, data] = msg.contents as [VaultInfo, NotesData];
-    setVaultInfo(info);
-    setRouteData({ tag: "notes", data });
+  // Update shared vault info
+  setVaultInfo(msg.vaultInfo);
+
+  // Update route-specific data based on response type
+  const response = msg.response;
+  if (response.tag === "TasksResponse") {
+    setRouteData({ tag: "tasks", data: response.contents });
+  } else if (response.tag === "NotesResponse") {
+    setRouteData({ tag: "notes", data: response.contents });
   }
 }

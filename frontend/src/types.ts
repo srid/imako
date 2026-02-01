@@ -59,14 +59,21 @@ export interface INotesData {
   noteCount: number;
 }
 
-export type ServerMessage = ITasksResultMsg | INotesResultMsg;
+export type QueryResponse = ITasksResponse | INotesResponse;
 
-export interface ITasksResultMsg {
-  tag: "TasksResultMsg";
-  contents: [VaultInfo, TasksData];
+export interface ITasksResponse {
+  tag: "TasksResponse";
+  contents: TasksData;
 }
 
-export interface INotesResultMsg {
-  tag: "NotesResultMsg";
-  contents: [VaultInfo, NotesData];
+export interface INotesResponse {
+  tag: "NotesResponse";
+  contents: NotesData;
+}
+
+export type ServerMessage = IServerMessage;
+
+export interface IServerMessage {
+  vaultInfo: VaultInfo;
+  response: QueryResponse;
 }
