@@ -4,7 +4,6 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
-    nixos-unified.url = "github:srid/nixos-unified";
     haskell-flake.url = "github:srid/haskell-flake";
     fourmolu-nix.url = "github:jedimahdi/fourmolu-nix";
 
@@ -29,13 +28,17 @@
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       imports = [
-        # Auto-imported modules from nixos-unified
-        (inputs.nixos-unified.lib.mkFlake { inherit inputs; root = ./.; }).flakeModules.default
-        # Domain-encapsulated module for generate-types
+        ./nix/modules/flake/devshell.nix
+        ./nix/modules/flake/haskell.nix
+        ./nix/modules/flake/home-module.nix
+        ./nix/modules/flake/pre-commit.nix
         ./packages/generate-types/flake-module.nix
+        ./frontend/flake-module.nix
       ];
+      _module.args = {
+        root = ./.;
+      };
     };
 }
-
-

@@ -130,21 +130,6 @@
         "type": "github"
       }
     },
-    "nixos-unified": {
-      "locked": {
-        "lastModified": 1754753812,
-        "narHash": "sha256-sYZLY+hsaMzz3gsYdwHA7conki3H8zSl43YH2xWnKBc=",
-        "owner": "srid",
-        "repo": "nixos-unified",
-        "rev": "4a5e3c33c6177237a27902d3fa4d845448d48e2b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "srid",
-        "repo": "nixos-unified",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1758029226,
@@ -171,7 +156,6 @@
         "git-hooks": "git-hooks",
         "haskell-flake": "haskell-flake",
         "lvar": "lvar",
-        "nixos-unified": "nixos-unified",
         "nixpkgs": "nixpkgs",
         "unionmount": "unionmount",
         "warp-tls-simple": "warp-tls-simple"
