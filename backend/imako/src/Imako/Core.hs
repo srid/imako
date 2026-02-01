@@ -10,7 +10,7 @@ where
 
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
-import Data.Time (Day)
+import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.API.Protocol (NotesData (..), Query (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
@@ -18,17 +18,22 @@ import Ob (Task (..), TaskStatus (..), Vault)
 import Ob.Vault (getTasks, notes)
 import System.FilePath (makeRelative, takeBaseName)
 
--- | Build vault info from path
-mkVaultInfo :: FilePath -> VaultInfo
-mkVaultInfo path =
+-- | Get today's date
+getLocalToday :: IO Day
+getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
+
+-- | Build vault info from path and current day
+mkVaultInfo :: FilePath -> Day -> VaultInfo
+mkVaultInfo path today =
   VaultInfo
     { vaultPath = path
     , vaultName = toText $ takeBaseName path
+    , today = today
     }
 
 -- | Build tasks data from vault
-mkTasksData :: Day -> FilePath -> Vault -> TasksData
-mkTasksData today vaultPath vault =
+mkTasksData :: FilePath -> Vault -> TasksData
+mkTasksData vaultPath vault =
   let tasks = getTasks vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
@@ -41,19 +46,17 @@ mkTasksData today vaultPath vault =
           Map.empty
           (incomplete <> completedTasks)
       tree = FolderTree.flattenTree $ buildFolderTree groupedAll
-   in TasksData
-        { folderTree = tree
-        , today = today
-        }
+   in TasksData {folderTree = tree}
 
 -- | Build notes data from vault
 mkNotesData :: Vault -> NotesData
 mkNotesData vault = NotesData {noteCount = Map.size vault.notes}
 
--- | Build server message for a query (wires together vault path and response building)
-mkServerMessage :: FilePath -> Day -> Vault -> Query -> ServerMessage
-mkServerMessage vaultPath today vault query =
-  let vaultInfo = mkVaultInfo vaultPath
-   in case query of
-        TasksQuery -> TasksResultMsg vaultInfo (mkTasksData today vaultPath vault)
-        NotesQuery -> NotesResultMsg vaultInfo (mkNotesData vault)
+-- | Build server message for a query (fetches today internally)
+mkServerMessage :: FilePath -> Vault -> Query -> IO ServerMessage
+mkServerMessage vaultPath vault query = do
+  today <- getLocalToday
+  let vaultInfo = mkVaultInfo vaultPath today
+  pure $ case query of
+    TasksQuery -> TasksResultMsg vaultInfo (mkTasksData vaultPath vault)
+    NotesQuery -> NotesResultMsg vaultInfo (mkNotesData vault)

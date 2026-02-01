@@ -13,12 +13,10 @@ module Imako.API.WebSocket (
 )
 where
 
-import Control.Concurrent (threadDelay)
-import Control.Concurrent.Async (Concurrently (..), race_, runConcurrently)
+import Control.Concurrent.Async (race_)
 import Control.Concurrent.STM qualified as STM
 import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.LVar qualified as LVar
-import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Network.WebSockets qualified as WS
 
 -- | Client state tracking current query subscription
@@ -33,12 +31,12 @@ initialClientState = ClientState Nothing
 
 Takes:
 - An LVar with live state
-- A handler function that builds responses given (Day, state, query)
+- A handler function that builds responses from (state, query)
 -}
 wsApp ::
   (FromJSON q, ToJSON msg) =>
   LVar.LVar state ->
-  (Day -> state -> q -> msg) ->
+  (state -> q -> IO msg) ->
   WS.ServerApp
 wsApp stateVar mkMessage pending = do
   conn <- WS.acceptRequest pending
@@ -58,25 +56,11 @@ wsApp stateVar mkMessage pending = do
         Nothing -> pass
 
     listenForChanges conn clientState = forever $ do
-      void $
-        runConcurrently . asum . map Concurrently $
-          [ listenDayChange >> LVar.get stateVar
-          , LVar.listenNext stateVar
-          ]
+      void $ LVar.listenNext stateVar
       clientSt <- STM.readTVarIO clientState
       whenJust clientSt.currentQuery (sendResultForQuery conn)
 
     sendResultForQuery conn query = do
-      state <- LVar.get stateVar
-      today <- getLocalToday
-      let msg = mkMessage today state query
+      st <- LVar.get stateVar
+      msg <- mkMessage st query
       WS.sendTextData conn (encode msg)
-
-    getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
-
-    listenDayChange = do
-      startDay <- getLocalToday
-      fix $ \loop -> do
-        threadDelay (60 * 1000000)
-        currentDay <- getLocalToday
-        when (currentDay == startDay) loop

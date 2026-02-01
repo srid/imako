@@ -44,13 +44,13 @@ export type VaultInfo = IVaultInfo;
 export interface IVaultInfo {
   vaultPath: string;
   vaultName: string;
+  today: string;
 }
 
 export type TasksData = ITasksData;
 
 export interface ITasksData {
   folderTree: FolderNode;
-  today: string;
 }
 
 export type NotesData = INotesData;

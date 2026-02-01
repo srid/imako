@@ -15,6 +15,7 @@ import type { VaultInfo, TasksData, NotesData } from "@/types";
 const emptyVaultInfo: VaultInfo = {
   vaultName: "",
   vaultPath: "",
+  today: "",
 };
 
 /** Route-specific data - sum type (only one active at a time) */

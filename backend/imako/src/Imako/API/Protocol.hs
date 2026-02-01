@@ -30,14 +30,14 @@ data Query
 data VaultInfo = VaultInfo
   { vaultPath :: FilePath
   , vaultName :: Text
+  , today :: Day
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
 -- | Tasks-specific data
-data TasksData = TasksData
+newtype TasksData = TasksData
   { folderTree :: FolderNode
-  , today :: Day
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
