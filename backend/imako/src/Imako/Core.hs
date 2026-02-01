@@ -1,6 +1,14 @@
+{-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
+{- HLINT ignore "Use infinitely" -}
+
 module Imako.Core (
+  -- * App State
+  AppState (..),
+  withAppState,
+
+  -- * Message building
   mkVaultInfo,
   mkTasksData,
   mkNotesData,
@@ -8,6 +16,9 @@ module Imako.Core (
 )
 where
 
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.Async (race_, withAsync)
+import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
@@ -15,26 +26,68 @@ import Imako.API.Protocol (NotesData (..), Query (..), ServerMessage (..), Tasks
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
 import Ob (Task (..), TaskStatus (..), Vault)
+import Ob qualified
 import Ob.Vault (getTasks, notes)
 import System.FilePath (makeRelative, takeBaseName)
+
+-- | Application state combining vault data with runtime context
+data AppState = AppState
+  { vault :: Vault
+  , today :: Day
+  }
 
 -- | Get today's date
 getLocalToday :: IO Day
 getLocalToday = localDay . zonedTimeToLocalTime <$> getZonedTime
 
--- | Build vault info from path and current day
-mkVaultInfo :: FilePath -> Day -> VaultInfo
-mkVaultInfo path today =
-  VaultInfo
-    { vaultPath = path
-    , vaultName = toText $ takeBaseName path
-    , today = today
-    }
+{- | Run with a live AppState that updates on:
+- Vault file changes
+- Day boundary crossings
+-}
+withAppState :: FilePath -> (LVar.LVar AppState -> IO ()) -> IO ()
+withAppState path f = do
+  Ob.withLiveVault path $ \vaultVar -> do
+    initialVault <- LVar.get vaultVar
+    initialToday <- getLocalToday
+    appStateVar <- LVar.new (AppState initialVault initialToday)
 
--- | Build tasks data from vault
-mkTasksData :: FilePath -> Vault -> TasksData
-mkTasksData vaultPath vault =
-  let tasks = getTasks vault
+    -- Run user action alongside watchers
+    withAsync (f appStateVar) $ \_ -> do
+      race_
+        (watchVaultChanges vaultVar appStateVar)
+        (watchDayChanges appStateVar)
+  where
+    -- Forward vault changes to AppState
+    watchVaultChanges vaultVar appStateVar = forever $ do
+      newVault <- LVar.listenNext vaultVar
+      LVar.modify appStateVar (\s -> s {vault = newVault})
+
+    -- Update AppState on day boundary
+    watchDayChanges appStateVar = forever $ do
+      startDay <- getLocalToday
+      waitForDayChange startDay
+      newDay <- getLocalToday
+      LVar.modify appStateVar (\s -> AppState s.vault newDay)
+
+    waitForDayChange startDay = fix $ \loop -> do
+      threadDelay (60 * 1000000) -- Check every minute
+      currentDay <- getLocalToday
+      when (currentDay == startDay) loop
+
+-- | Build vault info from path and app state
+mkVaultInfo :: FilePath -> AppState -> VaultInfo
+mkVaultInfo path appState =
+  let todayVal = appState.today
+   in VaultInfo
+        { vaultPath = path
+        , vaultName = toText $ takeBaseName path
+        , today = todayVal
+        }
+
+-- | Build tasks data from app state
+mkTasksData :: FilePath -> AppState -> TasksData
+mkTasksData vaultPath appState =
+  let tasks = getTasks appState.vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       groupedAll =
@@ -48,15 +101,14 @@ mkTasksData vaultPath vault =
       tree = FolderTree.flattenTree $ buildFolderTree groupedAll
    in TasksData {folderTree = tree}
 
--- | Build notes data from vault
-mkNotesData :: Vault -> NotesData
-mkNotesData vault = NotesData {noteCount = Map.size vault.notes}
+-- | Build notes data from app state
+mkNotesData :: AppState -> NotesData
+mkNotesData appState = NotesData {noteCount = Map.size appState.vault.notes}
 
--- | Build server message for a query (fetches today internally)
-mkServerMessage :: FilePath -> Vault -> Query -> IO ServerMessage
-mkServerMessage vaultPath vault query = do
-  today <- getLocalToday
-  let vaultInfo = mkVaultInfo vaultPath today
-  pure $ case query of
-    TasksQuery -> TasksResultMsg vaultInfo (mkTasksData vaultPath vault)
-    NotesQuery -> NotesResultMsg vaultInfo (mkNotesData vault)
+-- | Build server message for a query (pure - all state in AppState)
+mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage
+mkServerMessage vaultPath appState query =
+  let vaultInfo = mkVaultInfo vaultPath appState
+   in case query of
+        TasksQuery -> TasksResultMsg vaultInfo (mkTasksData vaultPath appState)
+        NotesQuery -> NotesResultMsg vaultInfo (mkNotesData appState)
