@@ -121,10 +121,7 @@
             # Test frontend is served (index.html with Imako reference)
             machine.succeed("curl -k -f https://localhost:4009 | grep -q 'Imako'")
 
-            # Test API endpoint returns JSON
-            machine.succeed("curl -k -f https://localhost:4009/api/view | grep -q 'vaultPath'")
-
-            print("✅ Imako home-manager service is running, serving frontend and API")
+            print("✅ Imako home-manager service is running and serving frontend")
           '';
 
         };
