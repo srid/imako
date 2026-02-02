@@ -11,7 +11,7 @@ Project origin: https://x.com/sridca/status/1896560964088271161
 
 ## Screenshot
 
-<img width="937" height="794" alt="image" src="https://github.com/user-attachments/assets/4d91ce6b-d62e-4af7-99c5-bbdef3c5643f" />
+<img width="694" height="598" alt="image" src="https://github.com/user-attachments/assets/c097037c-9072-4d06-8d0e-f82fc417bf46" />
 
 
 ## Running
