@@ -25,7 +25,7 @@ library
   build-depends:
     , aeson
     , aeson-typescript
-    , base
+    , base              >=4 && <5
     , pandoc-types
     , text
 
