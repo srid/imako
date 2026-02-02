@@ -64,11 +64,11 @@ data Task = Task
   }
   deriving stock (Show, Eq)
 
--- | Custom ToJSON instance that extracts text from Pandoc inlines
+-- | Custom ToJSON instance that preserves Pandoc inlines for frontend rendering
 instance ToJSON Task where
   toJSON task =
     object
-      [ "description" .= extractText task.description
+      [ "description" .= task.description
       , "sourceNote" .= task.sourceNote
       , "status" .= task.status
       , "dueDate" .= task.properties.dueDate
@@ -88,7 +88,7 @@ instance TypeScript Task where
         { interfaceName = "Task"
         , interfaceGenericVariables = []
         , interfaceMembers =
-            [ TSField False "description" "string" Nothing
+            [ TSField False "description" "Inline[]" Nothing
             , TSField False "sourceNote" "string" Nothing
             , TSField False "status" "TaskStatus" Nothing
             , TSField True "dueDate" "string" Nothing

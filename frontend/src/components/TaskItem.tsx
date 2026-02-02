@@ -3,6 +3,7 @@ import type { Task } from "@/types";
 import { Icons } from "@/utils/icons";
 import { formatDate, dateColor } from "@/utils/dates";
 import { isTaskVisible } from "@/state/filters";
+import { InlineRenderer } from "@/components/markdown/InlineRenderer";
 
 export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
   // Computed styles and visibility
@@ -65,7 +66,9 @@ export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
 
         {/* Content */}
         <div class="flex-1 min-w-0">
-          <div class={`leading-snug ${computed().textStyle}`}>{props.task.description}</div>
+          <div class={`leading-snug ${computed().textStyle}`}>
+            <InlineRenderer inlines={props.task.description} />
+          </div>
 
           {/* Metadata row */}
           <Show when={props.task.priority !== "Normal" || props.task.dueDate || props.task.scheduledDate || props.task.startDate || props.task.tags.length > 0}>
