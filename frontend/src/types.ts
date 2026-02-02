@@ -52,6 +52,7 @@ export interface IVaultInfo {
   vaultPath: string;
   vaultName: string;
   today: string;
+  notes: {[k in string]: string};
 }
 
 export type TasksData = ITasksData;

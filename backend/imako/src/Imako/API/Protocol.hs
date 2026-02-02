@@ -20,13 +20,18 @@ where
 import Data.Aeson (FromJSON, ToJSON, Value, defaultOptions)
 import Data.Aeson.TypeScript.Internal (TSDeclaration)
 import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
-import Data.Time (Day)
+import Data.Time (Day, UTCTime)
 import Imako.Core.FolderTree (FolderNode)
 
 -- | Day serializes as ISO date string (orphan instance, acceptable here)
 instance TypeScript Day where
   getTypeScriptType _ = "string"
   getTypeScriptDeclarations _ = [] -- No separate type needed, uses built-in string
+
+-- | UTCTime serializes as ISO timestamp string
+instance TypeScript UTCTime where
+  getTypeScriptType _ = "string"
+  getTypeScriptDeclarations _ = []
 
 -- | Query sent from client to subscribe to data
 data Query
@@ -44,6 +49,8 @@ data VaultInfo = VaultInfo
   { vaultPath :: FilePath
   , vaultName :: Text
   , today :: Day
+  , notes :: Map Text UTCTime
+  -- ^ All note paths (vault-relative) with last modified time
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)

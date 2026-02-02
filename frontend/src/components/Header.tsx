@@ -19,7 +19,7 @@ export const Header = () => {
             Tasks
           </A>
           <A
-            href="/notes"
+            href="/n"
             activeClass="text-accent-600 dark:text-accent-400 font-semibold"
             inactiveClass="text-stone-500 dark:text-stone-400 hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
             class="text-sm"
