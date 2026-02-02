@@ -187,9 +187,100 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
             }}
           </Match>
 
-          {/* Table - complex, show placeholder for now */}
-          <Match when={block.t === "Table"}>
-            <div class="text-stone-400 italic">[Table not yet rendered]</div>
+          {/* Table - [Attr, Caption, ColSpec[], TableHead, TableBody[], TableFoot] */}
+          <Match when={block.t === "Table" && block}>
+            {(b) => {
+              const [_attr, caption, colSpecs, tableHead, tableBodies, tableFoot] = b().c;
+              
+              // Helper to get alignment class
+              const alignClass = (align: string) => {
+                switch (align) {
+                  case "AlignLeft": return "text-left";
+                  case "AlignRight": return "text-right";
+                  case "AlignCenter": return "text-center";
+                  default: return "text-left";
+                }
+              };
+              
+              // Render a row
+              const renderRow = (row: [Attr, any[]]) => {
+                const [_rowAttr, cells] = row;
+                return (
+                  <tr class="border-b border-stone-200 dark:border-stone-700">
+                    <For each={cells}>
+                      {(cell, colIdx) => {
+                        const [_cellAttr, alignment, _rowSpan, _colSpan, blocks] = cell;
+                        const colAlign = alignment !== "AlignDefault" ? alignment : colSpecs[colIdx()]?.[0];
+                        return (
+                          <td class={`px-3 py-2 ${alignClass(colAlign)}`}>
+                            <BlockRenderer blocks={blocks} />
+                          </td>
+                        );
+                      }}
+                    </For>
+                  </tr>
+                );
+              };
+              
+              return (
+                <div class="my-4 overflow-x-auto">
+                  <table class="min-w-full border-collapse">
+                    {/* Caption */}
+                    {caption[1].length > 0 && (
+                      <caption class="text-sm text-stone-500 dark:text-stone-400 mb-2">
+                        <BlockRenderer blocks={caption[1]} />
+                      </caption>
+                    )}
+                    
+                    {/* Head */}
+                    {tableHead[1].length > 0 && (
+                      <thead class="bg-stone-100 dark:bg-stone-800">
+                        <For each={tableHead[1]}>
+                          {(row) => {
+                            const [_rowAttr, cells] = row;
+                            return (
+                              <tr class="border-b-2 border-stone-300 dark:border-stone-600">
+                                <For each={cells}>
+                                  {(cell, colIdx) => {
+                                    const [_cellAttr, alignment, _rowSpan, _colSpan, blocks] = cell;
+                                    const colAlign = alignment !== "AlignDefault" ? alignment : colSpecs[colIdx()]?.[0];
+                                    return (
+                                      <th class={`px-3 py-2 font-semibold ${alignClass(colAlign)}`}>
+                                        <BlockRenderer blocks={blocks} />
+                                      </th>
+                                    );
+                                  }}
+                                </For>
+                              </tr>
+                            );
+                          }}
+                        </For>
+                      </thead>
+                    )}
+                    
+                    {/* Bodies */}
+                    <For each={tableBodies}>
+                      {(body) => {
+                        const [_bodyAttr, _rowHeadCols, headRows, bodyRows] = body;
+                        return (
+                          <tbody>
+                            <For each={headRows}>{renderRow}</For>
+                            <For each={bodyRows}>{renderRow}</For>
+                          </tbody>
+                        );
+                      }}
+                    </For>
+                    
+                    {/* Foot */}
+                    {tableFoot[1].length > 0 && (
+                      <tfoot class="bg-stone-50 dark:bg-stone-800/50">
+                        <For each={tableFoot[1]}>{renderRow}</For>
+                      </tfoot>
+                    )}
+                  </table>
+                </div>
+              );
+            }}
           </Match>
         </Switch>
       )}

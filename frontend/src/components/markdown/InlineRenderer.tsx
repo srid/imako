@@ -2,7 +2,9 @@
  * Inline node renderer - handles text, emphasis, links, etc.
  * Uses Pandoc's native Inline type with tag discriminator.
  */
-import { Component, For, Switch, Match } from "solid-js";
+import { Component, For, Switch, Match, createSignal } from "solid-js";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import type { Inline } from "./types";
 import { BlockRenderer } from "./BlockRenderer";
 
@@ -153,16 +155,30 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
             }}
           </Match>
 
-          {/* Math - [MathType, string] */}
+          {/* Math - [MathType, string] - rendered with KaTeX */}
           <Match when={inline.t === "Math" && inline}>
             {(i) => {
               const [mathType, tex] = i().c;
-              // Simple rendering - could use KaTeX later
-              return (
-                <code class={mathType === "DisplayMath" ? "block text-center" : ""}>
-                  {tex}
-                </code>
-              );
+              const isDisplay = mathType === "DisplayMath";
+              try {
+                const html = katex.renderToString(tex, {
+                  displayMode: isDisplay,
+                  throwOnError: false,
+                });
+                return (
+                  <span 
+                    class={isDisplay ? "block text-center my-2" : "inline"}
+                    innerHTML={html}
+                  />
+                );
+              } catch {
+                // Fallback to code block on error
+                return (
+                  <code class={isDisplay ? "block text-center" : ""}>
+                    {tex}
+                  </code>
+                );
+              }
             }}
           </Match>
 
@@ -178,13 +194,27 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
             }}
           </Match>
 
-          {/* Note - Block[] (footnote) */}
+          {/* Note - Block[] (footnote) - show as popup on hover */}
           <Match when={inline.t === "Note" && inline}>
-            {(i) => (
-              <sup class="text-amber-600 dark:text-amber-400 cursor-help" title="Footnote">
-                [*]
-              </sup>
-            )}
+            {(i) => {
+              const [isOpen, setIsOpen] = createSignal(false);
+              return (
+                <span class="relative inline-block">
+                  <sup 
+                    class="text-amber-600 dark:text-amber-400 cursor-help px-0.5"
+                    onMouseEnter={() => setIsOpen(true)}
+                    onMouseLeave={() => setIsOpen(false)}
+                  >
+                    [*]
+                  </sup>
+                  {isOpen() && (
+                    <div class="absolute z-50 bottom-full left-0 mb-1 w-64 p-3 bg-white dark:bg-stone-800 rounded-lg shadow-lg border border-stone-200 dark:border-stone-600 text-sm">
+                      <BlockRenderer blocks={i().c} />
+                    </div>
+                  )}
+                </span>
+              );
+            }}
           </Match>
 
           {/* Span - [Attr, Inline[]] - check for wikilink class */}
