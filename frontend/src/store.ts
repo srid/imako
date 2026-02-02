@@ -16,6 +16,7 @@ const emptyVaultInfo: VaultInfo = {
   vaultName: "",
   vaultPath: "",
   today: "",
+  notes: {},
 };
 
 /** Route-specific data - sum type (only one active at a time) */

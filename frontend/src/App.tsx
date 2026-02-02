@@ -3,6 +3,7 @@ import { Router, Route, Navigate } from "@solidjs/router";
 import { isConnected } from "@/store";
 import { connectVault } from "@/sync/websocket";
 import { Header } from "@/components/Header";
+import { CommandPalette } from "@/components/CommandPalette";
 import TasksPage from "@/pages/TasksPage";
 import NotesPage from "@/pages/NotesPage";
 
@@ -13,6 +14,7 @@ const Layout: Component<{ children?: any }> = (props) => {
         <Header />
         {props.children}
       </div>
+      <CommandPalette />
     </div>
   );
 };
@@ -40,7 +42,8 @@ const App: Component = () => {
         <Router root={Layout}>
           <Route path="/" component={() => <Navigate href="/tasks" />} />
           <Route path="/tasks" component={TasksPage} />
-          <Route path="/notes" component={NotesPage} />
+          <Route path="/n" component={NotesPage} />
+          <Route path="/n/*notePath" component={NotesPage} />
         </Router>
       </Show>
     </div>

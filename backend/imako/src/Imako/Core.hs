@@ -79,10 +79,12 @@ withAppState path f = do
 mkVaultInfo :: FilePath -> AppState -> VaultInfo
 mkVaultInfo path appState =
   let todayVal = appState.today
+      notesMap = Map.map (.modifiedAt) $ Map.mapKeys toText appState.vault.notes
    in VaultInfo
         { vaultPath = path
         , vaultName = toText $ takeBaseName path
         , today = todayVal
+        , notes = notesMap
         }
 
 -- | Build tasks data from app state

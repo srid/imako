@@ -1,13 +1,33 @@
-import { Component, onMount, Show, createMemo } from "solid-js";
-import { routeData } from "@/store";
+import { Component, onMount, Show, createMemo, createEffect, For } from "solid-js";
+import { useParams, A } from "@solidjs/router";
+import { routeData, vaultInfo } from "@/store";
 import { sendQuery } from "@/sync/websocket";
 import { AstRenderer } from "@/components/markdown";
 import type { Pandoc } from "@/components/markdown";
 
 const NotesPage: Component = () => {
+  const params = useParams<{ notePath?: string }>();
+
+  // Get note path from route, decode it
+  const notePath = createMemo(() => {
+    const path = params.notePath;
+    return path ? decodeURIComponent(path) : null;
+  });
+
+  // On mount, if no path, send a query to populate vaultInfo
+  // (any query works since vaultInfo is included in every response)
   onMount(() => {
-    // Request INBOX.md (configurable later)
-    sendQuery({ tag: "NotesQuery", contents: "INBOX.md" });
+    if (!notePath()) {
+      sendQuery({ tag: "TasksQuery" });
+    }
+  });
+
+  // Request note when path changes
+  createEffect(() => {
+    const path = notePath();
+    if (path) {
+      sendQuery({ tag: "NotesQuery", contents: path });
+    }
   });
 
   const notesData = createMemo(() => {
@@ -15,22 +35,68 @@ const NotesPage: Component = () => {
     return data?.tag === "notes" ? data.data : null;
   });
 
+  // Recent notes sorted by mtime
+  const recentNotes = createMemo(() => {
+    const notes = vaultInfo.notes;
+    return Object.entries(notes)
+      .sort(([, a], [, b]) => new Date(b).getTime() - new Date(a).getTime())
+      .slice(0, 20);
+  });
+
   return (
-    <Show when={notesData()} fallback={<p class="text-stone-500 dark:text-stone-400">Loading notes...</p>}>
-      {(data) => (
-        <>
-          {/* Subheader */}
+    <>
+      <Show when={notePath()} fallback={
+        /* Recent notes list */
+        <div>
           <div class="flex items-center justify-between gap-4 mb-6">
             <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-200">
-              {data().notePath}
+              Recent Notes
             </h2>
+            <span class="text-sm text-stone-400 dark:text-stone-500">
+              Press <kbd class="px-1.5 py-0.5 bg-stone-100 dark:bg-stone-800 rounded text-xs">Ctrl+P</kbd> to search
+            </span>
           </div>
 
-          {/* Rendered markdown via AST */}
-          <AstRenderer ast={data().noteAst as Pandoc} />
-        </>
-      )}
-    </Show>
+          <div class="space-y-1">
+            <For each={recentNotes()}>
+              {([path, mtime]) => (
+                <A
+                  href={`/n/${encodeURIComponent(path)}`}
+                  class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors group"
+                >
+                  <span class="font-medium text-stone-700 dark:text-stone-300 group-hover:text-amber-600 dark:group-hover:text-amber-400">
+                    {path}
+                  </span>
+                  <span class="text-xs text-stone-400 dark:text-stone-500">
+                    {new Date(mtime).toLocaleDateString()}
+                  </span>
+                </A>
+              )}
+            </For>
+          </div>
+        </div>
+      }>
+        {/* Note content view */}
+        <Show when={notesData()} fallback={<p class="text-stone-500 dark:text-stone-400">Loading note...</p>}>
+          {(data) => (
+            <>
+              {/* Subheader */}
+              <div class="flex items-center justify-between gap-4 mb-6">
+                <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-200">
+                  {data().notePath}
+                </h2>
+                <A href="/n" class="text-sm text-stone-400 hover:text-amber-500 dark:text-stone-500 dark:hover:text-amber-400">
+                  ← Back
+                </A>
+              </div>
+
+              {/* Rendered markdown via AST */}
+              <AstRenderer ast={data().noteAst as Pandoc} />
+            </>
+          )}
+        </Show>
+      </Show>
+    </>
   );
 };
 
