@@ -18,6 +18,7 @@ where
 
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (race_, withAsync)
+import Data.Aeson (object, toJSON, (.=))
 import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
@@ -25,9 +26,9 @@ import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
-import Ob (Task (..), TaskStatus (..), Vault, noteToHtml)
+import Ob (Note (..), Task (..), TaskStatus (..), Vault (..))
 import Ob qualified
-import Ob.Vault (getTasks, notes)
+import Ob.Vault (getTasks)
 import System.FilePath (makeRelative, takeBaseName)
 
 -- | Application state combining vault data with runtime context
@@ -101,13 +102,13 @@ mkTasksData vaultPath appState =
       tree = FolderTree.flattenTree $ buildFolderTree groupedAll
    in TasksData {folderTree = tree}
 
--- | Build notes data by rendering the requested note to HTML
+-- | Build notes data by serializing the requested note to AST
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
 mkNotesData _vaultPath vault reqPath =
-  let html = case Map.lookup reqPath vault.notes of
-        Just note -> Ob.noteToHtml note
-        Nothing -> "Note not found: " <> toText reqPath
-   in NotesData {notePath = reqPath, noteHtml = html}
+  let ast = case Map.lookup reqPath vault.notes of
+        Just note -> toJSON note.content
+        Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
+   in NotesData {notePath = reqPath, noteAst = ast}
 
 -- | Build server message for a query (pure - all state in AppState)
 mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage

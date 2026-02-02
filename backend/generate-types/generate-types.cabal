@@ -23,6 +23,7 @@ executable generate-types
     , imako
     , ob
     , pandoc-types
+    , pandoc-typescript
     , relude
     , time
 

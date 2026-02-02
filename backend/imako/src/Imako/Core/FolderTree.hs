@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Imako.Core.FolderTree (
   FolderNode (..),
@@ -7,9 +8,12 @@ module Imako.Core.FolderTree (
   hasDueTasks,
   isTaskDue,
   flattenTree,
+  folderTreeTsDeclarations,
 ) where
 
-import Data.Aeson (ToJSON)
+import Data.Aeson (ToJSON, defaultOptions)
+import Data.Aeson.TypeScript.Internal (TSDeclaration)
+import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
 import Data.Map.Strict qualified as Map
 import Data.Time (Day)
 import Ob (Task)
@@ -23,6 +27,12 @@ data FolderNode = FolderNode
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
+
+$(deriveTypeScript defaultOptions ''FolderNode)
+
+-- | All TypeScript declarations from this module
+folderTreeTsDeclarations :: [TSDeclaration]
+folderTreeTsDeclarations = getTypeScriptDeclarations (Proxy @FolderNode)
 
 -- | Build a folder tree from a map of file paths to task lists
 buildFolderTree :: Map FilePath [Task] -> FolderNode

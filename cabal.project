@@ -1,6 +1,7 @@
 packages:
   ./backend/imako
   ./backend/ob
+  ./backend/pandoc-typescript
   ./backend/generate-types
 
 -- Nix won't recognize the settings below, because haskell-flake doesn't.

@@ -1,115 +1,90 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 {- |
 Generate TypeScript types from Haskell ToJSON instances.
 
 Usage:
-  cabal run generate-types > frontend/src/types.ts
-  -- or --
+  generate-types protocol  -- Generates frontend/src/types.ts
+  generate-types ast       -- Generates frontend/src/components/markdown/types.ts
+
+Run via justfile:
   just generate-types
 
 This ensures type-safety between the Haskell backend and TypeScript frontend.
 -}
 module Main where
 
-import Data.Aeson (defaultOptions)
-import Data.Aeson.TypeScript.Internal (TSDeclaration (..), TSField (..))
 import Data.Aeson.TypeScript.TH
-import Data.Bool qualified as B
 import Data.List qualified
-import Data.Maybe qualified as M
-import Data.Time (Day)
-import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
-import Imako.Core.FolderTree (FolderNode (..))
-import Ob.Task (Task (..), TaskStatus (..))
-import Ob.Task.Properties (Priority (..))
-
--- | Helper to create a required TSField (works around relude/base Bool conflict)
-reqField :: String -> String -> TSField
-reqField name typ = TSField B.False name typ M.Nothing
-
--- | Helper to create an optional TSField
-optField :: String -> String -> TSField
-optField name typ = TSField B.True name typ M.Nothing
-
--- Derive TypeScript instances for types with generic ToJSON
-$(deriveTypeScript defaultOptions ''TaskStatus)
-$(deriveTypeScript defaultOptions ''Priority)
-
--- Day is serialized as a string (ISO date)
-instance TypeScript Day where
-  getTypeScriptType _ = "string"
-  getTypeScriptDeclarations _ = [] -- No separate declaration needed
-
--- Task has a custom ToJSON, so we need to manually define what it looks like
--- This matches the JSON output from Task.hs ToJSON instance
-instance TypeScript Task where
-  getTypeScriptType _ = "Task"
-  getTypeScriptDeclarations _ =
-    [ TSInterfaceDeclaration
-        { interfaceName = "Task"
-        , interfaceGenericVariables = []
-        , interfaceMembers =
-            [ reqField "description" "string"
-            , reqField "sourceNote" "string"
-            , reqField "status" "TaskStatus"
-            , optField "dueDate" "string"
-            , optField "scheduledDate" "string"
-            , optField "startDate" "string"
-            , optField "completedDate" "string"
-            , reqField "priority" "Priority"
-            , reqField "tags" "string[]"
-            , reqField "parentBreadcrumbs" "string[]"
-            ]
-        , interfaceDoc = M.Nothing
-        }
-    ]
-
-$(deriveTypeScript defaultOptions ''FolderNode)
-$(deriveTypeScript defaultOptions ''Query)
-$(deriveTypeScript defaultOptions ''VaultInfo)
-$(deriveTypeScript defaultOptions ''TasksData)
-$(deriveTypeScript defaultOptions ''NotesData)
-$(deriveTypeScript defaultOptions ''QueryResponse)
-$(deriveTypeScript defaultOptions ''ServerMessage)
+import Imako.API.Protocol (protocolTsDeclarations)
+import Imako.Core.FolderTree (folderTreeTsDeclarations)
+import Ob.Task (taskTsDeclarations)
+import Ob.Task.Properties (priorityTsDeclarations)
+import Text.Pandoc.Definition.TypeScript (pandocTsDeclarations)
 
 main :: IO ()
 main = do
-  putStrLn header
-  putStrLn $ formatTSDeclarations' defaultFormattingOptions allDecls
+  args <- getArgs
+  case args of
+    ["protocol"] -> putStrLn generateProtocol
+    ["ast"] -> putStrLn generateAst
+    _ -> do
+      putStrLn "Usage: generate-types <command>"
+      putStrLn ""
+      putStrLn "Commands:"
+      putStrLn "  protocol  Generate protocol types (frontend/src/types.ts)"
+      putStrLn "  ast       Generate AST types (frontend/src/components/markdown/types.ts)"
+
+-- | Generate protocol types for frontend/src/types.ts
+generateProtocol :: String
+generateProtocol =
+  protocolHeader <> formatTSDeclarations' defaultFormattingOptions protocolDecls
   where
-    allDecls =
+    protocolDecls =
       mconcat
-        [ getTypeScriptDeclarations (Proxy @TaskStatus)
-        , getTypeScriptDeclarations (Proxy @Priority)
-        , getTypeScriptDeclarations (Proxy @Task)
-        , getTypeScriptDeclarations (Proxy @FolderNode)
-        , getTypeScriptDeclarations (Proxy @Query)
-        , getTypeScriptDeclarations (Proxy @VaultInfo)
-        , getTypeScriptDeclarations (Proxy @TasksData)
-        , getTypeScriptDeclarations (Proxy @NotesData)
-        , getTypeScriptDeclarations (Proxy @QueryResponse)
-        , getTypeScriptDeclarations (Proxy @ServerMessage)
+        [ taskTsDeclarations
+        , priorityTsDeclarations
+        , folderTreeTsDeclarations
+        , protocolTsDeclarations
         ]
 
-    header :: String
-    header =
+    protocolHeader :: String
+    protocolHeader =
       Data.List.unlines
         [ "/**"
         , " * AUTO-GENERATED TypeScript types from Haskell."
         , " * DO NOT EDIT MANUALLY."
         , " *"
-        , " * Regenerate with: cabal run generate-types > frontend/src/types.ts"
-        , " * Or: just generate-types"
+        , " * Regenerate with: just generate-types"
         , " *"
         , " * Source Haskell files:"
         , " *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs"
         , " *   - Priority: packages/ob/src/Ob/Task/Properties.hs"
         , " *   - FolderNode: packages/imako/src/Imako/Core/FolderTree.hs"
         , " *   - Protocol types: packages/imako/src/Imako/API/Protocol.hs"
+        , " */"
+        , ""
+        ]
+
+-- | Generate AST types for frontend/src/components/markdown/types.ts
+generateAst :: String
+generateAst =
+  astHeader <> formatTSDeclarations' defaultFormattingOptions pandocTsDeclarations
+  where
+    astHeader :: String
+    astHeader =
+      Data.List.unlines
+        [ "/**"
+        , " * AUTO-GENERATED AST types from Haskell."
+        , " * DO NOT EDIT MANUALLY."
+        , " *"
+        , " * Regenerate with: just generate-types"
+        , " *"
+        , " * Source: packages/ob/src/Text/Pandoc/Definition/TypeScript.hs"
+        , " *"
+        , " * These types match Pandoc's Block/Inline AST for markdown rendering."
+        , " * Uses discriminated unions with \"tag\" field for pattern matching."
         , " */"
         , ""
         ]

@@ -58,6 +58,7 @@ library
   -- other-extensions:
   build-depends:
     , aeson
+    , aeson-typescript
     , async
     , base
     , commonmark-simple

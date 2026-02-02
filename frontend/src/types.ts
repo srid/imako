@@ -2,8 +2,7 @@
  * AUTO-GENERATED TypeScript types from Haskell.
  * DO NOT EDIT MANUALLY.
  *
- * Regenerate with: cabal run generate-types > frontend/src/types.ts
- * Or: just generate-types
+ * Regenerate with: just generate-types
  *
  * Source Haskell files:
  *   - Task, TaskStatus: packages/ob/src/Ob/Task.hs
@@ -12,10 +11,7 @@
  *   - Protocol types: packages/imako/src/Imako/API/Protocol.hs
  */
 
-
 export type TaskStatus = "Incomplete" | "InProgress" | "Cancelled" | "Completed";
-
-export type Priority = "Highest" | "High" | "Medium" | "Normal" | "Low" | "Lowest";
 
 export interface Task {
   description: string;
@@ -29,6 +25,8 @@ export interface Task {
   tags: string[];
   parentBreadcrumbs: string[];
 }
+
+export type Priority = "Highest" | "High" | "Medium" | "Normal" | "Low" | "Lowest";
 
 export type FolderNode = IFolderNode;
 
@@ -66,7 +64,7 @@ export type NotesData = INotesData;
 
 export interface INotesData {
   notePath: string;
-  noteHtml: string;
+  noteAst: any;
 }
 
 export type QueryResponse = ITasksResponse | INotesResponse;
