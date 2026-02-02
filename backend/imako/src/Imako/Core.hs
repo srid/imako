@@ -26,9 +26,9 @@ import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
-import Ob (Task (..), TaskStatus (..), Vault, noteToAst)
+import Ob (Note (..), Task (..), TaskStatus (..), Vault (..))
 import Ob qualified
-import Ob.Vault (getTasks, notes)
+import Ob.Vault (getTasks)
 import System.FilePath (makeRelative, takeBaseName)
 
 -- | Application state combining vault data with runtime context
@@ -106,7 +106,7 @@ mkTasksData vaultPath appState =
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
 mkNotesData _vaultPath vault reqPath =
   let ast = case Map.lookup reqPath vault.notes of
-        Just note -> toJSON (Ob.noteToAst note)
+        Just note -> toJSON note.content
         Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
    in NotesData {notePath = reqPath, noteAst = ast}
 

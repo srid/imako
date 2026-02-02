@@ -26,7 +26,6 @@ library
     Ob
     Ob.DailyNotes
     Ob.Html
-    Ob.Json
     Ob.Link
     Ob.Markdown
     Ob.Note
@@ -34,6 +33,7 @@ library
     Ob.Task.Properties
     Ob.Task.Recurrence
     Ob.Vault
+    Text.Pandoc.Definition.TypeScript
 
   mixins:
     base hiding (Prelude),
@@ -59,6 +59,7 @@ library
   -- other-extensions:
   build-depends:
     , aeson
+    , aeson-typescript
     , async
     , base
     , commonmark-simple

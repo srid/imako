@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Module for working with obsidian-tasks
 module Ob.Task (
   Task (..),
@@ -7,10 +9,13 @@ module Ob.Task (
   extractTasks,
   extractText,
   renderInlines,
+  taskTsDeclarations,
 )
 where
 
-import Data.Aeson (ToJSON (..), object, (.=))
+import Data.Aeson (ToJSON (..), defaultOptions, object, (.=))
+import Data.Aeson.TypeScript.Internal (TSDeclaration (..), TSField (..))
+import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
 import Data.Time (Day)
 import Lucid
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
@@ -28,6 +33,8 @@ data TaskStatus
     Completed
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
+
+$(deriveTypeScript defaultOptions ''TaskStatus)
 
 {- | Parent task context containing task hierarchy information.
 
@@ -72,6 +79,37 @@ instance ToJSON Task where
       , "tags" .= task.properties.tags
       , "parentBreadcrumbs" .= map fst task.parentContext
       ]
+
+-- | TypeScript instance for Task (custom ToJSON, so manual definition)
+instance TypeScript Task where
+  getTypeScriptType _ = "Task"
+  getTypeScriptDeclarations _ =
+    [ TSInterfaceDeclaration
+        { interfaceName = "Task"
+        , interfaceGenericVariables = []
+        , interfaceMembers =
+            [ TSField False "description" "string" Nothing
+            , TSField False "sourceNote" "string" Nothing
+            , TSField False "status" "TaskStatus" Nothing
+            , TSField True "dueDate" "string" Nothing
+            , TSField True "scheduledDate" "string" Nothing
+            , TSField True "startDate" "string" Nothing
+            , TSField True "completedDate" "string" Nothing
+            , TSField False "priority" "Priority" Nothing
+            , TSField False "tags" "string[]" Nothing
+            , TSField False "parentBreadcrumbs" "string[]" Nothing
+            ]
+        , interfaceDoc = Nothing
+        }
+    ]
+
+-- | All TypeScript declarations from this module
+taskTsDeclarations :: [TSDeclaration]
+taskTsDeclarations =
+  mconcat
+    [ getTypeScriptDeclarations (Proxy @TaskStatus)
+    , getTypeScriptDeclarations (Proxy @Task)
+    ]
 
 -- | Extract tasks from a Pandoc document
 extractTasks :: FilePath -> Pandoc -> [Task]

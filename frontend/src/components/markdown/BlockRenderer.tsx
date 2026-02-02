@@ -1,118 +1,195 @@
 /**
- * Block node renderer - handles paragraphs, headings, lists, tasks, etc.
+ * Block node renderer - handles paragraphs, headings, lists, etc.
+ * Now uses Pandoc's native Block/Inline types directly.
  */
 import { Component, For, Switch, Match } from "solid-js";
-import type { BlockNode, InlineNode } from "./types";
+import type { Block, Inline, Attr } from "./types";
 import { InlineRenderer } from "./InlineRenderer";
 
 /**
- * Renders an array of block nodes.
+ * Renders an array of Pandoc Block nodes.
  */
-export const BlockRenderer: Component<{ nodes: BlockNode[] }> = (props) => {
+export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
   return (
-    <For each={props.nodes}>
-      {(node) => (
+    <For each={props.blocks}>
+      {(block) => (
         <Switch fallback={null}>
-          <Match when={node.type === "paragraph" && node}>
-            {(n) => (
+          {/* Plain - inline content without paragraph wrapping */}
+          <Match when={block.t === "Plain" && block}>
+            {(b) => (
+              <span class="text-stone-700 dark:text-stone-300">
+                <InlineRenderer inlines={b().c} />
+              </span>
+            )}
+          </Match>
+
+          {/* Para - paragraph with inline content */}
+          <Match when={block.t === "Para" && block}>
+            {(b) => (
               <p class="text-stone-700 dark:text-stone-300">
-                <InlineRenderer nodes={(n() as { inlines: InlineNode[] }).inlines} />
+                <InlineRenderer inlines={b().c} />
               </p>
             )}
           </Match>
 
-          <Match when={node.type === "heading" && node}>
-            {(n) => {
-              const h = n() as { level: number; inlines: InlineNode[] };
+          {/* Header - [level, Attr, inlines] */}
+          <Match when={block.t === "Header" && block}>
+            {(b) => {
+              const [level, _attr, inlines] = b().c;
               const classes = "font-bold mt-4 mb-2 text-stone-800 dark:text-stone-100";
-              switch (h.level) {
+              switch (level) {
                 case 1:
-                  return <h1 class={`text-2xl ${classes}`}><InlineRenderer nodes={h.inlines} /></h1>;
+                  return <h1 class={`text-2xl ${classes}`}><InlineRenderer inlines={inlines} /></h1>;
                 case 2:
-                  return <h2 class={`text-xl ${classes}`}><InlineRenderer nodes={h.inlines} /></h2>;
+                  return <h2 class={`text-xl ${classes}`}><InlineRenderer inlines={inlines} /></h2>;
                 case 3:
-                  return <h3 class={`text-lg ${classes}`}><InlineRenderer nodes={h.inlines} /></h3>;
+                  return <h3 class={`text-lg ${classes}`}><InlineRenderer inlines={inlines} /></h3>;
                 default:
-                  return <h4 class={`text-base ${classes}`}><InlineRenderer nodes={h.inlines} /></h4>;
+                  return <h4 class={`text-base ${classes}`}><InlineRenderer inlines={inlines} /></h4>;
               }
             }}
           </Match>
 
-          <Match when={node.type === "bulletList" && node}>
-            {(n) => {
-              const items = (n() as { items: BlockNode[][] }).items;
+          {/* BulletList - contents: Block[][] */}
+          <Match when={block.t === "BulletList" && block}>
+            {(b) => (
+              <div class="space-y-0.5">
+                <For each={b().c}>
+                  {(item) => <ListItemRenderer blocks={item} />}
+                </For>
+              </div>
+            )}
+          </Match>
+
+          {/* OrderedList - contents: [ListAttributes, Block[][]] */}
+          <Match when={block.t === "OrderedList" && block}>
+            {(b) => {
+              const [_listAttrs, items] = b().c;
               return (
-                <div class="space-y-0.5">
+                <ol class="list-decimal list-inside space-y-0.5 ml-4">
                   <For each={items}>
-                    {(item) => <ListItemRenderer blocks={item} />}
+                    {(item) => (
+                      <li class="text-stone-700 dark:text-stone-300">
+                        <BlockRenderer blocks={item} />
+                      </li>
+                    )}
                   </For>
-                </div>
+                </ol>
               );
             }}
           </Match>
 
-          <Match when={node.type === "orderedList" && node}>
-            {(n) => (
-              <ol class="list-decimal list-inside space-y-0.5 ml-4">
-                <For each={(n() as { items: BlockNode[][] }).items}>
-                  {(item) => (
-                    <li class="text-stone-700 dark:text-stone-300">
-                      <BlockRenderer nodes={item} />
-                    </li>
-                  )}
-                </For>
-              </ol>
-            )}
-          </Match>
-
-          <Match when={node.type === "codeBlock" && node}>
-            {(n) => {
-              const cb = n() as { language: string; code: string };
+          {/* CodeBlock - [Attr, string] */}
+          <Match when={block.t === "CodeBlock" && block}>
+            {(b) => {
+              const [_attr, code] = b().c;
               return (
                 <pre class="bg-stone-100 dark:bg-stone-800 p-4 rounded-lg my-2 overflow-x-auto">
-                  <code class="text-sm font-mono">{cb.code}</code>
+                  <code class="text-sm font-mono">{code}</code>
                 </pre>
               );
             }}
           </Match>
 
-          <Match when={node.type === "blockQuote" && node}>
-            {(n) => (
+          {/* BlockQuote - Block[] */}
+          <Match when={block.t === "BlockQuote" && block}>
+            {(b) => (
               <blockquote class="border-l-4 border-amber-400 dark:border-amber-600 pl-4 my-2 italic text-stone-600 dark:text-stone-400">
-                <BlockRenderer nodes={(n() as { blocks: BlockNode[] }).blocks} />
+                <BlockRenderer blocks={b().c} />
               </blockquote>
             )}
           </Match>
 
-          <Match when={node.type === "horizontalRule"}>
+          {/* HorizontalRule */}
+          <Match when={block.t === "HorizontalRule"}>
             <hr class="border-stone-300 dark:border-stone-600 my-4" />
           </Match>
 
-          <Match when={node.type === "task" && node}>
-            {(n) => {
-              const task = n() as { done: boolean; inlines: InlineNode[] };
+          {/* Div - [Attr, Block[]] */}
+          <Match when={block.t === "Div" && block}>
+            {(b) => {
+              const [_attr, blocks] = b().c;
               return (
-                <div class="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    checked={task.done}
-                    disabled
-                    class="mt-1 h-4 w-4 rounded border-stone-400 dark:border-stone-500 accent-amber-500"
-                  />
-                  <span class={task.done ? "line-through text-stone-400 dark:text-stone-500" : "text-stone-700 dark:text-stone-300"}>
-                    <InlineRenderer nodes={task.inlines} />
-                  </span>
+                <div>
+                  <BlockRenderer blocks={blocks} />
                 </div>
               );
             }}
           </Match>
 
-          <Match when={node.type === "div" && node}>
-            {(n) => (
-              <div>
-                <BlockRenderer nodes={(n() as { blocks: BlockNode[] }).blocks} />
+          {/* LineBlock - Inline[][] (each line is a list of inlines) */}
+          <Match when={block.t === "LineBlock" && block}>
+            {(b) => (
+              <div class="text-stone-700 dark:text-stone-300">
+                <For each={b().c}>
+                  {(line) => (
+                    <div>
+                      <InlineRenderer inlines={line} />
+                    </div>
+                  )}
+                </For>
               </div>
             )}
+          </Match>
+
+          {/* RawBlock - [Format, string] - render as preformatted */}
+          <Match when={block.t === "RawBlock" && block}>
+            {(b) => {
+              const [_format, text] = b().c;
+              return (
+                <pre class="bg-stone-100 dark:bg-stone-800 p-2 rounded text-sm font-mono">
+                  {text}
+                </pre>
+              );
+            }}
+          </Match>
+
+          {/* DefinitionList - [Inline[], Block[][]][] */}
+          <Match when={block.t === "DefinitionList" && block}>
+            {(b) => (
+              <dl class="text-stone-700 dark:text-stone-300">
+                <For each={b().c}>
+                  {([term, defs]) => (
+                    <>
+                      <dt class="font-semibold">
+                        <InlineRenderer inlines={term} />
+                      </dt>
+                      <For each={defs}>
+                        {(def) => (
+                          <dd class="ml-4">
+                            <BlockRenderer blocks={def} />
+                          </dd>
+                        )}
+                      </For>
+                    </>
+                  )}
+                </For>
+              </dl>
+            )}
+          </Match>
+
+          {/* Figure - [Attr, Caption, Block[]] */}
+          <Match when={block.t === "Figure" && block}>
+            {(b) => {
+              const [_attr, caption, blocks] = b().c;
+              return (
+                <figure class="my-4">
+                  <BlockRenderer blocks={blocks} />
+                  {caption[0] && (
+                    <figcaption class="text-sm text-stone-500 dark:text-stone-400 mt-2">
+                      <InlineRenderer inlines={caption[1].flatMap(blk => 
+                        blk.t === "Plain" || blk.t === "Para" ? blk.c : []
+                      )} />
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            }}
+          </Match>
+
+          {/* Table - complex, show placeholder for now */}
+          <Match when={block.t === "Table"}>
+            <div class="text-stone-400 italic">[Table not yet rendered]</div>
           </Match>
         </Switch>
       )}
@@ -123,16 +200,14 @@ export const BlockRenderer: Component<{ nodes: BlockNode[] }> = (props) => {
 /**
  * Renders a single list item.
  * - Single paragraph: inline with bullet
- * - Tasks: checkbox without bullet
  * - Nested lists: indented
  */
-const ListItemRenderer: Component<{ blocks: BlockNode[] }> = (props) => {
+const ListItemRenderer: Component<{ blocks: Block[] }> = (props) => {
   const firstBlock = () => props.blocks[0];
-  const isSingleParagraph = () => 
-    props.blocks.length === 1 && firstBlock()?.type === "paragraph";
-  const isTask = () => firstBlock()?.type === "task";
+  const isSinglePara = () => 
+    props.blocks.length === 1 && (firstBlock()?.t === "Para" || firstBlock()?.t === "Plain");
   const isNestedList = () => 
-    firstBlock()?.type === "bulletList" || firstBlock()?.type === "orderedList";
+    firstBlock()?.t === "BulletList" || firstBlock()?.t === "OrderedList";
   
   return (
     <Switch fallback={
@@ -140,29 +215,24 @@ const ListItemRenderer: Component<{ blocks: BlockNode[] }> = (props) => {
       <div class="flex items-start gap-2 ml-4">
         <span class="text-stone-400 select-none">•</span>
         <div class="flex-1">
-          <BlockRenderer nodes={props.blocks} />
+          <BlockRenderer blocks={props.blocks} />
         </div>
       </div>
     }>
       {/* Single paragraph - inline with bullet */}
-      <Match when={isSingleParagraph()}>
+      <Match when={isSinglePara()}>
         <div class="flex items-start gap-2 ml-4 text-stone-700 dark:text-stone-300">
           <span class="text-stone-400 select-none">•</span>
           <span>
-            <InlineRenderer nodes={(firstBlock() as { inlines: InlineNode[] }).inlines} />
+            <InlineRenderer inlines={(firstBlock() as { t: "Para" | "Plain"; c: Inline[] }).c} />
           </span>
         </div>
-      </Match>
-      
-      {/* Task items - no bullet, just the task */}
-      <Match when={isTask()}>
-        <BlockRenderer nodes={props.blocks} />
       </Match>
       
       {/* Nested list - indent */}
       <Match when={isNestedList()}>
         <div class="ml-4">
-          <BlockRenderer nodes={props.blocks} />
+          <BlockRenderer blocks={props.blocks} />
         </div>
       </Match>
     </Switch>

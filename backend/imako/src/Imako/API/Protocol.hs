@@ -1,4 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 {- | WebSocket protocol types for client-server communication.
 
@@ -11,12 +13,20 @@ module Imako.API.Protocol (
   VaultInfo (..),
   TasksData (..),
   NotesData (..),
+  protocolTsDeclarations,
 )
 where
 
-import Data.Aeson (FromJSON, ToJSON, Value)
+import Data.Aeson (FromJSON, ToJSON, Value, defaultOptions)
+import Data.Aeson.TypeScript.Internal (TSDeclaration)
+import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
 import Data.Time (Day)
 import Imako.Core.FolderTree (FolderNode)
+
+-- | Day serializes as ISO date string (orphan instance, acceptable here)
+instance TypeScript Day where
+  getTypeScriptType _ = "string"
+  getTypeScriptDeclarations _ = [] -- No separate type needed, uses built-in string
 
 -- | Query sent from client to subscribe to data
 data Query
@@ -27,6 +37,8 @@ data Query
   deriving stock (Show, Eq, Generic)
   deriving anyclass (FromJSON)
 
+$(deriveTypeScript defaultOptions ''Query)
+
 -- | Vault info included in all server messages
 data VaultInfo = VaultInfo
   { vaultPath :: FilePath
@@ -36,12 +48,16 @@ data VaultInfo = VaultInfo
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
+$(deriveTypeScript defaultOptions ''VaultInfo)
+
 -- | Tasks-specific data
 newtype TasksData = TasksData
   { folderTree :: FolderNode
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
+
+$(deriveTypeScript defaultOptions ''TasksData)
 
 -- | Notes-specific data (structured AST for client rendering)
 data NotesData = NotesData
@@ -51,12 +67,16 @@ data NotesData = NotesData
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
+$(deriveTypeScript defaultOptions ''NotesData)
+
 -- | Query-specific response data (one variant per query type)
 data QueryResponse
   = TasksResponse TasksData
   | NotesResponse NotesData
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
+
+$(deriveTypeScript defaultOptions ''QueryResponse)
 
 -- | Server message sent to client (vault info + query-specific response)
 data ServerMessage = ServerMessage
@@ -65,3 +85,17 @@ data ServerMessage = ServerMessage
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
+
+$(deriveTypeScript defaultOptions ''ServerMessage)
+
+-- | All TypeScript declarations from this module
+protocolTsDeclarations :: [TSDeclaration]
+protocolTsDeclarations =
+  mconcat
+    [ getTypeScriptDeclarations (Proxy @Query)
+    , getTypeScriptDeclarations (Proxy @VaultInfo)
+    , getTypeScriptDeclarations (Proxy @TasksData)
+    , getTypeScriptDeclarations (Proxy @NotesData)
+    , getTypeScriptDeclarations (Proxy @QueryResponse)
+    , getTypeScriptDeclarations (Proxy @ServerMessage)
+    ]

@@ -2,7 +2,7 @@ import { Component, onMount, Show, createMemo } from "solid-js";
 import { routeData } from "@/store";
 import { sendQuery } from "@/sync/websocket";
 import { AstRenderer } from "@/components/markdown";
-import type { AstNode } from "@/components/markdown";
+import type { Pandoc } from "@/components/markdown";
 
 const NotesPage: Component = () => {
   onMount(() => {
@@ -27,7 +27,7 @@ const NotesPage: Component = () => {
           </div>
 
           {/* Rendered markdown via AST */}
-          <AstRenderer ast={data().noteAst as AstNode} />
+          <AstRenderer ast={data().noteAst as Pandoc} />
         </>
       )}
     </Show>

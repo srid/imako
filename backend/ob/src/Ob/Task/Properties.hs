@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Ob.Task.Properties (
   Priority (..),
   TaskProperties (..),
@@ -6,10 +8,13 @@ module Ob.Task.Properties (
   parsePriority,
   parseTag,
   parseDateWithEmoji,
+  priorityTsDeclarations,
 )
 where
 
-import Data.Aeson (ToJSON (..), object, (.=))
+import Data.Aeson (ToJSON (..), defaultOptions, object, (.=))
+import Data.Aeson.TypeScript.Internal (TSDeclaration)
+import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
 import Data.Text qualified as T
 import Data.Time (Day, defaultTimeLocale, parseTimeM)
 import Ob.Task.Recurrence (Recurrence, parseRecurrence)
@@ -24,6 +29,12 @@ data Priority
   | Lowest -- ⏬
   deriving stock (Show, Eq, Ord, Generic)
   deriving anyclass (ToJSON)
+
+$(deriveTypeScript defaultOptions ''Priority)
+
+-- | All TypeScript declarations from this module
+priorityTsDeclarations :: [TSDeclaration]
+priorityTsDeclarations = getTypeScriptDeclarations (Proxy @Priority)
 
 -- | State for collecting task properties while parsing
 data TaskProperties = TaskProperties

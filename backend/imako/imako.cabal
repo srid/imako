@@ -47,6 +47,7 @@ common shared
 
   build-depends:
     , aeson
+    , aeson-typescript
     , async
     , base
     , containers
