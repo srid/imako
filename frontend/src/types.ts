@@ -11,8 +11,6 @@
  *   - Protocol types: packages/imako/src/Imako/API/Protocol.hs
  */
 
-import type { Inline } from "@/components/markdown/types";
-
 export type TaskStatus = "Incomplete" | "InProgress" | "Cancelled" | "Completed";
 
 export interface Task {

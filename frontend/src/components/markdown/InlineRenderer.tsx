@@ -109,9 +109,30 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
           </Match>
 
           {/* Link - [Attr, Inline[], Target] where Target = [url, title] */}
+          {/* Wikilinks appear as Links with data-wikilink-type attribute */}
           <Match when={inline.t === "Link" && inline}>
             {(i) => {
-              const [_attr, inlines, [url, _title]] = i().c;
+              const [[_id, _classes, kvs], inlines, [url, _title]] = i().c;
+              
+              // Check for wikilink by looking for data-wikilink-type attribute
+              const wikilinkType = kvs.find(([k, _v]) => k === "data-wikilink-type");
+              
+              if (wikilinkType) {
+                // Wikilink: render as styled text (the url is the target note path)
+                const displayText = inlines.length > 0 
+                  ? inlines.map(il => il.t === "Str" ? il.c : il.t === "Space" ? " " : "").join("")
+                  : url;
+                return (
+                  <span 
+                    class="text-purple-600 dark:text-purple-400 cursor-pointer hover:underline"
+                    title={`Link to: ${url}`}
+                  >
+                    {displayText || url}
+                  </span>
+                );
+              }
+              
+              // Regular link
               return (
                 <a
                   href={url}
@@ -226,8 +247,11 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
               if (classes.includes("wikilink")) {
                 const target = inlines.map(il => il.t === "Str" ? il.c : "").join("");
                 return (
-                  <span class="text-purple-600 dark:text-purple-400">
-                    [[{target}]]
+                  <span 
+                    class="text-purple-600 dark:text-purple-400 cursor-pointer hover:underline"
+                    title={`Link to: ${target}`}
+                  >
+                    {target}
                   </span>
                 );
               }
