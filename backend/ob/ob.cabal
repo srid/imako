@@ -33,7 +33,6 @@ library
     Ob.Task.Properties
     Ob.Task.Recurrence
     Ob.Vault
-    Text.Pandoc.Definition.TypeScript
 
   mixins:
     base hiding (Prelude),

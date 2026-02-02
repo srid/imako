@@ -5,6 +5,7 @@ export MULTI_REPL_LIBRARIES:="\
     imako:exe:imako \
     imako \
     ob \
+    pandoc-typescript \
     commonmark-simple \
     commonmark-wikilink \
     unionmount\

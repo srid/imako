@@ -1,6 +1,3 @@
-# Repo-specific hlint rules go here:
-- ignore: { name: Use camelCase }
-
 # Relude's .hlint.yaml goes here:
 # https://github.com/kowainik/relude/blob/main/.hlint.yaml
 - arguments:
@@ -3295,3 +3292,7 @@
     lhs: "(,) a <$> f a"
     note: "Use `traverseToSnd` from `Relude.Extra.Tuple`"
     rhs: traverseToSnd f a
+
+# pandoc-typescript uses base (not Relude) - ignore this Relude-specific hint
+- ignore: { name: "Use 'Proxy' from Relude", within: [Text.Pandoc.Definition.TypeScript] }
+- ignore: { name: Use camelCase }

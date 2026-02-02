@@ -15,8 +15,6 @@ module Ob (
   loadDailyNotesConfig,
   obsidianOpenUrl,
   noteToHtml,
-  -- Re-export Pandoc TypeScript instances
-  module Text.Pandoc.Definition.TypeScript,
 )
 where
 
@@ -26,4 +24,3 @@ import Ob.Link (obsidianOpenUrl)
 import Ob.Note (Note (..))
 import Ob.Task (Task (..), TaskStatus (..))
 import Ob.Vault (Vault (..), getVault, withLiveVault)
-import Text.Pandoc.Definition.TypeScript

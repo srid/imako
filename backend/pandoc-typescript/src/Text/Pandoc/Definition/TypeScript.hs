@@ -35,6 +35,8 @@ where
 import Data.Aeson (defaultOptions)
 import Data.Aeson.TypeScript.Internal (TSDeclaration (..), TSField (..))
 import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
+import Data.Proxy (Proxy (..))
+import Data.Text (Text)
 import Text.Pandoc.Definition hiding (Attr, ColSpec, ListAttributes, Target)
 
 -- ===========================================================================
