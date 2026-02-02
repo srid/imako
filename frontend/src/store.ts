@@ -17,6 +17,7 @@ const emptyVaultInfo: VaultInfo = {
   vaultPath: "",
   today: "",
   notes: {},
+  wikilinkResolutions: {},
 };
 
 /** Route-specific data - sum type (only one active at a time) */

@@ -50,6 +50,7 @@ common shared
     , aeson-typescript
     , async
     , base
+    , commonmark-wikilink
     , containers
     , directory
     , filepath
@@ -60,6 +61,7 @@ common shared
     , stm
     , text
     , time
+    , url-slug
     , wai
     , wai-app-static
     , wai-websockets

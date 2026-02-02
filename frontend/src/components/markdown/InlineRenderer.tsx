@@ -3,12 +3,15 @@
  * Uses Pandoc's native Inline type with tag discriminator.
  */
 import { Component, For, Switch, Match, createSignal } from "solid-js";
+import { useNavigate } from "@solidjs/router";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import type { Inline } from "./types";
 import { BlockRenderer } from "./BlockRenderer";
+import { vaultInfo } from "@/store";
 
 export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
+  const navigate = useNavigate();
   return (
     <For each={props.inlines}>
       {(inline) => (
@@ -118,14 +121,29 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
               const wikilinkType = kvs.find(([k, _v]) => k === "data-wikilink-type");
               
               if (wikilinkType) {
-                // Wikilink: render as styled text (the url is the target note path)
+                // Wikilink: resolve reactively using vaultInfo.wikilinkResolutions
                 const displayText = inlines.length > 0 
                   ? inlines.map(il => il.t === "Str" ? il.c : il.t === "Space" ? " " : "").join("")
                   : url;
+                
+                // Reactive resolution: check if wikilink target resolves to a note
+                const resolvedPath = () => vaultInfo.wikilinkResolutions[url];
+                const isResolved = () => !!resolvedPath();
+                
+                const handleClick = () => {
+                  const path = resolvedPath();
+                  if (path) {
+                    navigate(`/n/${encodeURIComponent(path)}`);
+                  }
+                };
+                
                 return (
                   <span 
-                    class="text-purple-600 dark:text-purple-400 cursor-pointer hover:underline"
-                    title={`Link to: ${url}`}
+                    class={isResolved() 
+                      ? "text-purple-600 dark:text-purple-400 cursor-pointer hover:underline" 
+                      : "text-stone-400 dark:text-stone-500 cursor-not-allowed"}
+                    title={isResolved() ? `Link to: ${resolvedPath()}` : `Broken link: ${url}`}
+                    onClick={handleClick}
                   >
                     {displayText || url}
                   </span>

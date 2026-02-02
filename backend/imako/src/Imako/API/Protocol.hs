@@ -51,6 +51,8 @@ data VaultInfo = VaultInfo
   , today :: Day
   , notes :: Map Text UTCTime
   -- ^ All note paths (vault-relative) with last modified time
+  , wikilinkResolutions :: Map Text Text
+  -- ^ Wikilink alias -> note path resolution map (for client-side resolution)
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)

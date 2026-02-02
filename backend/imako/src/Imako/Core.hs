@@ -16,20 +16,23 @@ module Imako.Core (
 )
 where
 
+import Commonmark.Extensions.WikiLink qualified as WikiLink
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (race_, withAsync)
-import Data.Aeson (object, toJSON, (.=))
+import Data.Aeson (Value (String), object, toJSON, (.=))
 import Data.LVar qualified as LVar
 import Data.List qualified as List
+import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
+import Network.URI.Slug qualified as Slug
 import Ob (Note (..), Task (..), TaskStatus (..), Vault (..))
 import Ob qualified
 import Ob.Vault (getTasks)
-import System.FilePath (makeRelative, takeBaseName)
+import System.FilePath (dropExtension, makeRelative, splitPath, takeBaseName)
 
 -- | Application state combining vault data with runtime context
 data AppState = AppState
@@ -80,12 +83,48 @@ mkVaultInfo :: FilePath -> AppState -> VaultInfo
 mkVaultInfo path appState =
   let todayVal = appState.today
       notesMap = Map.map (.modifiedAt) $ Map.mapKeys toText appState.vault.notes
+      -- Build wikilink resolution map: alias -> full note path
+      wikilinkMap = buildWikilinkResolutions $ Map.keys appState.vault.notes
    in VaultInfo
         { vaultPath = path
         , vaultName = toText $ takeBaseName path
         , today = todayVal
         , notes = notesMap
+        , wikilinkResolutions = wikilinkMap
         }
+
+{- | Build wikilink resolution map from note paths
+For each note, generates all valid wikilink aliases (basename, parent/basename, etc.)
+
+FIXME: Use @Map WikiLink FilePath@ once @wikilinkUrl@ is exported:
+https://github.com/srid/commonmark-wikilink/issues/7
+-}
+buildWikilinkResolutions :: [FilePath] -> Map Text Text
+buildWikilinkResolutions paths =
+  Map.fromList $ concatMap pathToAliases paths
+  where
+    -- \| Convert a note path to all valid wikilink aliases.
+    --
+    -- For @Foo\/Bar\/Qux.md@ produces: @["Qux", "Bar\/Qux", "Foo\/Bar\/Qux"]@
+    pathToAliases :: FilePath -> [(Text, Text)]
+    pathToAliases notePath =
+      map (,toText notePath) $ aliasesFor notePath
+
+    -- \| Extract wikilink aliases from a note path.
+    --
+    -- For @Foo\/Bar\/Qux.md@ produces: @["Qux", "Bar\/Qux", "Foo\/Bar\/Qux"]@
+    aliasesFor :: FilePath -> [Text]
+    aliasesFor notePath =
+      let noteWithoutExt = dropExtension notePath
+          pathComponents = filter (not . null) $ map (filter (/= '/')) $ splitPath noteWithoutExt
+          slugs = map (Slug.decodeSlug . toText) pathComponents
+          toUrl wl = case toJSON wl of
+            String t -> t
+            _ -> ""
+       in case nonEmpty slugs of
+            Nothing -> []
+            Just allSlugs ->
+              ordNub $ map (toUrl . snd) $ NE.toList $ WikiLink.allowedWikiLinks allSlugs
 
 -- | Build tasks data from app state
 mkTasksData :: FilePath -> AppState -> TasksData

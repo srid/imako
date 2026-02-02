@@ -1,3 +1,6 @@
+// AUTO-GENERATED - DO NOT EDIT. Regenerate with: just generate-types
+import { Inline } from "@/components/markdown/types";
+
 /**
  * AUTO-GENERATED TypeScript types from Haskell.
  * DO NOT EDIT MANUALLY.
@@ -53,6 +56,7 @@ export interface IVaultInfo {
   vaultName: string;
   today: string;
   notes: {[k in string]: string};
+  wikilinkResolutions: {[k in string]: string};
 }
 
 export type TasksData = ITasksData;
