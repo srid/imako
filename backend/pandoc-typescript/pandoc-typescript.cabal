@@ -1,16 +1,19 @@
-cabal-version: 3.4
-name:          pandoc-typescript
-version:       0.1.0.0
-synopsis:      TypeScript type generation for Pandoc AST types
+cabal-version:   3.4
+name:            pandoc-typescript
+version:         0.1.0.0
+synopsis:        TypeScript type generation for Pandoc AST types
 homepage:
   https://github.com/srid/imako/tree/master/backend/pandoc-typescript
 
-license:       MIT
-license-file:  LICENSE
-author:        Sridhar Ratnakumar
-maintainer:    srid@srid.ca
-category:      Text
-build-type:    Simple
+license:         MIT
+license-file:    LICENSE
+author:          Sridhar Ratnakumar
+maintainer:      srid@srid.ca
+category:        Text
+build-type:      Simple
+extra-doc-files:
+  CHANGELOG.md
+  README.md
 
 common warnings
   ghc-options: -Wall
