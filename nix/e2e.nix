@@ -43,10 +43,10 @@
 
     # Full E2E test runner for CI - starts servers, runs tests, exits with test result
     process-compose."e2e" = {
-      settings = {
-        # Disable TUI for CI
-        tui = false;
+      # Disable TUI for CI
+      cli.options.tui = false;
 
+      settings = {
         processes = {
           backend = {
             command = "${lib.getExe self'.packages.imako} ./example";
