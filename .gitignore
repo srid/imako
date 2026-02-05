@@ -16,3 +16,5 @@ result-*
 /.pre-commit-config.yaml
 .claude/settings.local.json
 ghcid.txt
+
+node_modules
