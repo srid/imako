@@ -39,3 +39,27 @@ frontend-build:
 generate-types:
     cabal build generate-types
     nix run .#generate-types-to -- . "cabal run generate-types --"
+
+# Run backend with example vault (for e2e tests) - uses Nix package
+run-example:
+    nix run .#imako -- ./example
+
+# Install e2e test dependencies
+e2e-install:
+    cd tests && npm install && npx playwright install chromium
+
+# Run all e2e tests
+e2e:
+    cd tests && npm run e2e
+
+# Run e2e tests with Playwright UI
+e2e-ui:
+    cd tests && npm run e2e:ui
+
+# Run e2e tests with visible browser
+e2e-headed:
+    cd tests && npm run e2e:headed
+
+# Run specific e2e test (by grep pattern)
+e2e-quick PATTERN:
+    cd tests && npx playwright test --grep "{{ PATTERN }}"

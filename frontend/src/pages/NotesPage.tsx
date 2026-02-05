@@ -91,7 +91,9 @@ const NotesPage: Component = () => {
               </div>
 
               {/* Rendered markdown via AST */}
-              <AstRenderer ast={data().noteAst as Pandoc} />
+              <div data-testid="note-content">
+                <AstRenderer ast={data().noteAst as Pandoc} />
+              </div>
             </>
           )}
         </Show>

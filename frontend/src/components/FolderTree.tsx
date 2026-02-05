@@ -32,7 +32,7 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string; today:
   }));
 
   return (
-    <div class="flex flex-col gap-2">
+    <div data-testid="folder-tree" class="flex flex-col gap-2">
       <For each={data().folders}>
         {([name, subnode]) => {
           const folderPath = () => `${data().currentPath}/${name}`;

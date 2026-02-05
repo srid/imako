@@ -1,0 +1,51 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+      
+      - name: Build backend
+        run: nix build .#imako
+      
+      - name: Build frontend
+        run: nix build .#imako-frontend
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'tests/package-lock.json'
+      
+      - name: Install test dependencies
+        run: |
+          cd tests
+          npm ci
+          npx playwright install chromium --with-deps
+      
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+          
+      - name: Run E2E tests
+        run: |
+          cd tests
+          CI=true npx playwright test
+        env:
+          CI: true
