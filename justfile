@@ -48,15 +48,25 @@ run-example:
 e2e-install:
     cd tests && npm install && npx playwright install chromium
 
-# Run all e2e tests
-e2e:
-    cd tests && npm run e2e
+# Start e2e servers (backend + frontend) via process-compose
+e2e-servers:
+    nix run .#e2e-servers
 
-# Run e2e tests with Playwright UI
+# Run all e2e tests (starts servers via process-compose, runs tests, then stops)
+e2e:
+    nix build .#imako
+    cd frontend && npm install
+    nix run .#e2e-servers &
+    sleep 5
+    cd tests && npm run e2e; EXIT_CODE=$?
+    pkill -f "process-compose" 2>/dev/null || true
+    exit $EXIT_CODE
+
+# Run e2e tests with Playwright UI (servers must already be running via `just e2e-servers`)
 e2e-ui:
     cd tests && npm run e2e:ui
 
-# Run e2e tests with visible browser
+# Run e2e tests with visible browser (servers must already be running)
 e2e-headed:
     cd tests && npm run e2e:headed
 

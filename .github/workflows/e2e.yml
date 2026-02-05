@@ -2,9 +2,9 @@ name: E2E Tests
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   e2e:
@@ -19,11 +19,8 @@ jobs:
       - name: Setup Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
       
-      - name: Build backend
+      - name: Build packages
         run: nix build .#imako
-      
-      - name: Build frontend
-        run: nix build .#imako-frontend
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,20 +29,21 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'tests/package-lock.json'
       
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
       - name: Install test dependencies
         run: |
           cd tests
           npm ci
           npx playwright install chromium --with-deps
-      
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
           
       - name: Run E2E tests
         run: |
-          cd tests
-          CI=true npx playwright test
-        env:
-          CI: true
+          # Start servers via process-compose (tui=false in config)
+          nix run .#e2e-servers &
+          sleep 10
+          # Run tests
+          cd tests && npm run e2e
+          # Cleanup
+          pkill -f process-compose || true

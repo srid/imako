@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * Playwright configuration for Imako E2E tests.
+ * Servers are managed externally by process-compose (via `just e2e-servers`).
  *
  * @see https://playwright.dev/docs/test-configuration
  */
@@ -27,21 +28,7 @@ export default defineConfig({
     },
   ],
 
-  webServer: [
-    {
-      // Backend: Nix package with the example vault
-      command: "cd .. && nix run .#imako -- ./example",
-      url: "http://localhost:9010",
-      timeout: 300000, // 5 min for cold Nix builds
-      reuseExistingServer: !process.env.CI,
-    },
-    {
-      // Frontend: Vite dev server
-      command: "cd .. && just frontend-dev",
-      url: "http://localhost:5173",
-      timeout: 30000,
-      reuseExistingServer: !process.env.CI,
-      cwd: __dirname,
-    },
-  ],
+  // Servers are managed by process-compose (nix run .#e2e-servers)
+  // No webServer config needed here
 });
+

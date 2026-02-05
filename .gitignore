@@ -18,3 +18,8 @@ result-*
 ghcid.txt
 
 node_modules
+
+# Playwright
+tests/test-results/
+tests/playwright-report/
+tests/.playwright/
