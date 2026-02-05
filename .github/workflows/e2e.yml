@@ -39,11 +39,4 @@ jobs:
           npx playwright install chromium --with-deps
           
       - name: Run E2E tests
-        run: |
-          # Start servers via process-compose (tui=false in config)
-          nix run .#e2e-servers &
-          sleep 10
-          # Run tests
-          cd tests && npm run e2e
-          # Cleanup
-          pkill -f process-compose || true
+        run: nix run .#e2e
