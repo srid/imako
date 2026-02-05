@@ -21,9 +21,6 @@
 
     aeson-typescript.url = "github:codedownio/aeson-typescript";
     aeson-typescript.flake = false;
-
-    warp-tls-simple.url = "github:srid/warp-tls-simple";
-    warp-tls-simple.flake = false;
   };
 
   outputs = inputs:

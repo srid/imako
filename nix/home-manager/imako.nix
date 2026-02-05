@@ -33,12 +33,6 @@ in
       default = "localhost";
       description = "Host to bind the web server to";
     };
-
-    https = mkOption {
-      type = types.bool;
-      default = true;
-      description = "Enable HTTPS (TLS certificates auto-generated in vault/.imako)";
-    };
   };
 
   config = mkIf cfg.enable {
@@ -51,7 +45,7 @@ in
 
       Service = {
         Type = "simple";
-        ExecStart = "${cfg.package}/bin/imako ${cfg.vaultDir} --port ${toString cfg.port} --host ${cfg.host}${optionalString (!cfg.https) " --no-https"}";
+        ExecStart = "${cfg.package}/bin/imako ${cfg.vaultDir} --port ${toString cfg.port} --host ${cfg.host}";
       };
 
       Install = {
@@ -70,7 +64,7 @@ in
           (toString cfg.port)
           "--host"
           cfg.host
-        ] ++ optionals (!cfg.https) [ "--no-https" ];
+        ];
         RunAtLoad = true;
         KeepAlive = false;
         StandardOutPath = "${config.home.homeDirectory}/Library/Logs/imako.log";

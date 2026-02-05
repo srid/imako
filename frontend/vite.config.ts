@@ -13,13 +13,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://localhost:4009",
-        secure: false, // Allow self-signed certs
+        target: "http://localhost:4009",
       },
       "/ws": {
-        target: "wss://localhost:4009",
+        target: "ws://localhost:4009",
         ws: true,
-        secure: false,
       },
     },
   },

@@ -11,11 +11,9 @@ import Main.Utf8 qualified as Utf8
 import Network.Wai (Application)
 import Network.Wai.Application.Static (staticApp)
 import Network.Wai.Handler.Warp qualified as Warp
-import Network.Wai.Handler.WarpTLS.Simple (TLSConfig (..), startWarpServer)
 import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets qualified as WS
 import Options.Applicative (execParser)
-import System.FilePath ((</>))
 import WaiAppStatic.Storage.Filesystem (defaultWebAppSettings)
 import WaiAppStatic.Types (ssIndices, unsafeToPiece)
 
@@ -41,10 +39,7 @@ main :: IO ()
 main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
-    let protocol = case options.tlsConfig of
-          TLSDisabled -> "http"
-          _ -> "https"
-        url = protocol <> "://" <> options.host <> ":" <> show options.port
+    let url = "http://" <> options.host <> ":" <> show options.port
     putTextLn $ "Starting server on " <> url
 
     Core.withAppState options.path $ \appStateVar -> do
@@ -55,5 +50,4 @@ main = do
               & Warp.setHost (fromString $ toString options.host)
               & Warp.setPort options.port
               & Warp.setTimeout 600 -- 10 minutes (for long WebSocket connections)
-          tlsStateDir = options.path </> ".imako"
-      liftIO $ startWarpServer warpSettings tlsStateDir options.tlsConfig app
+      liftIO $ Warp.runSettings warpSettings app

@@ -66,7 +66,6 @@ common shared
     , wai-app-static
     , wai-websockets
     , warp
-    , warp-tls-simple
     , websockets
     , with-utf8
 

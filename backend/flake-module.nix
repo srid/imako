@@ -2,7 +2,6 @@
 {
   imports = [
     inputs.haskell-flake.flakeModule
-    (inputs.warp-tls-simple + /flake-module.nix)
   ];
   perSystem = { self', lib, pkgs, ... }: {
     haskellProjects.default = {
