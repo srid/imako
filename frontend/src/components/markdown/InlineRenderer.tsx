@@ -139,6 +139,8 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
                 
                 return (
                   <span 
+                    data-wikilink={url}
+                    data-broken={!isResolved() ? "true" : undefined}
                     class={isResolved() 
                       ? "text-purple-600 dark:text-purple-400 cursor-pointer hover:underline" 
                       : "text-stone-400 dark:text-stone-500 cursor-not-allowed"}

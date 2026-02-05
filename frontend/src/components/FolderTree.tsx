@@ -39,7 +39,10 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string; today:
           const nodeId = () => `folder:${folderPath()}`;
           return (
             <Show when={folderHasVisibleTasks(subnode, props.today)}>
-              <details open={!isCollapsed(nodeId())} onToggle={(e) => {
+              <details
+                data-testid="folder-node"
+                open={!isCollapsed(nodeId())}
+                onToggle={(e) => {
                 const isOpen = (e.target as HTMLDetailsElement).open;
                 if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
                 else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());

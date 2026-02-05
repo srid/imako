@@ -12,7 +12,9 @@ const Layout: Component<{ children?: any }> = (props) => {
     <div class="max-w-4xl mx-auto my-8 px-4">
       <div class="bg-white dark:bg-stone-950 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-700 p-6 sm:p-8">
         <Header />
-        {props.children}
+        <main>
+          {props.children}
+        </main>
       </div>
       <CommandPalette />
     </div>

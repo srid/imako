@@ -25,7 +25,10 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
 
   return (
     <Show when={stats().visible.length > 0}>
-      <details open={!isCollapsed(nodeId())} onToggle={(e) => {
+      <details
+        data-testid="file-node"
+        open={!isCollapsed(nodeId())}
+        onToggle={(e) => {
         const isOpen = (e.target as HTMLDetailsElement).open;
         if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
         else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());

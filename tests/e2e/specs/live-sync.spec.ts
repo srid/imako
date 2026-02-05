@@ -9,8 +9,8 @@ import { test, expect, waitForSync } from "../dsl";
 import * as fs from "fs";
 import * as path from "path";
 
-// Path to the example vault (relative to project root)
-const VAULT_PATH = path.join(process.cwd(), "example");
+// Path to the example vault (tests run from tests/ directory)
+const VAULT_PATH = path.join(process.cwd(), "..", "example");
 
 test.describe("Live Sync", () => {
   test("new task appears when file is modified", async ({ app }) => {
