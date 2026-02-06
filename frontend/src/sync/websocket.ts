@@ -38,10 +38,22 @@ export function connectVault(): () => void {
     setTimeout(connectVault, 3000);
   };
 
-  return () => {
-    ws?.close();
+  // Gracefully close WebSocket before page unload to avoid EPIPE errors
+  // Use both events for maximum compatibility
+  window.addEventListener("beforeunload", disconnectVault);
+  window.addEventListener("pagehide", disconnectVault);
+
+  return disconnectVault;
+}
+
+/**
+ * Gracefully disconnect from the WebSocket.
+ */
+export function disconnectVault(): void {
+  if (ws) {
+    ws.close(1000, "Page unloading");
     ws = null;
-  };
+  }
 }
 
 /**
