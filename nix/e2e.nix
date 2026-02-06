@@ -44,7 +44,7 @@
     # Full E2E test runner for CI - starts servers, runs tests, exits with test result
     process-compose."e2e" = {
       # Disable TUI for CI
-      cli.options.tui = false;
+      cli.environment.PC_DISABLE_TUI = true;
 
       settings = {
         processes = {
