@@ -14,7 +14,7 @@
             command = "${pkgs.ghcid}/bin/ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl --enable-multi-repl imako:exe:imako' --setup \":set args $NOTEBOOK\"";
             readiness_probe = {
               exec = {
-                command = "${pkgs.curl}/bin/curl -s -o /dev/null -w '%{exitcode}' http://localhost:4009 || true";
+                command = "${pkgs.curl}/bin/curl -s -o /dev/null -w '%{exitcode}' http://localhost:4009";
               };
               initial_delay_seconds = 10; # ghcid takes longer to start
               period_seconds = 2;
@@ -48,14 +48,11 @@
       settings = {
         processes = {
           backend = {
-            command = "${lib.getExe self'.packages.imako} ./example";
+            command = "set -x; ${lib.getExe self'.packages.imako} ./example";
             readiness_probe = {
               exec = {
-                command = "${pkgs.curl}/bin/curl -s -o /dev/null -w '%{exitcode}' http://localhost:4009 || true";
+                command = "${pkgs.curl}/bin/curl -s -o /dev/null -w '%{exitcode}' http://localhost:4009";
               };
-              initial_delay_seconds = 3;
-              period_seconds = 1;
-              failure_threshold = 30;
             };
           };
 
@@ -67,9 +64,6 @@
                 port = 5173;
                 path = "/";
               };
-              initial_delay_seconds = 2;
-              period_seconds = 1;
-              failure_threshold = 30;
             };
             depends_on.backend.condition = "process_started";
           };

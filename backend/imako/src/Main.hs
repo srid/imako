@@ -40,6 +40,8 @@ main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
     let url = "http://" <> options.host <> ":" <> show options.port
+    hSetBuffering stdout LineBuffering
+    hSetBuffering stderr LineBuffering
     putTextLn $ "Starting server on " <> url
 
     Core.withAppState options.path $ \appStateVar -> do
