@@ -8,7 +8,6 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import type { Inline } from "./types";
 import { BlockRenderer } from "./BlockRenderer";
-import { vaultInfo } from "@/store";
 
 export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
   const navigate = useNavigate();
@@ -112,47 +111,54 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
           </Match>
 
           {/* Link - [Attr, Inline[], Target] where Target = [url, title] */}
-          {/* Wikilinks appear as Links with data-wikilink-type attribute */}
           <Match when={inline.t === "Link" && inline}>
             {(i) => {
               const [[_id, _classes, kvs], inlines, [url, _title]] = i().c;
               
-              // Check for wikilink by looking for data-wikilink-type attribute
-              const wikilinkType = kvs.find(([k, _v]) => k === "data-wikilink-type");
+              // Check for broken link
+              const isBroken = kvs.some(([k, _v]) => k === "data-broken");
               
-              if (wikilinkType) {
-                // Wikilink: resolve reactively using vaultInfo.wikilinkResolutions
+              // Check for wikilink (for styling)
+              const isWikilink = kvs.some(([k, _v]) => k === "data-wikilink");
+              const wikilinkTarget = kvs.find(([k]) => k === "data-wikilink")?.[1];
+              
+              // Internal link (starts with /n/)
+              const isInternal = url.startsWith("/n/");
+              
+              // Broken link: render as non-clickable span
+              if (isBroken) {
                 const displayText = inlines.length > 0 
                   ? inlines.map(il => il.t === "Str" ? il.c : il.t === "Space" ? " " : "").join("")
-                  : url;
-                
-                // Reactive resolution: check if wikilink target resolves to a note
-                const resolvedPath = () => vaultInfo.wikilinkResolutions[url];
-                const isResolved = () => !!resolvedPath();
-                
-                const handleClick = () => {
-                  const path = resolvedPath();
-                  if (path) {
-                    navigate(`/n/${encodeURIComponent(path)}`);
-                  }
-                };
-                
+                  : wikilinkTarget || url;
                 return (
                   <span 
-                    data-wikilink={url}
-                    data-broken={!isResolved() ? "true" : undefined}
-                    class={isResolved() 
-                      ? "text-purple-600 dark:text-purple-400 cursor-pointer hover:underline" 
-                      : "text-stone-400 dark:text-stone-500 cursor-not-allowed"}
-                    title={isResolved() ? `Link to: ${resolvedPath()}` : `Broken link: ${url}`}
-                    onClick={handleClick}
+                    class="text-stone-400 dark:text-stone-500 cursor-not-allowed"
+                    title={`Broken link: ${wikilinkTarget || url}`}
                   >
-                    {displayText || url}
+                    {displayText}
                   </span>
                 );
               }
               
-              // Regular link
+              // Internal link: use navigate()
+              if (isInternal) {
+                const handleClick = () => navigate(url);
+                const displayText = inlines.length > 0 
+                  ? inlines.map(il => il.t === "Str" ? il.c : il.t === "Space" ? " " : "").join("")
+                  : wikilinkTarget || decodeURIComponent(url.slice(3)); // Remove /n/ prefix
+                return (
+                  <span 
+                    class={isWikilink 
+                      ? "text-purple-600 dark:text-purple-400 cursor-pointer hover:underline"
+                      : "text-amber-600 dark:text-amber-400 cursor-pointer hover:underline"}
+                    onClick={handleClick}
+                  >
+                    {displayText}
+                  </span>
+                );
+              }
+              
+              // External link
               return (
                 <a
                   href={url}

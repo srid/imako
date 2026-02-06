@@ -28,11 +28,14 @@ import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
+import Network.URI (escapeURIString, isUnreserved)
 import Network.URI.Slug qualified as Slug
 import Ob (Note (..), Task (..), TaskStatus (..), Vault (..))
 import Ob qualified
 import Ob.Vault (getTasks)
 import System.FilePath (dropExtension, makeRelative, splitPath, takeBaseName)
+import Text.Pandoc.Definition (Inline (..), Pandoc)
+import Text.Pandoc.Walk (walk)
 
 -- | Application state combining vault data with runtime context
 data AppState = AppState
@@ -83,14 +86,11 @@ mkVaultInfo :: FilePath -> AppState -> VaultInfo
 mkVaultInfo path appState =
   let todayVal = appState.today
       notesMap = Map.map (.modifiedAt) $ Map.mapKeys toText appState.vault.notes
-      -- Build wikilink resolution map: alias -> full note path
-      wikilinkMap = buildWikilinkResolutions $ Map.keys appState.vault.notes
    in VaultInfo
         { vaultPath = path
         , vaultName = toText $ takeBaseName path
         , today = todayVal
         , notes = notesMap
-        , wikilinkResolutions = wikilinkMap
         }
 
 {- | Build wikilink resolution map from note paths
@@ -146,10 +146,43 @@ mkTasksData vaultPath appState =
 -- | Build notes data by serializing the requested note to AST
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
 mkNotesData _vaultPath vault reqPath =
-  let ast = case Map.lookup reqPath vault.notes of
-        Just note -> toJSON note.content
+  let wikilinkMap = buildWikilinkResolutions $ Map.keys vault.notes
+      ast = case Map.lookup reqPath vault.notes of
+        Just note -> toJSON $ enrichWikilinks wikilinkMap note.content
         Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
    in NotesData {notePath = reqPath, noteAst = ast}
+
+{- | Transform wikilinks into regular internal links
+Resolved: URL becomes /n/<encoded-path>, keeps data-wikilink for styling
+Broken: URL empty, adds data-broken attribute
+-}
+enrichWikilinks :: Map Text Text -> Pandoc -> Pandoc
+enrichWikilinks resolutions = walk enrichInline
+  where
+    enrichInline :: Inline -> Inline
+    enrichInline (Link (id', classes, kvs) inlines (url, title))
+      | isWikilink kvs =
+          let resolved = Map.lookup url resolutions
+              -- Keep data-wikilink for styling, remove data-wikilink-type
+              cleanKvs = filter (\(k, _) -> k /= "data-wikilink-type") kvs
+              wikilinkAttr = ("data-wikilink", url)
+           in case resolved of
+                Just path ->
+                  -- Resolved: set URL to internal route
+                  let newUrl = "/n/" <> encodePathComponent (toText path)
+                   in Link (id', classes, wikilinkAttr : cleanKvs) inlines (newUrl, title)
+                Nothing ->
+                  -- Broken: empty URL, add data-broken
+                  let brokenAttr = ("data-broken", "true")
+                   in Link (id', classes, wikilinkAttr : brokenAttr : cleanKvs) inlines ("", title)
+    enrichInline x = x
+
+    isWikilink :: [(Text, Text)] -> Bool
+    isWikilink = any (\(k, _) -> k == "data-wikilink-type")
+
+    -- URL-encode a path component
+    encodePathComponent :: Text -> Text
+    encodePathComponent = toText . escapeURIString isUnreserved . toString
 
 -- | Build server message for a query (pure - all state in AppState)
 mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage

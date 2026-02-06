@@ -56,8 +56,10 @@ common shared
     , filepath
     , http-types
     , lvar                  >=0.2
+    , network-uri
     , ob
     , optparse-applicative
+    , pandoc-types
     , relude                >=1.0
     , stm
     , text

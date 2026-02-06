@@ -56,7 +56,6 @@ export interface IVaultInfo {
   vaultName: string;
   today: string;
   notes: {[k in string]: string};
-  wikilinkResolutions: {[k in string]: string};
 }
 
 export type TasksData = ITasksData;
