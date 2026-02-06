@@ -1,5 +1,5 @@
 import { Component, onMount, Show } from "solid-js";
-import { Router, Route, Navigate } from "@solidjs/router";
+import { HashRouter, Route, Navigate } from "@solidjs/router";
 import { isConnected } from "@/store";
 import { connectVault } from "@/sync/websocket";
 import { Header } from "@/components/Header";
@@ -41,12 +41,12 @@ const App: Component = () => {
           </div>
         }
       >
-        <Router root={Layout}>
+        <HashRouter root={Layout}>
           <Route path="/" component={() => <Navigate href="/tasks" />} />
           <Route path="/tasks" component={TasksPage} />
           <Route path="/n" component={NotesPage} />
           <Route path="/n/*notePath" component={NotesPage} />
-        </Router>
+        </HashRouter>
       </Show>
     </div>
   );

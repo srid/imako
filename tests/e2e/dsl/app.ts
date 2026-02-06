@@ -25,10 +25,13 @@ export class App {
   }
 
   /**
-   * Navigate to a specific route.
+   * Navigate to a specific route (uses hash-based routing).
+   * Routes are prefixed with /#/ for HashRouter compatibility.
    */
   async navigateTo(route: "/" | "/tasks" | `/n/${string}`): Promise<void> {
-    await this.page.goto(route);
+    // With HashRouter, routes become /#/path - navigate to root and let hash handle it
+    const hashRoute = route === "/" ? "/" : `/#${route}`;
+    await this.page.goto(hashRoute);
     await this.waitForConnection();
   }
 

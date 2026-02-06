@@ -35,8 +35,8 @@ test.describe("Connection", () => {
 
   test("redirects root to tasks page", async ({ page }) => {
     await page.goto("/");
-    // Wait for navigation to complete
-    await page.waitForURL("**/tasks");
-    expect(page.url()).toContain("/tasks");
+    // Wait for navigation to complete (hash-based routing)
+    await page.waitForURL("**/#/tasks");
+    expect(page.url()).toContain("/#/tasks");
   });
 });
