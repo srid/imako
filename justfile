@@ -16,7 +16,7 @@ repl *ARGS:
     cabal repl {{ CABAL_REPL_ARGS }} {{ ARGS }}
 
 # Run ghcid -- auto-recompile and run `main` function
-run:
+backend-dev:
     ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }} imako:exe:imako' --setup ":set args {{ NOTEBOOK }}"
 
 # Run tests

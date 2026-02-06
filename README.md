@@ -27,8 +27,8 @@ just dev
 Or separately:
 
 ```sh
-just NOTEBOOK=$HOME/mynotes run   # Backend with ghcid
-just frontend-dev                 # Frontend dev server
+just NOTEBOOK=$HOME/mynotes backend-dev   # Backend with ghcid
+just frontend-dev                         # Frontend dev server
 ```
 
 Open http://localhost:5173 to view the app.
@@ -49,7 +49,6 @@ Imako is written in Haskell with a SolidJS frontend. This repository hosts:
 just e2e
 
 # Or run manually with servers already running:
-just run-example    # Terminal 1
-just frontend-dev   # Terminal 2
-just e2e-run        # Terminal 3
+just dev            # Terminal 1 (starts both servers)
+just e2e-run        # Terminal 2
 ```
