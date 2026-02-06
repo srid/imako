@@ -58,7 +58,11 @@ export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
 
   return (
     <Show when={computed().visible}>
-      <div class="group/task relative py-1.5 -mx-2 px-2 rounded-lg hover:bg-accent-50/50 dark:hover:bg-accent-900/10 flex items-start gap-2 text-sm transition-colors">
+      <div
+        data-testid="task-item"
+        data-status={props.task.status}
+        class="group/task relative py-1.5 -mx-2 px-2 rounded-lg hover:bg-accent-50/50 dark:hover:bg-accent-900/10 flex items-start gap-2 text-sm transition-colors"
+      >
         {/* Checkbox */}
         <span class={`w-5 h-5 flex-shrink-0 flex items-center justify-center ${computed().statusColor}`}>
           {computed().icon}

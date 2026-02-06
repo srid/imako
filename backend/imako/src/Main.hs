@@ -25,7 +25,7 @@ mkApp vaultPath appStateVar = do
     lookupEnv "IMAKO_FRONTEND_PATH" >>= \case
       Just p -> pure p
       Nothing -> pure "frontend/dist"
-  -- Configure static file settings to serve index.html for root
+  -- Configure static file settings (hash-based routing - no SPA fallback needed)
   let settings =
         (defaultWebAppSettings $ fromString frontendPath)
           { ssIndices = [unsafeToPiece "index.html"]
@@ -40,6 +40,8 @@ main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
     let url = "http://" <> options.host <> ":" <> show options.port
+    hSetBuffering stdout LineBuffering
+    hSetBuffering stderr LineBuffering
     putTextLn $ "Starting server on " <> url
 
     Core.withAppState options.path $ \appStateVar -> do

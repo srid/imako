@@ -19,11 +19,16 @@ Project origin: https://x.com/sridca/status/1896560964088271161
 In Nix devShell,
 
 ```sh
-# Start the backend API server
-just NOTEBOOK=$HOME/mynotes run
+# Start both backend (ghcid) and frontend (Vite) with hot-reload
+# NOTE: Uses ~/Dropbox/Vault by default. Override with NOTEBOOK env var.
+just dev
+```
 
-# In another terminal, start the frontend dev server
-just frontend-dev
+Or separately:
+
+```sh
+just NOTEBOOK=$HOME/mynotes backend-dev   # Backend with ghcid
+just frontend-dev                         # Frontend dev server
 ```
 
 Open http://localhost:5173 to view the app.
@@ -35,3 +40,15 @@ Imako is written in Haskell with a SolidJS frontend. This repository hosts:
 - `packages/ob`: Haskell library for working with Obsidian vaults
 - `packages/imako`: Main Imako backend (API + WebSocket server)
 - `frontend/`: SolidJS SPA (Vite + Tailwind v4)
+- `tests/`: Playwright E2E tests with custom DSL
+
+## E2E Testing
+
+```sh
+# Run all tests (process-compose orchestrated)
+just e2e
+
+# Or run manually with servers already running:
+just dev            # Terminal 1 (starts both servers)
+just e2e-run        # Terminal 2
+```

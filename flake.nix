@@ -21,6 +21,8 @@
 
     aeson-typescript.url = "github:codedownio/aeson-typescript";
     aeson-typescript.flake = false;
+
+    process-compose-flake.url = "github:Platonic-Systems/process-compose-flake";
   };
 
   outputs = inputs:
@@ -33,6 +35,7 @@
         ./backend/flake-module.nix
         ./backend/generate-types/flake-module.nix
         ./frontend/flake-module.nix
+        ./nix/e2e.nix
       ];
       _module.args = {
         root = ./.;

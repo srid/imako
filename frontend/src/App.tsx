@@ -1,5 +1,5 @@
 import { Component, onMount, Show } from "solid-js";
-import { Router, Route, Navigate } from "@solidjs/router";
+import { HashRouter, Route, Navigate } from "@solidjs/router";
 import { isConnected } from "@/store";
 import { connectVault } from "@/sync/websocket";
 import { Header } from "@/components/Header";
@@ -12,7 +12,9 @@ const Layout: Component<{ children?: any }> = (props) => {
     <div class="max-w-4xl mx-auto my-8 px-4">
       <div class="bg-white dark:bg-stone-950 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-700 p-6 sm:p-8">
         <Header />
-        {props.children}
+        <main>
+          {props.children}
+        </main>
       </div>
       <CommandPalette />
     </div>
@@ -39,12 +41,12 @@ const App: Component = () => {
           </div>
         }
       >
-        <Router root={Layout}>
+        <HashRouter root={Layout}>
           <Route path="/" component={() => <Navigate href="/tasks" />} />
           <Route path="/tasks" component={TasksPage} />
           <Route path="/n" component={NotesPage} />
           <Route path="/n/*notePath" component={NotesPage} />
-        </Router>
+        </HashRouter>
       </Show>
     </div>
   );

@@ -54,6 +54,7 @@ common shared
     , containers
     , directory
     , filepath
+    , http-types
     , lvar                  >=0.2
     , ob
     , optparse-applicative
