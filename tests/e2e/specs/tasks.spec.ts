@@ -45,4 +45,20 @@ test.describe("Tasks Page", () => {
     const text = await firstTask.textContent();
     expect(text).toBeTruthy();
   });
+
+  test("wikilinks render correctly in task descriptions", async ({ app }) => {
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+
+    // Find the task with wikilinks (from Tasks.md: "[[Alice]]: move [[Box]] to her place!")
+    const taskWithWikilinks = tasks.taskItems().filter({
+      hasText: "move",
+    });
+    await expect(taskWithWikilinks.first()).toBeVisible();
+
+    // Get the full text content - should include both wikilink texts
+    const text = await taskWithWikilinks.first().textContent();
+    expect(text).toContain("Alice");
+    expect(text).toContain("Box");
+  });
 });

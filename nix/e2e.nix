@@ -51,6 +51,8 @@
       {
         # Disable TUI for CI
         cli.environment.PC_DISABLE_TUI = true;
+        # Disable web UI to avoid port 8080 conflicts
+        cli.options.no-server = true;
 
         settings = {
           processes = {
@@ -67,10 +69,34 @@
             };
 
             test-runner = {
-              command = "cd tests && E2E_BASE_URL=http://localhost:${toString port} npm run e2e";
+              command = "cd tests && npm ci && E2E_BASE_URL=http://localhost:${toString port} npx playwright test";
               depends_on.imako.condition = "process_healthy";
               # Exit process-compose when tests complete
               availability.exit_on_end = true;
+            };
+          };
+        };
+      };
+
+    # E2E server only - for developing tests interactively
+    # Run `just e2e-server` then `just e2e-test` in another terminal
+    process-compose."e2e-server" =
+      let
+        port = 4019;
+        imako = lib.getExe' self'.packages.imako-with-frontend "imako";
+      in
+      {
+        settings = {
+          processes = {
+            imako = {
+              command = "set -x; ${imako} --port ${toString port} ./example";
+              readiness_probe = {
+                http_get = {
+                  host = "localhost";
+                  inherit port;
+                  path = "/";
+                };
+              };
             };
           };
         };

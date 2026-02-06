@@ -63,22 +63,12 @@ dev:
 e2e:
     nix run .#e2e
 
-# Run e2e tests (servers must already be running via `just dev`)
+# Start e2e server with example vault (for developing tests)
 [group('e2e')]
-e2e-run:
-    cd tests && npm run e2e
+e2e-server:
+    nix run .#e2e-server
 
-# Run e2e tests with Playwright UI (servers must already be running via `just dev`)
+# Run e2e tests against running e2e-server
 [group('e2e')]
-e2e-ui:
-    cd tests && npm run e2e:ui
-
-# Run e2e tests with visible browser (servers must already be running)
-[group('e2e')]
-e2e-headed:
-    cd tests && npm run e2e:headed
-
-# Run specific e2e test (by grep pattern)
-[group('e2e')]
-e2e-quick PATTERN:
-    cd tests && npx playwright test --grep "{{ PATTERN }}"
+e2e-test:
+    cd tests && E2E_BASE_URL=http://localhost:4019 npm run e2e

@@ -129,7 +129,9 @@ buildWikilinkResolutions paths =
 -- | Build tasks data from app state
 mkTasksData :: FilePath -> AppState -> TasksData
 mkTasksData vaultPath appState =
-  let tasks = getTasks appState.vault
+  let wikilinkMap = buildWikilinkResolutions $ Map.keys appState.vault.notes
+      enrichTask t = t {description = enrichInlines wikilinkMap t.description}
+      tasks = map enrichTask $ getTasks appState.vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       groupedAll =
@@ -152,15 +154,15 @@ mkNotesData _vaultPath vault reqPath =
         Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
    in NotesData {notePath = reqPath, noteAst = ast}
 
-{- | Transform wikilinks into regular internal links
+{- | Transform wikilinks in inline elements into regular internal links
 Resolved: URL becomes /n/<encoded-path>, keeps data-wikilink for styling
 Broken: URL empty, adds data-broken attribute
 -}
-enrichWikilinks :: Map Text Text -> Pandoc -> Pandoc
-enrichWikilinks resolutions = walk enrichInline
+enrichInlines :: Map Text Text -> [Inline] -> [Inline]
+enrichInlines resolutions = map enrichInline
   where
     enrichInline :: Inline -> Inline
-    enrichInline (Link (id', classes, kvs) inlines (url, title))
+    enrichInline (Link (id', classes, kvs) linkInlines (url, title))
       | isWikilink kvs =
           let resolved = Map.lookup url resolutions
               -- Keep data-wikilink for styling, remove data-wikilink-type
@@ -170,11 +172,11 @@ enrichWikilinks resolutions = walk enrichInline
                 Just path ->
                   -- Resolved: set URL to internal route
                   let newUrl = "/n/" <> encodePathComponent (toText path)
-                   in Link (id', classes, wikilinkAttr : cleanKvs) inlines (newUrl, title)
+                   in Link (id', classes, wikilinkAttr : cleanKvs) linkInlines (newUrl, title)
                 Nothing ->
                   -- Broken: empty URL, add data-broken
                   let brokenAttr = ("data-broken", "true")
-                   in Link (id', classes, wikilinkAttr : brokenAttr : cleanKvs) inlines ("", title)
+                   in Link (id', classes, wikilinkAttr : brokenAttr : cleanKvs) linkInlines ("", title)
     enrichInline x = x
 
     isWikilink :: [(Text, Text)] -> Bool
@@ -183,6 +185,10 @@ enrichWikilinks resolutions = walk enrichInline
     -- URL-encode a path component
     encodePathComponent :: Text -> Text
     encodePathComponent = toText . escapeURIString isUnreserved . toString
+
+-- | Transform wikilinks in a Pandoc document
+enrichWikilinks :: Map Text Text -> Pandoc -> Pandoc
+enrichWikilinks resolutions = walk (enrichInlines resolutions)
 
 -- | Build server message for a query (pure - all state in AppState)
 mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage

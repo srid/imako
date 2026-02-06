@@ -134,6 +134,8 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
                   <span 
                     class="text-stone-400 dark:text-stone-500 cursor-not-allowed"
                     title={`Broken link: ${wikilinkTarget || url}`}
+                    data-wikilink={wikilinkTarget}
+                    data-broken="true"
                   >
                     {displayText}
                   </span>
@@ -152,6 +154,7 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
                       ? "text-purple-600 dark:text-purple-400 cursor-pointer hover:underline"
                       : "text-amber-600 dark:text-amber-400 cursor-pointer hover:underline"}
                     onClick={handleClick}
+                    {...(isWikilink ? { "data-wikilink": wikilinkTarget } : {})}
                   >
                     {displayText}
                   </span>
