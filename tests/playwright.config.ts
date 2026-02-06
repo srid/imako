@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Base URL configurable via env var (for e2e tests on different ports)
+const baseURL = process.env.E2E_BASE_URL || "http://localhost:5173";
+
 /**
  * Playwright configuration for Imako E2E tests.
  * Servers are managed externally by process-compose (via `just e2e-servers`).
@@ -16,7 +19,7 @@ export default defineConfig({
   timeout: 30000,
 
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
