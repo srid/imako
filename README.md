@@ -19,11 +19,16 @@ Project origin: https://x.com/sridca/status/1896560964088271161
 In Nix devShell,
 
 ```sh
-# Start the backend API server
-just NOTEBOOK=$HOME/mynotes run
+# Start both backend (ghcid) and frontend (Vite) with hot-reload
+# NOTE: Uses ~/Dropbox/Vault by default. Override with NOTEBOOK env var.
+just dev
+```
 
-# In another terminal, start the frontend dev server
-just frontend-dev
+Or separately:
+
+```sh
+just NOTEBOOK=$HOME/mynotes run   # Backend with ghcid
+just frontend-dev                 # Frontend dev server
 ```
 
 Open http://localhost:5173 to view the app.

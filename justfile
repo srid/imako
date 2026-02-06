@@ -48,9 +48,9 @@ run-example:
 e2e-install:
     cd tests && npm install && npx playwright install chromium
 
-# Start e2e servers (backend + frontend) via process-compose
-e2e-servers:
-    nix run .#e2e-servers
+# Start dev servers (ghcid backend + Vite frontend) via process-compose
+dev:
+    NOTEBOOK={{ NOTEBOOK }} nix run .#dev
 
 # Run all e2e tests (via process-compose: starts servers, runs tests, exits)
 e2e:

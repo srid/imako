@@ -5,20 +5,20 @@
   ];
 
   perSystem = { self', pkgs, lib, ... }: {
-    # Server-only config for local development
-    process-compose."e2e-servers" = {
+    # Local development: ghcid backend + Vite frontend with hot-reload
+    process-compose."dev" = {
       settings = {
         processes = {
           backend = {
-            command = "${lib.getExe self'.packages.imako} ./example";
+            # Use ghcid for hot-reload development (NOTEBOOK env var for vault path)
+            command = "${pkgs.ghcid}/bin/ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl --enable-multi-repl imako:exe:imako' --setup \":set args $NOTEBOOK\"";
             readiness_probe = {
               exec = {
-                # Accept any response from backend (including 404)
                 command = "${pkgs.curl}/bin/curl -s -o /dev/null -w '%{exitcode}' http://localhost:4009 || true";
               };
-              initial_delay_seconds = 3;
-              period_seconds = 1;
-              failure_threshold = 30;
+              initial_delay_seconds = 10; # ghcid takes longer to start
+              period_seconds = 2;
+              failure_threshold = 60;
             };
           };
 
@@ -34,7 +34,6 @@
               period_seconds = 1;
               failure_threshold = 30;
             };
-            # Start frontend after backend starts (not waits for healthy)
             depends_on.backend.condition = "process_started";
           };
         };
