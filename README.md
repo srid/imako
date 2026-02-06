@@ -35,3 +35,16 @@ Imako is written in Haskell with a SolidJS frontend. This repository hosts:
 - `packages/ob`: Haskell library for working with Obsidian vaults
 - `packages/imako`: Main Imako backend (API + WebSocket server)
 - `frontend/`: SolidJS SPA (Vite + Tailwind v4)
+- `tests/`: Playwright E2E tests with custom DSL
+
+## E2E Testing
+
+```sh
+# Run all tests (process-compose orchestrated)
+just e2e
+
+# Or run manually with servers already running:
+just run-example    # Terminal 1
+just frontend-dev   # Terminal 2
+just e2e-run        # Terminal 3
+```

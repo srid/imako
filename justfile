@@ -52,15 +52,13 @@ e2e-install:
 e2e-servers:
     nix run .#e2e-servers
 
-# Run all e2e tests (starts servers via process-compose, runs tests, then stops)
+# Run all e2e tests (via process-compose: starts servers, runs tests, exits)
 e2e:
-    nix build .#imako
-    cd frontend && npm install
-    nix run .#e2e-servers &
-    sleep 5
-    cd tests && npm run e2e; EXIT_CODE=$?
-    pkill -f "process-compose" 2>/dev/null || true
-    exit $EXIT_CODE
+    nix run .#e2e
+
+# Run e2e tests (servers must already be running via `just run-example` + `just frontend-dev`)
+e2e-run:
+    cd tests && npm run e2e
 
 # Run e2e tests with Playwright UI (servers must already be running via `just e2e-servers`)
 e2e-ui:
