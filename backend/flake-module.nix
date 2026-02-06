@@ -50,6 +50,8 @@
         wrapProgram $out/bin/imako \
           --set IMAKO_FRONTEND_PATH ${self'.packages.imako-frontend}
       '';
+      # Tell lib.getExe that the main program is called 'imako'
+      meta.mainProgram = "imako";
     };
 
     # Default package & app.

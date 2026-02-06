@@ -40,46 +40,40 @@
       };
     };
 
-    # Full E2E test runner for CI - starts servers, runs tests, exits with test result
-    # Uses unique ports (4019, 5183) to avoid conflicts with dev servers (4009, 5173)
-    process-compose."e2e" = {
-      # Disable TUI for CI
-      cli.environment.PC_DISABLE_TUI = true;
+    # Full E2E test runner for CI - starts server, runs tests, exits with test result
+    # Uses unique port to avoid conflicts with dev servers (4009)
+    # The Nix-packaged imako binary bundles the frontend (via IMAKO_FRONTEND_PATH)
+    process-compose."e2e" =
+      let
+        port = 4019;
+        imako = lib.getExe' self'.packages.imako-with-frontend "imako";
+      in
+      {
+        # Disable TUI for CI
+        cli.environment.PC_DISABLE_TUI = true;
 
-      settings = {
-        processes = {
-          backend = {
-            command = "set -x; ${lib.getExe self'.packages.imako} --port 4019 ./example";
-            readiness_probe = {
-              exec = {
-                command = "${pkgs.curl}/bin/curl -s -o /dev/null -w '%{exitcode}' http://localhost:4019";
+        settings = {
+          processes = {
+            imako = {
+              # The Nix package bundles the frontend - no separate frontend process needed
+              command = "set -x; ${imako} --port ${toString port} ./example";
+              readiness_probe = {
+                http_get = {
+                  host = "localhost";
+                  inherit port;
+                  path = "/";
+                };
               };
             };
-          };
 
-          frontend = {
-            command = "cd frontend && VITE_PORT=5183 BACKEND_PORT=4019 ${pkgs.nodejs}/bin/npm run dev";
-            readiness_probe = {
-              http_get = {
-                host = "localhost";
-                port = 5183;
-                path = "/";
-              };
+            test-runner = {
+              command = "cd tests && E2E_BASE_URL=http://localhost:${toString port} npm run e2e";
+              depends_on.imako.condition = "process_healthy";
+              # Exit process-compose when tests complete
+              availability.exit_on_end = true;
             };
-            depends_on.backend.condition = "process_started";
-          };
-
-          test-runner = {
-            command = "cd tests && E2E_BASE_URL=http://localhost:5183 npm run e2e";
-            depends_on = {
-              backend.condition = "process_healthy";
-              frontend.condition = "process_healthy";
-            };
-            # Exit process-compose when tests complete
-            availability.exit_on_end = true;
           };
         };
       };
-    };
   };
 }
