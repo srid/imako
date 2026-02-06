@@ -40,9 +40,7 @@ generate-types:
     cabal build generate-types
     nix run .#generate-types-to -- . "cabal run generate-types --"
 
-# Run backend with example vault (for e2e tests) - uses Nix package
-run-example:
-    nix run .#imako -- ./example
+
 
 # Install e2e test dependencies
 e2e-install:
@@ -56,11 +54,11 @@ dev:
 e2e:
     nix run .#e2e
 
-# Run e2e tests (servers must already be running via `just run-example` + `just frontend-dev`)
+# Run e2e tests (servers must already be running via `just dev`)
 e2e-run:
     cd tests && npm run e2e
 
-# Run e2e tests with Playwright UI (servers must already be running via `just e2e-servers`)
+# Run e2e tests with Playwright UI (servers must already be running via `just dev`)
 e2e-ui:
     cd tests && npm run e2e:ui
 
