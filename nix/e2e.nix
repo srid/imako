@@ -16,9 +16,6 @@
               exec = {
                 command = "${pkgs.netcat}/bin/nc -z localhost 4009";
               };
-              initial_delay_seconds = 10; # ghcid takes longer to start
-              period_seconds = 2;
-              failure_threshold = 60;
             };
           };
 
@@ -30,9 +27,6 @@
                 port = 5173;
                 path = "/";
               };
-              initial_delay_seconds = 2;
-              period_seconds = 1;
-              failure_threshold = 30;
             };
             depends_on.backend.condition = "process_healthy";
           };
