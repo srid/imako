@@ -70,6 +70,15 @@ export const TaskItem: Component<{ task: Task; today: string }> = (props) => {
 
         {/* Content */}
         <div class="flex-1 min-w-0">
+          {/* Parent breadcrumbs */}
+          <Show when={props.task.parentBreadcrumbs.length > 0}>
+            <div
+              data-testid="task-breadcrumbs"
+              class="text-xs text-stone-400 dark:text-stone-500 mb-0.5 truncate"
+            >
+              {props.task.parentBreadcrumbs.join(" › ")}
+            </div>
+          </Show>
           <div class={`leading-snug ${computed().textStyle}`}>
             <InlineRenderer inlines={props.task.description} />
           </div>

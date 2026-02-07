@@ -1,12 +1,13 @@
 /**
  * Tasks page tests.
  *
- * Verifies task rendering, status display, and folder tree.
+ * Verifies task rendering, status display, folder tree, and parent breadcrumbs.
  *
  * Expected vault state (example/):
  * Filters hide Completed/Cancelled tasks by default.
- * Visible tasks (11 total):
- * - Notes/Tasks.md: 7 visible (2 completed/cancelled hidden)
+ * Visible tasks (17 total):
+ * - Notes/Tasks.md: 13 visible (2 completed/cancelled hidden)
+ *   - 6 are nested subtasks with parent breadcrumbs
  * - Projects/Active.md: 4 visible (1 completed hidden)
  *
  * Note: Tags are rendered with 🏷️ emoji, not # symbol
@@ -16,14 +17,21 @@ import { test, expect, TaskExpectation } from "../dsl";
 
 // All visible tasks from the example vault (Completed/Cancelled hidden by default)
 const EXPECTED_TASKS: TaskExpectation[] = [
-  // Notes/Tasks.md
+  // Notes/Tasks.md — top-level
   { text: "Add mobile support", status: "Incomplete" },
-  { text: "move", status: "Incomplete", contains: ["Alice", "Box", "to her place!"] },
+  { text: "Alice: move Box to her place!", status: "Incomplete" },
   { text: "Explore offline mode", status: "Incomplete" },
   { text: "Implement backlinks feature", status: "Incomplete", contains: ["feature"] },
   { text: "Review the Imako implementation plan", status: "Incomplete" },
   { text: "Write E2E tests for core features", status: "Incomplete" },
   { text: "Research Playwright best practices", status: "InProgress", contains: ["research"] },
+  // Notes/Tasks.md — nested subtasks
+  { text: "Pack the box", status: "Incomplete", breadcrumbs: ["Alice: move Box to her place!"] },
+  { text: "Schedule pickup", status: "Incomplete", breadcrumbs: ["Alice: move Box to her place!"] },
+  { text: "Write task rendering tests", status: "InProgress", breadcrumbs: ["Write E2E tests for core features"] },
+  { text: "Write navigation tests", status: "Incomplete", breadcrumbs: ["Write E2E tests for core features"] },
+  { text: "Read official docs", status: "Incomplete", breadcrumbs: ["Research Playwright best practices"] },
+  { text: "Try page object pattern", status: "Incomplete", breadcrumbs: ["Research Playwright best practices"] },
   // Projects/Active.md
   { text: "Add live sync tests", status: "Incomplete" },
   { text: "Add screenshots", status: "Incomplete" },
@@ -56,5 +64,25 @@ test.describe("Tasks Page", () => {
     for (const folderName of EXPECTED_FOLDERS) {
       await expect(folders.filter({ hasText: folderName })).toBeVisible();
     }
+  });
+
+  test("nested tasks show parent breadcrumbs", async ({ app }) => {
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+
+    // Verify nested tasks have correct breadcrumbs
+    const nestedTasks = EXPECTED_TASKS.filter((t) => t.breadcrumbs);
+    for (const task of nestedTasks) {
+      const item = tasks.taskItems().filter({ hasText: task.text });
+      const crumbs = item.locator("[data-testid='task-breadcrumbs']");
+      await expect(crumbs).toBeVisible();
+      await expect(crumbs).toContainText(task.breadcrumbs!.join(" › "));
+    }
+
+    // Top-level tasks should NOT have breadcrumbs
+    const topLevelCount = EXPECTED_TASKS.filter((t) => !t.breadcrumbs).length;
+    const allBreadcrumbs = tasks.taskItems().locator("[data-testid='task-breadcrumbs']");
+    // Only nested tasks should have breadcrumbs (4 nested tasks)
+    await expect(allBreadcrumbs).toHaveCount(nestedTasks.length);
   });
 });
