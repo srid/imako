@@ -2,63 +2,59 @@
  * Tasks page tests.
  *
  * Verifies task rendering, status display, and folder tree.
+ *
+ * Expected vault state (example/):
+ * Filters hide Completed/Cancelled tasks by default.
+ * Visible tasks (11 total):
+ * - Notes/Tasks.md: 7 visible (2 completed/cancelled hidden)
+ * - Projects/Active.md: 4 visible (1 completed hidden)
+ *
+ * Note: Tags are rendered with 🏷️ emoji, not # symbol
  */
 
-import { test, expect } from "../dsl";
+import { test, expect, TaskExpectation } from "../dsl";
+
+// All visible tasks from the example vault (Completed/Cancelled hidden by default)
+const EXPECTED_TASKS: TaskExpectation[] = [
+  // Notes/Tasks.md
+  { text: "Add mobile support", status: "Incomplete" },
+  { text: "move", status: "Incomplete", contains: ["Alice", "Box", "to her place!"] },
+  { text: "Explore offline mode", status: "Incomplete" },
+  { text: "Implement backlinks feature", status: "Incomplete", contains: ["feature"] },
+  { text: "Review the Imako implementation plan", status: "Incomplete" },
+  { text: "Write E2E tests for core features", status: "Incomplete" },
+  { text: "Research Playwright best practices", status: "InProgress", contains: ["research"] },
+  // Projects/Active.md
+  { text: "Add live sync tests", status: "Incomplete" },
+  { text: "Add screenshots", status: "Incomplete" },
+  { text: "Complete E2E test infrastructure", status: "Incomplete" },
+  { text: "Write user guide", status: "Incomplete" },
+];
+
+const EXPECTED_FOLDERS = ["Notes", "Projects"];
 
 test.describe("Tasks Page", () => {
   test.beforeEach(async ({ app }) => {
     await app.navigateTo("/tasks");
   });
 
-  test("renders tasks from the vault", async ({ app }) => {
+  test("renders visible tasks with correct content", async ({ app }) => {
     const tasks = app.tasks();
     await tasks.waitForTasks();
 
-    // Should have tasks from the example vault
-    const count = await tasks.taskCount();
-    expect(count).toBeGreaterThan(0);
+    // Verify all visible tasks are rendered with correct content
+    await tasks.verifyTasks(EXPECTED_TASKS);
   });
 
-  test("displays folder tree", async ({ app }) => {
+  test("displays folder tree with correct folders", async ({ app }) => {
     const tree = app.folderTree();
 
-    // Folder tree should be visible
-    await expect(tree.folders().first()).toBeVisible();
-  });
+    // Verify exact folder count and names
+    const folders = tree.folders();
+    await expect(folders).toHaveCount(EXPECTED_FOLDERS.length);
 
-  test("shows tasks with correct status indicators", async ({ app }) => {
-    const tasks = app.tasks();
-    await tasks.waitForTasks();
-
-    // Should have at least one incomplete task
-    const incomplete = tasks.tasksByStatus("Incomplete");
-    await expect(incomplete.first()).toBeVisible();
-  });
-
-  test("task descriptions render inline markdown", async ({ app }) => {
-    const tasks = app.tasks();
-    await tasks.waitForTasks();
-
-    // Tasks should contain their text content
-    const firstTask = tasks.taskItems().first();
-    const text = await firstTask.textContent();
-    expect(text).toBeTruthy();
-  });
-
-  test("wikilinks render correctly in task descriptions", async ({ app }) => {
-    const tasks = app.tasks();
-    await tasks.waitForTasks();
-
-    // Find the task with wikilinks (from Tasks.md: "[[Alice]]: move [[Box]] to her place!")
-    const taskWithWikilinks = tasks.taskItems().filter({
-      hasText: "move",
-    });
-    await expect(taskWithWikilinks.first()).toBeVisible();
-
-    // Get the full text content - should include both wikilink texts
-    const text = await taskWithWikilinks.first().textContent();
-    expect(text).toContain("Alice");
-    expect(text).toContain("Box");
+    for (const folderName of EXPECTED_FOLDERS) {
+      await expect(folders.filter({ hasText: folderName })).toBeVisible();
+    }
   });
 });

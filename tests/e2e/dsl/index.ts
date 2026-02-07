@@ -10,6 +10,7 @@ import { App } from "./app";
 export { App } from "./app";
 export {
   TasksView,
+  TaskExpectation,
   NoteView,
   CommandPaletteView,
   FolderTreeView,

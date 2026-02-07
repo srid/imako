@@ -2,74 +2,84 @@
  * Notes page tests.
  *
  * Verifies markdown rendering, wikilinks, and navigation.
+ *
+ * Expected vault state (example/):
+ * - Notes/Welcome.md: Main note with headings, code blocks, and wikilinks
+ * - Notes/Wikilinks.md: Note with 6 wikilinks, including 2 broken ones
  */
 
 import { test, expect } from "../dsl";
 
+const WELCOME_HEADINGS = [
+  "Welcome to Imako",
+  "About Imako",
+  "Features",
+];
+
 test.describe("Notes Page", () => {
-  test("renders note content", async ({ app }) => {
-    // Navigate to Welcome note
+  test("renders note content with correct title", async ({ app }) => {
     await app.navigateTo("/n/Notes%2FWelcome.md");
-
     const note = app.note();
     await note.waitForContent();
 
-    // Should contain the welcome text
-    const text = await note.textContent();
-    expect(text).toContain("Welcome");
+    // Verify the main heading
+    const h1 = note.content().locator("h1");
+    await expect(h1).toHaveText("Welcome to Imako");
   });
 
-  test("renders headings correctly", async ({ app }) => {
+  test("renders all expected headings", async ({ app }) => {
     await app.navigateTo("/n/Notes%2FWelcome.md");
-
     const note = app.note();
     await note.waitForContent();
 
-    // Should have headings
+    // Verify heading count and content
     const headings = note.headings();
-    await expect(headings.first()).toBeVisible();
+    await expect(headings).toHaveCount(WELCOME_HEADINGS.length);
+
+    for (const heading of WELCOME_HEADINGS) {
+      await expect(headings.filter({ hasText: heading })).toBeVisible();
+    }
   });
 
-  test("renders code blocks", async ({ app }) => {
+  test("renders code block with correct content", async ({ app }) => {
     await app.navigateTo("/n/Notes%2FWelcome.md");
-
     const note = app.note();
     await note.waitForContent();
 
-    // Should have a code block
+    // Verify code block exists and contains expected content
     const codeBlocks = note.codeBlocks();
     await expect(codeBlocks.first()).toBeVisible();
+    await expect(codeBlocks.first()).toContainText("Imako");
   });
 
-  test("renders wikilinks with styling", async ({ app }) => {
+  test("renders correct number of wikilinks", async ({ app }) => {
     await app.navigateTo("/n/Notes%2FWikilinks.md");
-
     const note = app.note();
     await note.waitForContent();
 
-    // Should have wikilinks
+    // Wikilinks.md has 6 wikilinks
     const wikilinks = note.wikilinks();
-    await expect(wikilinks.first()).toBeVisible();
+    await expect(wikilinks).toHaveCount(6);
   });
 
-  test("marks broken wikilinks", async ({ app }) => {
+  test("renders correct broken wikilinks", async ({ app }) => {
     await app.navigateTo("/n/Notes%2FWikilinks.md");
-
     const note = app.note();
     await note.waitForContent();
 
-    // Should have broken wikilinks
+    // 2 broken wikilinks: "Nonexistent" and "Missing Page"
     const broken = note.brokenWikilinks();
-    await expect(broken.first()).toBeVisible();
+    await expect(broken).toHaveCount(2);
+    await expect(broken.filter({ hasText: "Nonexistent" })).toBeVisible();
+    await expect(broken.filter({ hasText: "Missing Page" })).toBeVisible();
   });
 
-  test("wikilink navigation works", async ({ app }) => {
+  test("wikilink navigation navigates to correct page", async ({ app }) => {
     await app.navigateTo("/n/Notes%2FWikilinks.md");
-
     const note = app.note();
     await note.waitForContent();
 
-    // Click on a valid wikilink (Welcome)
+    // Click on the Welcome wikilink
     const welcomeLink = note.wikilinks().filter({ hasText: "Welcome" });
     await welcomeLink.click();
 

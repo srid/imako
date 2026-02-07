@@ -8,6 +8,18 @@
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
+ * Expected task for verification.
+ */
+export interface TaskExpectation {
+  /** Text that should appear in the task description */
+  text: string;
+  /** Expected task status */
+  status: "Incomplete" | "InProgress" | "Completed" | "Cancelled";
+  /** Additional text fragments that should appear */
+  contains?: string[];
+}
+
+/**
  * View abstraction for the Tasks page.
  */
 export class TasksView {
@@ -45,6 +57,27 @@ export class TasksView {
    */
   async waitForTasks(): Promise<void> {
     await expect(this.taskItems().first()).toBeVisible({ timeout: 5000 });
+  }
+
+  /**
+   * Verify tasks match expected content and count.
+   */
+  async verifyTasks(expected: TaskExpectation[]): Promise<void> {
+    // Verify exact count
+    await expect(this.taskItems()).toHaveCount(expected.length);
+
+    // Verify each task exists with correct content
+    for (const task of expected) {
+      const item = this.taskItems().filter({ hasText: task.text });
+      await expect(item).toBeVisible();
+      await expect(item).toHaveAttribute("data-status", task.status);
+
+      if (task.contains) {
+        for (const text of task.contains) {
+          await expect(item).toContainText(text);
+        }
+      }
+    }
   }
 
   /**
