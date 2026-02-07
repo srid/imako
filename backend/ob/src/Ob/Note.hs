@@ -7,13 +7,15 @@ module Ob.Note (
 )
 where
 
+import Commonmark.Extensions.WikiLink qualified as WL
 import Data.Aeson qualified as Aeson
 import Data.IxSet.Typed (Indexable (..), IxSet, ixFun, ixList)
 import Data.Time (UTCTime)
+import Network.URI.Slug qualified as Slug
 import Ob.Markdown (parseMarkdown)
 import Ob.Task (Task, extractTasks)
 import System.Directory (getModificationTime)
-import System.FilePath ((</>))
+import System.FilePath (dropExtension, splitPath, (</>))
 import Text.Pandoc.Definition (Pandoc)
 
 data Note = Note
@@ -30,13 +32,31 @@ data Note = Note
 instance Ord Note where
   compare a b = compare a.path b.path
 
-type NoteIxs = '[FilePath]
+type NoteIxs = '[FilePath, WL.WikiLink]
 type IxNote = IxSet NoteIxs Note
 
 instance Indexable NoteIxs Note where
   indices =
     ixList
       (ixFun $ one . (.path))
+      (ixFun noteSelfRefs)
+
+{- | All possible wiki-links that refer to this note.
+
+For @Foo\/Bar\/Qux.md@ produces: @[[Qux]], [[Bar\/Qux]], [[Foo\/Bar\/Qux]]@
+(with all WikiLink type variants).
+-}
+noteSelfRefs :: Note -> [WL.WikiLink]
+noteSelfRefs note =
+  let pathComponents =
+        filter (not . null)
+          . map (filter (/= '/'))
+          $ splitPath (dropExtension note.path)
+      slugs = Slug.decodeSlug . toText <$> pathComponents
+   in case nonEmpty slugs of
+        Nothing -> []
+        Just allSlugs ->
+          ordNub . toList $ snd <$> WL.allowedWikiLinks allSlugs
 
 {- | Parse a note from disk.
 

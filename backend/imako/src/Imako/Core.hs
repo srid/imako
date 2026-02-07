@@ -19,22 +19,20 @@ where
 import Commonmark.Extensions.WikiLink qualified as WikiLink
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (race_, withAsync)
-import Data.Aeson (Value (String), object, toJSON, (.=))
+import Data.Aeson (object, toJSON, (.=))
 import Data.IxSet.Typed qualified as Ix
 import Data.LVar qualified as LVar
 import Data.List qualified as List
-import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
 import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
 import Network.URI (escapeURIString, isUnreserved)
-import Network.URI.Slug qualified as Slug
-import Ob (Note (..), Task (..), TaskStatus (..), Vault (..))
+import Ob (IxNote, Note (..), Task (..), TaskStatus (..), Vault (..))
 import Ob qualified
 import Ob.Vault (getTasks)
-import System.FilePath (dropExtension, makeRelative, splitPath, takeBaseName)
+import System.FilePath (makeRelative, takeBaseName)
 import Text.Pandoc.Definition (Inline (..), Pandoc)
 import Text.Pandoc.Walk (walk)
 
@@ -94,44 +92,11 @@ mkVaultInfo path appState =
         , notes = notesMap
         }
 
-{- | Build wikilink resolution map from note paths
-For each note, generates all valid wikilink aliases (basename, parent/basename, etc.)
-
-FIXME: Use @Map WikiLink FilePath@ once @wikilinkUrl@ is exported:
-https://github.com/srid/commonmark-wikilink/issues/7
--}
-buildWikilinkResolutions :: [FilePath] -> Map Text Text
-buildWikilinkResolutions paths =
-  Map.fromList $ concatMap pathToAliases paths
-  where
-    -- \| Convert a note path to all valid wikilink aliases.
-    --
-    -- For @Foo\/Bar\/Qux.md@ produces: @["Qux", "Bar\/Qux", "Foo\/Bar\/Qux"]@
-    pathToAliases :: FilePath -> [(Text, Text)]
-    pathToAliases notePath =
-      map (,toText notePath) $ aliasesFor notePath
-
-    -- \| Extract wikilink aliases from a note path.
-    --
-    -- For @Foo\/Bar\/Qux.md@ produces: @["Qux", "Bar\/Qux", "Foo\/Bar\/Qux"]@
-    aliasesFor :: FilePath -> [Text]
-    aliasesFor notePath =
-      let noteWithoutExt = dropExtension notePath
-          pathComponents = filter (not . null) $ map (filter (/= '/')) $ splitPath noteWithoutExt
-          slugs = map (Slug.decodeSlug . toText) pathComponents
-          toUrl wl = case toJSON wl of
-            String t -> t
-            _ -> ""
-       in case nonEmpty slugs of
-            Nothing -> []
-            Just allSlugs ->
-              ordNub $ map (toUrl . snd) $ NE.toList $ WikiLink.allowedWikiLinks allSlugs
-
 -- | Build tasks data from app state
 mkTasksData :: FilePath -> AppState -> TasksData
 mkTasksData vaultPath appState =
-  let wikilinkMap = buildWikilinkResolutions $ map (.path) $ Ix.toList appState.vault.notes
-      enrichTask t = t {description = enrichInlines wikilinkMap t.description}
+  let notes = appState.vault.notes
+      enrichTask t = t {description = enrichInlines notes t.description}
       tasks = map enrichTask $ getTasks appState.vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
@@ -149,30 +114,31 @@ mkTasksData vaultPath appState =
 -- | Build notes data by serializing the requested note to AST
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
 mkNotesData _vaultPath vault reqPath =
-  let wikilinkMap = buildWikilinkResolutions $ map (.path) $ Ix.toList vault.notes
-      ast = case Ix.getOne (Ix.getEQ reqPath vault.notes) of
-        Just note -> toJSON $ enrichWikilinks wikilinkMap note.content
+  let ast = case Ix.getOne (Ix.getEQ reqPath vault.notes) of
+        Just note -> toJSON $ enrichWikilinks vault.notes note.content
         Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
    in NotesData {notePath = reqPath, noteAst = ast}
 
-{- | Transform wikilinks in inline elements into regular internal links
-Resolved: URL becomes /n/<encoded-path>, keeps data-wikilink for styling
-Broken: URL empty, adds data-broken attribute
+{- | Transform wikilinks in inline elements into regular internal links.
+
+Uses the WikiLink IxSet index for O(log n) resolution:
+- Resolved: URL becomes \/n\/<encoded-path>, keeps data-wikilink for styling
+- Broken: URL empty, adds data-broken attribute
 -}
-enrichInlines :: Map Text Text -> [Inline] -> [Inline]
-enrichInlines resolutions = map enrichInline
+enrichInlines :: IxNote -> [Inline] -> [Inline]
+enrichInlines notes = map enrichInline
   where
     enrichInline :: Inline -> Inline
-    enrichInline (Link (id', classes, kvs) linkInlines (url, title))
-      | isWikilink kvs =
-          let resolved = Map.lookup url resolutions
+    enrichInline inl@(Link (id', classes, kvs) linkInlines (_url, title))
+      | Just (wl, _) <- WikiLink.mkWikiLinkFromInline inl =
+          let resolved = Ix.getOne (Ix.getEQ wl notes)
               -- Keep data-wikilink for styling, remove data-wikilink-type
               cleanKvs = filter (\(k, _) -> k /= "data-wikilink-type") kvs
-              wikilinkAttr = ("data-wikilink", url)
+              wikilinkAttr = ("data-wikilink", _url)
            in case resolved of
-                Just path ->
+                Just note ->
                   -- Resolved: set URL to internal route
-                  let newUrl = "/n/" <> encodePathComponent (toText path)
+                  let newUrl = "/n/" <> encodePathComponent (toText note.path)
                    in Link (id', classes, wikilinkAttr : cleanKvs) linkInlines (newUrl, title)
                 Nothing ->
                   -- Broken: empty URL, add data-broken
@@ -180,16 +146,13 @@ enrichInlines resolutions = map enrichInline
                    in Link (id', classes, wikilinkAttr : brokenAttr : cleanKvs) linkInlines ("", title)
     enrichInline x = x
 
-    isWikilink :: [(Text, Text)] -> Bool
-    isWikilink = any (\(k, _) -> k == "data-wikilink-type")
-
     -- URL-encode a path component
     encodePathComponent :: Text -> Text
     encodePathComponent = toText . escapeURIString isUnreserved . toString
 
 -- | Transform wikilinks in a Pandoc document
-enrichWikilinks :: Map Text Text -> Pandoc -> Pandoc
-enrichWikilinks resolutions = walk (enrichInlines resolutions)
+enrichWikilinks :: IxNote -> Pandoc -> Pandoc
+enrichWikilinks notes = walk (enrichInlines notes)
 
 -- | Build server message for a query (pure - all state in AppState)
 mkServerMessage :: FilePath -> AppState -> Query -> ServerMessage

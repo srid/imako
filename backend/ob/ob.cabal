@@ -80,6 +80,7 @@ library
     , unionmount
     , unliftio
     , uri-encode
+    , url-slug
 
   hs-source-dirs:     src
   default-language:   GHC2021
