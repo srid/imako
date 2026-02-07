@@ -4,6 +4,7 @@ import { routeData, vaultInfo } from "@/store";
 import { sendQuery } from "@/sync/websocket";
 import { AstRenderer } from "@/components/markdown";
 import type { Pandoc } from "@/components/markdown";
+import { ObsidianEditLink } from "@/components/ObsidianEditLink";
 
 const NotesPage: Component = () => {
   const params = useParams<{ notePath?: string }>();
@@ -82,9 +83,15 @@ const NotesPage: Component = () => {
             <>
               {/* Subheader */}
               <div class="flex items-center justify-between gap-4 mb-6">
-                <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-200">
-                  {data().notePath}
-                </h2>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-200">
+                    {data().notePath}
+                  </h2>
+                  <ObsidianEditLink
+                    filePath={data().notePath}
+                    class="text-stone-400 hover:text-accent-600 dark:hover:text-accent-400"
+                  />
+                </div>
                 <A href="/n" class="text-sm text-stone-400 hover:text-amber-500 dark:text-stone-500 dark:hover:text-amber-400">
                   ← Back
                 </A>

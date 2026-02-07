@@ -1,9 +1,9 @@
 import { Component, For, Show, createMemo } from "solid-js";
 import type { Task } from "@/types";
 import { Icons } from "@/utils/icons";
-import { obsidianOpenUrl } from "@/utils/obsidian";
 import { isCollapsed, toggleCollapse, isTaskVisible } from "@/state/filters";
 import { TaskItem } from "@/components/TaskItem";
+import { ObsidianEditLink } from "@/components/ObsidianEditLink";
 import { vaultInfo } from "@/store";
 
 export const FileNode: Component<{ filename: string; tasks: Task[]; today: string; path: string }> = (props) => {
@@ -63,14 +63,10 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
           </span>
 
           {/* Edit link */}
-          <a
-            href={obsidianOpenUrl(vaultInfo.vaultName, `${props.path}/${props.filename}`)}
+          <ObsidianEditLink
+            filePath={`${props.path}/${props.filename}`}
             class="opacity-0 group-hover/file:opacity-100 transition-opacity text-stone-400 hover:text-accent-600 dark:hover:text-accent-400"
-            title="Open in Obsidian"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {Icons.edit}
-          </a>
+          />
         </summary>
 
         {/* Tasks list */}
