@@ -20,6 +20,7 @@ import Commonmark.Extensions.WikiLink qualified as WikiLink
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (race_, withAsync)
 import Data.Aeson (Value (String), object, toJSON, (.=))
+import Data.IxSet.Typed qualified as Ix
 import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.List.NonEmpty qualified as NE
@@ -85,7 +86,7 @@ withAppState path f = do
 mkVaultInfo :: FilePath -> AppState -> VaultInfo
 mkVaultInfo path appState =
   let todayVal = appState.today
-      notesMap = Map.map (.modifiedAt) $ Map.mapKeys toText appState.vault.notes
+      notesMap = Map.fromList $ map (\n -> (toText n.path, n.modifiedAt)) $ Ix.toList appState.vault.notes
    in VaultInfo
         { vaultPath = path
         , vaultName = toText $ takeBaseName path
@@ -129,7 +130,7 @@ buildWikilinkResolutions paths =
 -- | Build tasks data from app state
 mkTasksData :: FilePath -> AppState -> TasksData
 mkTasksData vaultPath appState =
-  let wikilinkMap = buildWikilinkResolutions $ Map.keys appState.vault.notes
+  let wikilinkMap = buildWikilinkResolutions $ map (.path) $ Ix.toList appState.vault.notes
       enrichTask t = t {description = enrichInlines wikilinkMap t.description}
       tasks = map enrichTask $ getTasks appState.vault
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
@@ -148,8 +149,8 @@ mkTasksData vaultPath appState =
 -- | Build notes data by serializing the requested note to AST
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
 mkNotesData _vaultPath vault reqPath =
-  let wikilinkMap = buildWikilinkResolutions $ Map.keys vault.notes
-      ast = case Map.lookup reqPath vault.notes of
+  let wikilinkMap = buildWikilinkResolutions $ map (.path) $ Ix.toList vault.notes
+      ast = case Ix.getOne (Ix.getEQ reqPath vault.notes) of
         Just note -> toJSON $ enrichWikilinks wikilinkMap note.content
         Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
    in NotesData {notePath = reqPath, noteAst = ast}

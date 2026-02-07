@@ -66,6 +66,7 @@ library
     , containers
     , directory
     , filepath
+    , ixset-typed
     , lucid2
     , lvar                 >=0.2
     , megaparsec

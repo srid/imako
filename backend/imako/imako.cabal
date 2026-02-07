@@ -55,6 +55,7 @@ common shared
     , directory
     , filepath
     , http-types
+    , ixset-typed
     , lvar                  >=0.2
     , network-uri
     , ob
