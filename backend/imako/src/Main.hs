@@ -8,7 +8,8 @@ import Imako.API.WebSocket (wsApp)
 import Imako.CLI qualified as CLI
 import Imako.Core qualified as Core
 import Main.Utf8 qualified as Utf8
-import Network.Wai (Application)
+import Network.HTTP.Types (status200)
+import Network.Wai (Application, rawPathInfo, responseLBS)
 import Network.Wai.Application.Static (staticApp)
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Handler.WebSockets (websocketsOr)
@@ -33,7 +34,14 @@ mkApp vaultPath appStateVar = do
       staticFileApp = staticApp settings
       -- Handler is now pure: state -> query -> msg
       wsHandler = wsApp appStateVar (\st q -> pure $ Core.mkServerMessage vaultPath st q)
-  pure $ websocketsOr WS.defaultConnectionOptions wsHandler staticFileApp
+      app = healthMiddleware $ websocketsOr WS.defaultConnectionOptions wsHandler staticFileApp
+  pure app
+
+-- | Middleware that responds to /health with 200 OK (for readiness probes)
+healthMiddleware :: Application -> Application
+healthMiddleware backendApp req respond
+  | rawPathInfo req == "/health" = respond $ responseLBS status200 [] "ok"
+  | otherwise = backendApp req respond
 
 main :: IO ()
 main = do

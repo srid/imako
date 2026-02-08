@@ -13,8 +13,10 @@
             # Use ghcid for hot-reload development (NOTEBOOK env var for vault path)
             command = "${pkgs.ghcid}/bin/ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl --enable-multi-repl imako:exe:imako' --setup \":set args $NOTEBOOK\"";
             readiness_probe = {
-              exec = {
-                command = "${pkgs.netcat}/bin/nc -z localhost 4009";
+              http_get = {
+                host = "localhost";
+                port = 4009;
+                path = "/health";
               };
             };
           };
@@ -57,7 +59,7 @@
                 http_get = {
                   host = "localhost";
                   inherit port;
-                  path = "/";
+                  path = "/health";
                 };
               };
             };
@@ -88,7 +90,7 @@
                 http_get = {
                   host = "localhost";
                   inherit port;
-                  path = "/";
+                  path = "/health";
                 };
               };
             };
