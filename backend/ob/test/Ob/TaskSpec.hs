@@ -136,13 +136,17 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "nested.md" pandoc
-          map (\t -> (extractText t.description, t.status, map fst t.parentContext)) tasks
+          map (\t -> (extractText t.description, t.status, t.parentBreadcrumbs)) tasks
             `shouldBe` [ ("Main task", Incomplete, [])
                        , ("Subtask 1", Incomplete, ["Main task"])
                        , ("Subtask 2", Completed, ["Main task"])
                        , ("Another main task", Incomplete, [])
                        , ("Another subtask", Incomplete, ["Another main task"])
                        ]
+          -- Verify taskNum assignment (DFS order)
+          map (.taskNum) tasks `shouldBe` [1, 2, 3, 4, 5]
+          -- Verify parentTaskNum references
+          map (.parentTaskNum) tasks `shouldBe` [Nothing, Just 1, Just 1, Nothing, Just 4]
 
     it "tracks only parent tasks in breadcrumb, not plain list items" $ do
       let markdownContent =
@@ -159,7 +163,7 @@ spec = do
         Left err -> expectationFailure $ "Failed to parse markdown: " <> show err
         Right (_, pandoc) -> do
           let tasks = extractTasks "context.md" pandoc
-          map (\t -> (extractText t.description, map fst t.parentContext)) tasks
+          map (\t -> (extractText t.description, t.parentBreadcrumbs)) tasks
             `shouldBe` [ ("Feature A", [])
                        , ("Deep task", ["Feature A"])
                        ]
@@ -206,7 +210,7 @@ spec = do
                        , "Check this link"
                        ]
 
-    it "tracks parent start dates for future task filtering" $ do
+    it "tracks parent start dates in task properties" $ do
       let markdownContent =
             [text|
         # Tasks
@@ -225,19 +229,21 @@ spec = do
             [parent1, child1, parent2, child2] -> do
               -- Parent with future start should have it in properties
               parent1.properties.startDate `shouldBe` Just (fromGregorian 2030 1 1)
-              parent1.parentContext `shouldBe` []
+              parent1.parentTaskNum `shouldBe` Nothing
 
-              -- Child should inherit parent's start date in parentContext
+              -- Child references parent
               child1.properties.startDate `shouldBe` Nothing
-              map snd child1.parentContext `shouldBe` [Just (fromGregorian 2030 1 1)]
+              child1.parentTaskNum `shouldBe` Just 1
+              child1.parentBreadcrumbs `shouldBe` ["Parent with future start"]
 
               -- Parent without start
               parent2.properties.startDate `shouldBe` Nothing
-              parent2.parentContext `shouldBe` []
+              parent2.parentTaskNum `shouldBe` Nothing
 
               -- Child of parent without start
               child2.properties.startDate `shouldBe` Nothing
-              map snd child2.parentContext `shouldBe` [Nothing]
+              child2.parentTaskNum `shouldBe` Just 3
+              child2.parentBreadcrumbs `shouldBe` ["Another parent without start"]
             _ -> expectationFailure $ "Expected 4 tasks but got " <> show (length tasks)
 
     it "parses recurring tasks" $ do

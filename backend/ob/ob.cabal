@@ -33,6 +33,7 @@ library
     Ob.Task.Properties
     Ob.Task.Recurrence
     Ob.Vault
+    Ob.Vault.Ix
 
   mixins:
     base hiding (Prelude),

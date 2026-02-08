@@ -31,7 +31,6 @@ import Imako.Core.FolderTree qualified as FolderTree
 import Network.URI (escapeURIString, isUnreserved)
 import Ob (IxNote, Note (..), Task (..), TaskStatus (..), Vault (..))
 import Ob qualified
-import Ob.Vault (getTasks)
 import System.FilePath (makeRelative, takeBaseName)
 import Text.Pandoc.Definition (Inline (..), Pandoc)
 import Text.Pandoc.Walk (walk)
@@ -96,8 +95,9 @@ mkVaultInfo path appState =
 mkTasksData :: FilePath -> AppState -> TasksData
 mkTasksData vaultPath appState =
   let notes = appState.vault.notes
+      allTasks = appState.vault.tasks
       enrichTask t = t {description = enrichInlines notes t.description}
-      tasks = map enrichTask $ getTasks appState.vault
+      tasks = map enrichTask $ Ix.toList allTasks
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
       groupedAll =

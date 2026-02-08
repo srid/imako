@@ -6,6 +6,7 @@ module Ob (
   Note (..),
   Task (..),
   TaskStatus (..),
+  IxTask,
   Vault (..),
   IxNote,
   DailyNote (..),
@@ -23,5 +24,5 @@ import Ob.DailyNotes (DailyNote (..), DailyNotesConfig (..), getTodayNotePath, l
 import Ob.Html (noteToHtml)
 import Ob.Link (obsidianOpenUrl)
 import Ob.Note (IxNote, Note (..))
-import Ob.Task (Task (..), TaskStatus (..))
+import Ob.Task (IxTask, Task (..), TaskStatus (..))
 import Ob.Vault (Vault (..), getVault, withLiveVault)
