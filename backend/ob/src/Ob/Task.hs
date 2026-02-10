@@ -21,6 +21,7 @@ import Data.Aeson.TypeScript.Internal (TSDeclaration (..), TSField (..))
 import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
 import Data.IxSet.Typed (Indexable (..), IxSet, ixFun, ixList)
 import Data.IxSet.Typed qualified as Ix
+import Data.Time.Calendar (Day)
 import Lucid
 import Ob.Task.Properties (Priority (..), TaskProperties (..), parseInlineSequence)
 import Text.Pandoc.Definition (Block (..), Inline (..), Pandoc (..), QuoteType (..))
@@ -58,6 +59,8 @@ data Task = Task
   -- ^ taskNum of the direct parent task, if nested (Nothing for top-level)
   , parentBreadcrumbs :: [Text]
   -- ^ Ancestor task descriptions from root to immediate parent (for display)
+  , parentStartDate :: Maybe Day
+  -- ^ Inherited start date from closest ancestor that has one (for filtering)
   }
   deriving stock (Show, Eq)
 
@@ -93,6 +96,7 @@ instance ToJSON Task where
       , "priority" .= task.properties.priority
       , "tags" .= task.properties.tags
       , "parentBreadcrumbs" .= task.parentBreadcrumbs
+      , "parentStartDate" .= task.parentStartDate
       ]
 
 -- | TypeScript instance for Task (custom ToJSON, so manual definition)
@@ -113,6 +117,7 @@ instance TypeScript Task where
             , TSField False "priority" "Priority" Nothing
             , TSField False "tags" "string[]" Nothing
             , TSField False "parentBreadcrumbs" "string[]" Nothing
+            , TSField True "parentStartDate" "string" Nothing
             ]
         , interfaceDoc = Nothing
         }
@@ -132,47 +137,49 @@ Assigns 1-based taskNum in DFS order. Tracks parent taskNum for nested tasks.
 -}
 extractTasks :: FilePath -> Pandoc -> [Task]
 extractTasks sourcePath (Pandoc _ blocks) =
-  let (tasks, _) = extractFromBlocks sourcePath Nothing [] 1 blocks
+  let (tasks, _) = extractFromBlocks sourcePath Nothing [] Nothing 1 blocks
    in tasks
 
 -- | Extract tasks from a list of blocks, returning tasks and next available taskNum
-extractFromBlocks :: FilePath -> Maybe Word -> [Text] -> Word -> [Block] -> ([Task], Word)
-extractFromBlocks path parentNum crumbs nextNum =
+extractFromBlocks :: FilePath -> Maybe Word -> [Text] -> Maybe Day -> Word -> [Block] -> ([Task], Word)
+extractFromBlocks path parentNum crumbs inheritedStart nextNum =
   foldl' step ([], nextNum)
   where
     step (acc, n) block =
-      let (ts, n') = extractFromBlock path parentNum crumbs n block
+      let (ts, n') = extractFromBlock path parentNum crumbs inheritedStart n block
        in (acc <> ts, n')
 
 -- | Extract tasks from a block, tracking parent task context
-extractFromBlock :: FilePath -> Maybe Word -> [Text] -> Word -> Block -> ([Task], Word)
-extractFromBlock path parentNum crumbs nextNum = \case
+extractFromBlock :: FilePath -> Maybe Word -> [Text] -> Maybe Day -> Word -> Block -> ([Task], Word)
+extractFromBlock path parentNum crumbs inheritedStart nextNum = \case
   BulletList items -> foldItems items
   OrderedList _ items -> foldItems items
   _ -> ([], nextNum)
   where
     foldItems = foldl' step ([], nextNum)
     step (acc, n) item =
-      let (ts, n') = extractFromItem path parentNum crumbs n item
+      let (ts, n') = extractFromItem path parentNum crumbs inheritedStart n item
        in (acc <> ts, n')
 
 -- | Extract task from a list item, tracking parent tasks
-extractFromItem :: FilePath -> Maybe Word -> [Text] -> Word -> [Block] -> ([Task], Word)
-extractFromItem sourcePath parentNum crumbs nextNum blocks =
+extractFromItem :: FilePath -> Maybe Word -> [Text] -> Maybe Day -> Word -> [Block] -> ([Task], Word)
+extractFromItem sourcePath parentNum crumbs inheritedStart nextNum blocks =
   let (maybeTask, nestedBlocks) = extractTaskFromBlocks blocks
       -- Assign taskNum and build task
-      (thisTask, thisNum, thisCrumbs, nextAfterThis) = case maybeTask of
+      (thisTask, thisNum, thisCrumbs, childStart, nextAfterThis) = case maybeTask of
         Just mkTask ->
-          let task = mkTask nextNum parentNum crumbs
+          let task = mkTask nextNum parentNum crumbs inheritedStart
               newCrumbs = crumbs <> [extractText task.description]
-           in ([task], Just nextNum, newCrumbs, nextNum + 1)
-        Nothing -> ([], parentNum, crumbs, nextNum)
+              -- Children inherit: task's own startDate (if any), otherwise the inherited one
+              effectiveStart = task.properties.startDate <|> inheritedStart
+           in ([task], Just nextNum, newCrumbs, effectiveStart, nextNum + 1)
+        Nothing -> ([], parentNum, crumbs, inheritedStart, nextNum)
       -- Extract nested tasks with this task as parent (if it exists)
-      (nestedTasks, nextFinal) = extractFromBlocks sourcePath thisNum thisCrumbs nextAfterThis nestedBlocks
+      (nestedTasks, nextFinal) = extractFromBlocks sourcePath thisNum thisCrumbs childStart nextAfterThis nestedBlocks
    in (thisTask <> nestedTasks, nextFinal)
   where
     -- Split blocks into task info and nested blocks
-    extractTaskFromBlocks :: [Block] -> (Maybe (Word -> Maybe Word -> [Text] -> Task), [Block])
+    extractTaskFromBlocks :: [Block] -> (Maybe (Word -> Maybe Word -> [Text] -> Maybe Day -> Task), [Block])
     extractTaskFromBlocks = \case
       Plain inlines : rest ->
         let mkTask = extractFromInlines sourcePath inlines
@@ -183,11 +190,11 @@ extractFromItem sourcePath parentNum crumbs nextNum blocks =
       _ -> (Nothing, blocks)
 
 -- | Extract task from inline elements, returning a task constructor
-extractFromInlines :: FilePath -> [Inline] -> Maybe (Word -> Maybe Word -> [Text] -> Task)
+extractFromInlines :: FilePath -> [Inline] -> Maybe (Word -> Maybe Word -> [Text] -> Maybe Day -> Task)
 extractFromInlines sourcePath = \case
   Str marker : Space : rest
     | Just taskStatus <- parseCheckbox marker ->
-        Just $ \num pNum bc -> parseTaskWithMetadata rest sourcePath taskStatus num pNum bc
+        Just $ \num pNum bc pStart -> parseTaskWithMetadata rest sourcePath taskStatus num pNum bc pStart
   _ -> Nothing
   where
     parseCheckbox = \case
@@ -201,8 +208,8 @@ extractFromInlines sourcePath = \case
       _ -> Nothing
 
 -- | Parse task with obsidian-tasks metadata
-parseTaskWithMetadata :: [Inline] -> FilePath -> TaskStatus -> Word -> Maybe Word -> [Text] -> Task
-parseTaskWithMetadata taskInlines sourcePath taskStatus num pNum breadcrumbs =
+parseTaskWithMetadata :: [Inline] -> FilePath -> TaskStatus -> Word -> Maybe Word -> [Text] -> Maybe Day -> Task
+parseTaskWithMetadata taskInlines sourcePath taskStatus num pNum breadcrumbs pStartDate =
   let props = parseInlineSequence taskInlines
       isComplete = taskStatus == Completed
    in Task
@@ -218,6 +225,7 @@ parseTaskWithMetadata taskInlines sourcePath taskStatus num pNum breadcrumbs =
         , taskNum = num
         , parentTaskNum = pNum
         , parentBreadcrumbs = breadcrumbs
+        , parentStartDate = pStartDate
         }
 
 -- | Extract plain text from inline elements

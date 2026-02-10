@@ -27,6 +27,7 @@ export interface Task {
   priority: Priority;
   tags: string[];
   parentBreadcrumbs: string[];
+  parentStartDate?: string;
 }
 
 export type Priority = "Highest" | "High" | "Medium" | "Normal" | "Low" | "Lowest";

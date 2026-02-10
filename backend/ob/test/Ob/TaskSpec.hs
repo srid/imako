@@ -215,8 +215,9 @@ spec = do
             [text|
         # Tasks
 
-        - [ ] Parent with future start 🛫 2030-01-01
+        - [ ] Parent with future start 🛫 2090-01-01
           - [ ] Child task without start date
+            - [ ] Grandchild task
         - [ ] Another parent without start
           - [ ] Another child
         |]
@@ -226,25 +227,34 @@ spec = do
         Right (_, pandoc) -> do
           let tasks = extractTasks "future.md" pandoc
           case tasks of
-            [parent1, child1, parent2, child2] -> do
+            [parent1, child1, grandchild1, parent2, child2] -> do
               -- Parent with future start should have it in properties
-              parent1.properties.startDate `shouldBe` Just (fromGregorian 2030 1 1)
+              parent1.properties.startDate `shouldBe` Just (fromGregorian 2090 1 1)
               parent1.parentTaskNum `shouldBe` Nothing
+              parent1.parentStartDate `shouldBe` Nothing
 
-              -- Child references parent
+              -- Child inherits parent's start date
               child1.properties.startDate `shouldBe` Nothing
               child1.parentTaskNum `shouldBe` Just 1
               child1.parentBreadcrumbs `shouldBe` ["Parent with future start"]
+              child1.parentStartDate `shouldBe` Just (fromGregorian 2090 1 1)
+
+              -- Grandchild also inherits
+              grandchild1.properties.startDate `shouldBe` Nothing
+              grandchild1.parentTaskNum `shouldBe` Just 2
+              grandchild1.parentStartDate `shouldBe` Just (fromGregorian 2090 1 1)
 
               -- Parent without start
               parent2.properties.startDate `shouldBe` Nothing
               parent2.parentTaskNum `shouldBe` Nothing
+              parent2.parentStartDate `shouldBe` Nothing
 
               -- Child of parent without start
               child2.properties.startDate `shouldBe` Nothing
-              child2.parentTaskNum `shouldBe` Just 3
+              child2.parentTaskNum `shouldBe` Just 4
               child2.parentBreadcrumbs `shouldBe` ["Another parent without start"]
-            _ -> expectationFailure $ "Expected 4 tasks but got " <> show (length tasks)
+              child2.parentStartDate `shouldBe` Nothing
+            _ -> expectationFailure $ "Expected 5 tasks but got " <> show (length tasks)
 
     it "parses recurring tasks" $ do
       let markdownContent =

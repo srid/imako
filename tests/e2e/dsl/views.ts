@@ -95,6 +95,14 @@ export class TasksView {
   }
 
   /**
+   * Toggle a filter button by its label text.
+   */
+  async toggleFilter(label: string): Promise<void> {
+    const button = this.page.getByRole("button", { name: label });
+    await button.click();
+  }
+
+  /**
    * Get the folder tree container.
    */
   folderTree(): Locator {

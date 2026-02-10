@@ -28,7 +28,9 @@ export const [collapsedNodes, toggleCollapse, isCollapsed] = usePersistedSet(
  * Filters are client-side; backend provides all tasks.
  */
 export const isTaskVisible = (task: Task, today: string): boolean => {
-  const isFuture = task.startDate && task.startDate > today;
+  const isFuture =
+    (task.startDate && task.startDate > today) ||
+    (task.parentStartDate && task.parentStartDate > today);
   const isPast = task.status === "Completed" || task.status === "Cancelled";
 
   const showFuture = isFilterActive("ShowFuture");

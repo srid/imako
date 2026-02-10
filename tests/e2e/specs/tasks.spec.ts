@@ -85,4 +85,28 @@ test.describe("Tasks Page", () => {
     // Only nested tasks should have breadcrumbs (4 nested tasks)
     await expect(allBreadcrumbs).toHaveCount(nestedTasks.length);
   });
+
+  test("hides children and grandchildren of future-dated parents", async ({ app }) => {
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+
+    // Future parent and its descendants should NOT be visible by default
+    const futureTexts = ["Plan 2090 conference", "Book venue", "Research catering options"];
+    for (const text of futureTexts) {
+      await expect(tasks.taskItems().filter({ hasText: text })).toHaveCount(0);
+    }
+
+    // Toggle "Future tasks" filter — now they should appear in the DOM
+    await tasks.toggleFilter("Future tasks");
+    // All 3 tasks (parent + child + grandchild) should now exist
+    for (const text of futureTexts) {
+      await expect(tasks.taskItems().filter({ hasText: text }).first()).toBeAttached();
+    }
+
+    // Toggle off again — they should disappear
+    await tasks.toggleFilter("Future tasks");
+    for (const text of futureTexts) {
+      await expect(tasks.taskItems().filter({ hasText: text })).toHaveCount(0);
+    }
+  });
 });

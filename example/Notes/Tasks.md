@@ -25,3 +25,9 @@ Task list for testing task parsing and rendering.
 
 - [ ] Add mobile support
 - [ ] Explore offline mode
+
+## Future
+
+- [ ] Plan 2090 conference 🛫 2090-01-01
+  - [ ] Book venue
+    - [ ] Research catering options
