@@ -56,6 +56,7 @@
               # The Nix package bundles the frontend - no separate frontend process needed
               command = "set -x; ${imako} --port ${toString port} ./example";
               readiness_probe = {
+                period_seconds = 1;
                 http_get = {
                   host = "localhost";
                   inherit port;
