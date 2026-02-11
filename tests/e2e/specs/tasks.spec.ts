@@ -1,16 +1,14 @@
 /**
  * Tasks page tests.
  *
- * Verifies task rendering, status display, folder tree, and parent breadcrumbs.
+ * Verifies task rendering, status display, folder tree, and hierarchical nesting.
  *
  * Expected vault state (example/):
  * Filters hide Completed/Cancelled tasks by default.
  * Visible tasks (17 total):
  * - Notes/Tasks.md: 13 visible (2 completed/cancelled hidden)
- *   - 6 are nested subtasks with parent breadcrumbs
+ *   - 6 are nested subtasks rendered inside their parents
  * - Projects/Active.md: 4 visible (1 completed hidden)
- *
- * Note: Tags are rendered with 🏷️ emoji, not # symbol
  */
 
 import { test, expect, TaskExpectation } from "../dsl";
@@ -26,12 +24,12 @@ const EXPECTED_TASKS: TaskExpectation[] = [
   { text: "Write E2E tests for core features", status: "Incomplete" },
   { text: "Research Playwright best practices", status: "InProgress", contains: ["research"] },
   // Notes/Tasks.md — nested subtasks
-  { text: "Pack the box", status: "Incomplete", breadcrumbs: ["Alice: move Box to her place!"] },
-  { text: "Schedule pickup", status: "Incomplete", breadcrumbs: ["Alice: move Box to her place!"] },
-  { text: "Write task rendering tests", status: "InProgress", breadcrumbs: ["Write E2E tests for core features"] },
-  { text: "Write navigation tests", status: "Incomplete", breadcrumbs: ["Write E2E tests for core features"] },
-  { text: "Read official docs", status: "Incomplete", breadcrumbs: ["Research Playwright best practices"] },
-  { text: "Try page object pattern", status: "Incomplete", breadcrumbs: ["Research Playwright best practices"] },
+  { text: "Pack the box", status: "Incomplete" },
+  { text: "Schedule pickup", status: "Incomplete" },
+  { text: "Write task rendering tests", status: "InProgress" },
+  { text: "Write navigation tests", status: "Incomplete" },
+  { text: "Read official docs", status: "Incomplete" },
+  { text: "Try page object pattern", status: "Incomplete" },
   // Projects/Active.md
   { text: "Add live sync tests", status: "Incomplete" },
   { text: "Add screenshots", status: "Incomplete" },
@@ -66,24 +64,18 @@ test.describe("Tasks Page", () => {
     }
   });
 
-  test("nested tasks show parent breadcrumbs", async ({ app }) => {
+  test("nested tasks are rendered inside their parent", async ({ app }) => {
     const tasks = app.tasks();
     await tasks.waitForTasks();
 
-    // Verify nested tasks have correct breadcrumbs
-    const nestedTasks = EXPECTED_TASKS.filter((t) => t.breadcrumbs);
-    for (const task of nestedTasks) {
-      const item = tasks.taskItems().filter({ hasText: task.text });
-      const crumbs = item.locator("[data-testid='task-breadcrumbs']");
-      await expect(crumbs).toBeVisible();
-      await expect(crumbs).toContainText(task.breadcrumbs!.join(" › "));
-    }
+    // "Pack the box" should be nested inside "Alice: move Box to her place!"
+    const aliceParent = tasks.taskItems().filter({ hasText: "Alice: move Box to her place!" }).first();
+    // The parent task-item should contain child task-items
+    const packChild = aliceParent.locator("[data-testid='task-item']").filter({ hasText: "Pack the box" });
+    await expect(packChild).toBeVisible();
 
-    // Top-level tasks should NOT have breadcrumbs
-    const topLevelCount = EXPECTED_TASKS.filter((t) => !t.breadcrumbs).length;
-    const allBreadcrumbs = tasks.taskItems().locator("[data-testid='task-breadcrumbs']");
-    // Only nested tasks should have breadcrumbs (4 nested tasks)
-    await expect(allBreadcrumbs).toHaveCount(nestedTasks.length);
+    const scheduleChild = aliceParent.locator("[data-testid='task-item']").filter({ hasText: "Schedule pickup" });
+    await expect(scheduleChild).toBeVisible();
   });
 
   test("hides children and grandchildren of future-dated parents", async ({ app }) => {

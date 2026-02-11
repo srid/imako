@@ -28,6 +28,8 @@ export interface Task {
   tags: string[];
   parentBreadcrumbs: string[];
   parentStartDate?: string;
+  taskNum: number;
+  parentTaskNum?: number;
 }
 
 export type Priority = "Highest" | "High" | "Medium" | "Normal" | "Low" | "Lowest";

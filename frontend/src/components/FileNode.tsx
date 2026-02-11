@@ -5,6 +5,7 @@ import { isCollapsed, toggleCollapse, isTaskVisible } from "@/state/filters";
 import { TaskItem } from "@/components/TaskItem";
 import { ObsidianEditLink } from "@/components/ObsidianEditLink";
 import { vaultInfo } from "@/store";
+import { buildTaskTree, type TaskNode } from "@/utils/taskTree";
 
 export const FileNode: Component<{ filename: string; tasks: Task[]; today: string; path: string }> = (props) => {
   const nodeId = () => `file:${props.path}/${props.filename}`;
@@ -14,10 +15,12 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
     const visible = props.tasks.filter((t) => isTaskVisible(t, props.today));
     const completed = props.tasks.filter((t) => t.status === "Completed" || t.status === "Cancelled").length;
     const total = props.tasks.length;
+    const tree = buildTaskTree(props.tasks);
     return {
       visible,
       completed,
       total,
+      tree,
       progress: total === 0 ? 0 : (completed / total) * 100,
       hasDue: props.tasks.some((t) => t.dueDate && t.dueDate <= props.today),
     };
@@ -69,11 +72,20 @@ export const FileNode: Component<{ filename: string; tasks: Task[]; today: strin
           />
         </summary>
 
-        {/* Tasks list */}
+        {/* Tasks tree */}
         <div class="pl-10 flex flex-col">
-          <For each={props.tasks}>{(task) => <TaskItem task={task} today={props.today} />}</For>
+          <TaskTree nodes={stats().tree} today={props.today} />
         </div>
       </details>
     </Show>
+  );
+};
+
+/** Recursively render a list of task nodes */
+const TaskTree: Component<{ nodes: TaskNode[]; today: string }> = (props) => {
+  return (
+    <For each={props.nodes}>
+      {(node) => <TaskItem node={node} today={props.today} />}
+    </For>
   );
 };

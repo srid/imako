@@ -17,8 +17,6 @@ export interface TaskExpectation {
   status: "Incomplete" | "InProgress" | "Completed" | "Cancelled";
   /** Additional text fragments that should appear */
   contains?: string[];
-  /** Expected parent breadcrumbs (if task is nested) */
-  breadcrumbs?: string[];
 }
 
 /**
@@ -70,18 +68,11 @@ export class TasksView {
 
     // Verify each task exists with correct content
     for (const task of expected) {
-      let item = this.taskItems().filter({ hasText: task.text });
-
-      if (task.breadcrumbs && task.breadcrumbs.length > 0) {
-        // Narrow to items that HAVE breadcrumbs
-        item = item.filter({ has: this.page.locator("[data-testid='task-breadcrumbs']") });
-        const crumbs = item.locator("[data-testid='task-breadcrumbs']");
-        await expect(crumbs.first()).toBeVisible();
-        await expect(crumbs.first()).toContainText(task.breadcrumbs.join(" › "));
-      } else {
-        // Narrow to items that DON'T have breadcrumbs
-        item = item.filter({ hasNot: this.page.locator("[data-testid='task-breadcrumbs']") });
-      }
+      // Match only the task-item whose own description contains the text
+      // (not ancestor task-items that contain nested children with this text)
+      const item = this.taskItems().filter({
+        has: this.page.locator("[data-testid='task-description']", { hasText: task.text }),
+      }).last();
 
       await expect(item).toBeVisible();
       await expect(item).toHaveAttribute("data-status", task.status);

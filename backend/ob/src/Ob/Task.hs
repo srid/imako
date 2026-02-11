@@ -97,6 +97,8 @@ instance ToJSON Task where
       , "tags" .= task.properties.tags
       , "parentBreadcrumbs" .= task.parentBreadcrumbs
       , "parentStartDate" .= task.parentStartDate
+      , "taskNum" .= task.taskNum
+      , "parentTaskNum" .= task.parentTaskNum
       ]
 
 -- | TypeScript instance for Task (custom ToJSON, so manual definition)
@@ -118,6 +120,8 @@ instance TypeScript Task where
             , TSField False "tags" "string[]" Nothing
             , TSField False "parentBreadcrumbs" "string[]" Nothing
             , TSField True "parentStartDate" "string" Nothing
+            , TSField False "taskNum" "number" Nothing
+            , TSField True "parentTaskNum" "number" Nothing
             ]
         , interfaceDoc = Nothing
         }
