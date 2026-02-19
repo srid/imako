@@ -4,6 +4,7 @@
 module Main where
 
 import Data.LVar qualified as LVar
+import Imako.API.Protocol (Query (..))
 import Imako.API.WebSocket (wsApp)
 import Imako.CLI qualified as CLI
 import Imako.Core qualified as Core
@@ -33,9 +34,17 @@ mkApp vaultPath appStateVar = do
           }
       staticFileApp = staticApp settings
       -- Handler is now pure: state -> query -> msg
-      wsHandler = wsApp appStateVar (\st q -> pure $ Core.mkServerMessage vaultPath st q)
+      -- querySlot groups queries by constructor for deduplication
+      wsHandler = wsApp appStateVar querySlot (\st q -> pure $ Core.mkServerMessage vaultPath st q)
       app = healthMiddleware $ websocketsOr WS.defaultConnectionOptions wsHandler staticFileApp
   pure app
+
+{- | Slot key for query deduplication.
+Queries with the same slot replace each other; different slots coexist.
+-}
+querySlot :: Query -> Text
+querySlot VaultQuery = "vault"
+querySlot (NotesQuery _) = "notes"
 
 -- | Middleware that responds to /health with 200 OK (for readiness probes)
 healthMiddleware :: Application -> Application

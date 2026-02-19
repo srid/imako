@@ -83,9 +83,9 @@ const VaultPage: Component = () => {
     return decodeURIComponent(raw);
   });
 
-  // VaultQuery is sent automatically on ws.onopen (see websocket.ts)
-
-  // When a file is selected AND vault data is available, fetch its note content
+  // VaultQuery is sent automatically on ws.onopen (see websocket.ts).
+  // The server accumulates all queries and pushes responses for each
+  // on model change, so sending NotesQuery here won't overwrite VaultQuery.
   createEffect(() => {
     const path = selectedPath();
     if (!path) return;
