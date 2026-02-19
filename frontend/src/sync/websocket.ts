@@ -61,6 +61,7 @@ export function disconnectVault(): void {
  */
 export function sendQuery(query: Query): void {
   if (ws && ws.readyState === WebSocket.OPEN) {
+    console.log("[sendQuery]", query.tag, "contents" in query ? (query as any).contents : "");
     ws.send(JSON.stringify(query));
   }
 }
