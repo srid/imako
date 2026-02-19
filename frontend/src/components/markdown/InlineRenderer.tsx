@@ -65,7 +65,7 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
           {/* Strikeout */}
           <Match when={inline.t === "Strikeout" && inline}>
             {(i) => (
-              <del>
+              <del class="text-stone-400 dark:text-stone-500 decoration-stone-300 dark:decoration-stone-600">
                 <InlineRenderer inlines={i().c} />
               </del>
             )}
@@ -103,7 +103,7 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
             {(i) => {
               const [_attr, code] = i().c;
               return (
-                <code class="bg-stone-100 dark:bg-stone-800 px-1 rounded text-sm">
+                <code class="bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700/50 px-1.5 py-0.5 rounded-md text-[0.9em] font-medium text-amber-700 dark:text-amber-400">
                   {code}
                 </code>
               );
@@ -125,6 +125,9 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
               // Internal link (starts with /p/)
               const isInternal = url.startsWith("/p/");
               
+              // Shared transition classes
+              const transitionClasses = "transition-all duration-200 underline-offset-4";
+              
               // Broken link: render as non-clickable span
               if (isBroken) {
                 const displayText = inlines.length > 0 
@@ -132,7 +135,7 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
                   : wikilinkTarget || url;
                 return (
                   <span 
-                    class="text-stone-400 dark:text-stone-500 cursor-not-allowed"
+                    class={`text-stone-400 dark:text-stone-500 cursor-not-allowed border-b border-dotted border-stone-300 dark:border-stone-600 px-0.5 ${transitionClasses}`}
                     title={`Broken link: ${wikilinkTarget || url}`}
                     data-wikilink={wikilinkTarget}
                     data-broken="true"
@@ -151,8 +154,8 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
                 return (
                   <span 
                     class={isWikilink 
-                      ? "text-purple-600 dark:text-purple-400 cursor-pointer hover:underline"
-                      : "text-amber-600 dark:text-amber-400 cursor-pointer hover:underline"}
+                      ? `text-violet-600 dark:text-violet-400 font-medium hover:text-violet-800 dark:hover:text-violet-300 underline decoration-violet-300/50 hover:decoration-violet-500 decoration-dashed cursor-pointer ${transitionClasses}`
+                      : `text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-800 dark:hover:text-indigo-300 underline decoration-indigo-300/50 hover:decoration-indigo-500 cursor-pointer ${transitionClasses}`}
                     onClick={handleClick}
                     {...(isWikilink ? { "data-wikilink": wikilinkTarget } : {})}
                   >
@@ -165,7 +168,7 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
               return (
                 <a
                   href={url}
-                  class="text-amber-600 dark:text-amber-400 hover:underline"
+                  class={`text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-800 dark:hover:text-indigo-300 underline decoration-indigo-300/50 hover:decoration-indigo-500 ${transitionClasses}`}
                   target="_blank"
                   rel="noopener"
                 >
@@ -251,15 +254,18 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
               return (
                 <span class="relative inline-block">
                   <sup 
-                    class="text-amber-600 dark:text-amber-400 cursor-help px-0.5"
+                    class="text-violet-600 dark:text-violet-400 font-medium cursor-help px-0.5 hover:text-violet-800 hover:dark:text-violet-300 transition-colors"
                     onMouseEnter={() => setIsOpen(true)}
                     onMouseLeave={() => setIsOpen(false)}
                   >
                     [*]
                   </sup>
                   {isOpen() && (
-                    <div class="absolute z-50 bottom-full left-0 mb-1 w-64 p-3 bg-white dark:bg-stone-800 rounded-lg shadow-lg border border-stone-200 dark:border-stone-600 text-sm">
-                      <BlockRenderer blocks={i().c} />
+                    <div class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-white dark:bg-stone-900 rounded-xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 ring-1 ring-stone-200 dark:ring-stone-800 text-sm animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      <div class="prose prose-sm dark:prose-invert">
+                        <BlockRenderer blocks={i().c} />
+                      </div>
+                      <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white dark:bg-stone-900 ring-1 ring-stone-200 dark:ring-stone-800 rotate-45 border-t-0 border-l-0" />
                     </div>
                   )}
                 </span>

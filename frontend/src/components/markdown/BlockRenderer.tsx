@@ -26,7 +26,7 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
           {/* Para - paragraph with inline content */}
           <Match when={block.t === "Para" && block}>
             {(b) => (
-              <p class="text-stone-700 dark:text-stone-300">
+              <p class="text-stone-800 dark:text-stone-200 leading-relaxed mb-5 last:mb-0">
                 <InlineRenderer inlines={b().c} />
               </p>
             )}
@@ -36,16 +36,18 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
           <Match when={block.t === "Header" && block}>
             {(b) => {
               const [level, _attr, inlines] = b().c;
-              const classes = "font-bold mt-4 mb-2 text-stone-800 dark:text-stone-100";
+              const classes = "font-bold text-stone-900 dark:text-stone-50 tracking-tight";
               switch (level) {
                 case 1:
-                  return <h1 class={`text-2xl ${classes}`}><InlineRenderer inlines={inlines} /></h1>;
+                  return <h1 class={`text-3xl sm:text-4xl mt-10 mb-6 pb-2 border-b border-stone-200 dark:border-stone-800 ${classes}`}><InlineRenderer inlines={inlines} /></h1>;
                 case 2:
-                  return <h2 class={`text-xl ${classes}`}><InlineRenderer inlines={inlines} /></h2>;
+                  return <h2 class={`text-2xl sm:text-3xl mt-8 mb-4 ${classes}`}><InlineRenderer inlines={inlines} /></h2>;
                 case 3:
-                  return <h3 class={`text-lg ${classes}`}><InlineRenderer inlines={inlines} /></h3>;
+                  return <h3 class={`text-xl sm:text-2xl mt-6 mb-3 ${classes}`}><InlineRenderer inlines={inlines} /></h3>;
+                case 4:
+                  return <h4 class={`text-lg sm:text-xl mt-5 mb-2 ${classes}`}><InlineRenderer inlines={inlines} /></h4>;
                 default:
-                  return <h4 class={`text-base ${classes}`}><InlineRenderer inlines={inlines} /></h4>;
+                  return <h5 class={`text-base uppercase tracking-wider text-stone-500 dark:text-stone-400 mt-5 mb-2 font-semibold`}><InlineRenderer inlines={inlines} /></h5>;
               }
             }}
           </Match>
@@ -53,7 +55,7 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
           {/* BulletList - contents: Block[][] */}
           <Match when={block.t === "BulletList" && block}>
             {(b) => (
-              <div class="space-y-0.5">
+              <div class="space-y-1.5 mb-5 last:mb-0">
                 <For each={b().c}>
                   {(item) => <ListItemRenderer blocks={item} />}
                 </For>
@@ -66,10 +68,10 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
             {(b) => {
               const [_listAttrs, items] = b().c;
               return (
-                <ol class="list-decimal list-inside space-y-0.5 ml-4">
+                <ol class="list-decimal list-outside space-y-1.5 ml-6 mb-5 last:mb-0 text-stone-700 dark:text-stone-300">
                   <For each={items}>
                     {(item) => (
-                      <li class="text-stone-700 dark:text-stone-300">
+                      <li class="pl-2 marker:text-stone-500">
                         <BlockRenderer blocks={item} />
                       </li>
                     )}
@@ -84,8 +86,8 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
             {(b) => {
               const [_attr, code] = b().c;
               return (
-                <pre class="bg-stone-100 dark:bg-stone-800 p-4 rounded-lg my-2 overflow-x-auto">
-                  <code class="text-sm font-mono">{code}</code>
+                <pre class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-xl my-6 overflow-x-auto shadow-sm">
+                  <code class="text-sm font-mono text-stone-800 dark:text-stone-200 leading-normal">{code}</code>
                 </pre>
               );
             }}
@@ -94,7 +96,7 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
           {/* BlockQuote - Block[] */}
           <Match when={block.t === "BlockQuote" && block}>
             {(b) => (
-              <blockquote class="border-l-4 border-amber-400 dark:border-amber-600 pl-4 my-2 italic text-stone-600 dark:text-stone-400">
+              <blockquote class="border-l-4 border-amber-500 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-600 px-5 py-3 rounded-r-lg my-6 italic text-stone-700 dark:text-stone-300 shadow-sm transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20">
                 <BlockRenderer blocks={b().c} />
               </blockquote>
             )}
@@ -137,7 +139,7 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
             {(b) => {
               const [_format, text] = b().c;
               return (
-                <pre class="bg-stone-100 dark:bg-stone-800 p-2 rounded text-sm font-mono">
+                <pre class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-3 rounded-lg text-sm font-mono my-4 overflow-x-auto">
                   {text}
                 </pre>
               );
@@ -147,21 +149,21 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
           {/* DefinitionList - [Inline[], Block[][]][] */}
           <Match when={block.t === "DefinitionList" && block}>
             {(b) => (
-              <dl class="text-stone-700 dark:text-stone-300">
+              <dl class="text-stone-800 dark:text-stone-200 my-5">
                 <For each={b().c}>
                   {([term, defs]) => (
-                    <>
-                      <dt class="font-semibold">
+                    <div class="mb-4">
+                      <dt class="font-bold text-stone-900 dark:text-stone-50 mb-1">
                         <InlineRenderer inlines={term} />
                       </dt>
                       <For each={defs}>
                         {(def) => (
-                          <dd class="ml-4">
+                          <dd class="ml-6 text-stone-600 dark:text-stone-400">
                             <BlockRenderer blocks={def} />
                           </dd>
                         )}
                       </For>
-                    </>
+                    </div>
                   )}
                 </For>
               </dl>
@@ -223,29 +225,29 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
               };
               
               return (
-                <div class="my-4 overflow-x-auto">
-                  <table class="min-w-full border-collapse">
+                <div class="my-8 overflow-x-auto rounded-xl ring-1 ring-stone-200 dark:ring-stone-800 bg-white dark:bg-stone-950 shadow-sm">
+                  <table class="min-w-full border-collapse text-left text-sm whitespace-nowrap">
                     {/* Caption */}
                     {caption[1].length > 0 && (
-                      <caption class="text-sm text-stone-500 dark:text-stone-400 mb-2">
+                      <caption class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400 py-3 bg-stone-50 dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800">
                         <BlockRenderer blocks={caption[1]} />
                       </caption>
                     )}
                     
                     {/* Head */}
                     {tableHead[1].length > 0 && (
-                      <thead class="bg-stone-100 dark:bg-stone-800">
+                      <thead class="bg-stone-50/80 dark:bg-stone-900/50 text-stone-900 dark:text-white">
                         <For each={tableHead[1]}>
                           {(row) => {
                             const [_rowAttr, cells] = row;
                             return (
-                              <tr class="border-b-2 border-stone-300 dark:border-stone-600">
+                              <tr class="border-b border-stone-200 dark:border-stone-800">
                                 <For each={cells}>
                                   {(cell, colIdx) => {
                                     const [_cellAttr, alignment, _rowSpan, _colSpan, blocks] = cell;
                                     const colAlign = alignment !== "AlignDefault" ? alignment : colSpecs[colIdx()]?.[0];
                                     return (
-                                      <th class={`px-3 py-2 font-semibold ${alignClass(colAlign)}`}>
+                                      <th scope="col" class={`px-4 py-3 font-semibold ${alignClass(colAlign)}`}>
                                         <BlockRenderer blocks={blocks} />
                                       </th>
                                     );
@@ -263,7 +265,7 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
                       {(body) => {
                         const [_bodyAttr, _rowHeadCols, headRows, bodyRows] = body;
                         return (
-                          <tbody>
+                          <tbody class="divide-y divide-stone-100 dark:divide-stone-800/60 bg-white dark:bg-stone-950">
                             <For each={headRows}>{renderRow}</For>
                             <For each={bodyRows}>{renderRow}</For>
                           </tbody>
@@ -273,7 +275,7 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
                     
                     {/* Foot */}
                     {tableFoot[1].length > 0 && (
-                      <tfoot class="bg-stone-50 dark:bg-stone-800/50">
+                      <tfoot class="bg-stone-50 dark:bg-stone-900/80 border-t-2 border-stone-200 dark:border-stone-800">
                         <For each={tableFoot[1]}>{renderRow}</For>
                       </tfoot>
                     )}
@@ -303,8 +305,8 @@ const ListItemRenderer: Component<{ blocks: Block[] }> = (props) => {
   return (
     <Switch fallback={
       // Default: bullet + block content
-      <div class="flex items-start gap-2 ml-4">
-        <span class="text-stone-400 select-none">•</span>
+      <div class="flex items-start gap-3">
+        <div class="w-1.5 h-1.5 rounded-full bg-stone-400 dark:bg-stone-500 mt-2.5 shrink-0" />
         <div class="flex-1">
           <BlockRenderer blocks={props.blocks} />
         </div>
@@ -312,9 +314,9 @@ const ListItemRenderer: Component<{ blocks: Block[] }> = (props) => {
     }>
       {/* Single paragraph - inline with bullet */}
       <Match when={isSinglePara()}>
-        <div class="flex items-start gap-2 ml-4 text-stone-700 dark:text-stone-300">
-          <span class="text-stone-400 select-none">•</span>
-          <span>
+        <div class="flex items-start gap-3 text-stone-800 dark:text-stone-200">
+          <div class="w-1.5 h-1.5 rounded-full bg-stone-400 dark:bg-stone-500 mt-2.5 shrink-0" />
+          <span class="leading-relaxed">
             <InlineRenderer inlines={(firstBlock() as { t: "Para" | "Plain"; c: Inline[] }).c} />
           </span>
         </div>
