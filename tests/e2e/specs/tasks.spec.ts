@@ -182,4 +182,26 @@ test.describe("Vault Tasks", () => {
     // All files should be visible again
     await expect(tree.files()).toHaveCount(initialFiles);
   });
+
+  test("slash key focuses filter and Escape clears it", async ({ app }) => {
+    const vault = app.vault();
+    await vault.waitForVault();
+    const filterInput = vault.filterInput();
+
+    // Filter should not be focused initially
+    await expect(filterInput).not.toBeFocused();
+
+    // Press "/" to focus filter
+    await app.page.keyboard.press("/");
+    await expect(filterInput).toBeFocused();
+
+    // Type something
+    await filterInput.fill("Tasks");
+    await expect(filterInput).toHaveValue("Tasks");
+
+    // Press Escape to clear and blur
+    await app.page.keyboard.press("Escape");
+    await expect(filterInput).toHaveValue("");
+    await expect(filterInput).not.toBeFocused();
+  });
 });

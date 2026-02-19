@@ -90,7 +90,7 @@ export class VaultView {
    * Type into the search filter.
    */
   async filterTree(query: string): Promise<void> {
-    const input = this.page.locator("input[placeholder='Filter files…']");
+    const input = this.page.locator("[data-testid='tree-filter']");
     await input.fill(query);
   }
 
@@ -98,8 +98,15 @@ export class VaultView {
    * Clear the search filter.
    */
   async clearFilter(): Promise<void> {
-    const input = this.page.locator("input[placeholder='Filter files…']");
+    const input = this.page.locator("[data-testid='tree-filter']");
     await input.fill("");
+  }
+
+  /**
+   * Get the filter input locator (for focus/shortcut assertions).
+   */
+  filterInput(): Locator {
+    return this.page.locator("[data-testid='tree-filter']");
   }
 }
 

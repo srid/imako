@@ -5,8 +5,6 @@ import {
   toggleShowTasks,
   toggleFilter,
   isFilterActive,
-  treeFilter,
-  setTreeFilter,
 } from "@/state/filters";
 
 export const Header: Component = () => {
@@ -72,25 +70,6 @@ export const Header: Component = () => {
           <span class="text-xs text-stone-400 dark:text-stone-500 ml-2 hidden sm:inline">
             Today: <span class="font-medium text-stone-600 dark:text-stone-300">{vaultInfo.today}</span>
           </span>
-        </div>
-
-        {/* Inline search */}
-        <div class="relative">
-          <input
-            type="text"
-            placeholder="Filter files…"
-            value={treeFilter()}
-            onInput={(e) => setTreeFilter(e.currentTarget.value)}
-            class="w-44 px-3 py-1 text-sm bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-lg border border-stone-200 dark:border-stone-700 outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent placeholder:text-stone-400 dark:placeholder:text-stone-500"
-          />
-          <Show when={treeFilter()}>
-            <button
-              onClick={() => setTreeFilter("")}
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 text-xs"
-            >
-              ✕
-            </button>
-          </Show>
         </div>
       </div>
     </header>

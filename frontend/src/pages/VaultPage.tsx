@@ -1,4 +1,4 @@
-import { Component, Show, createMemo, createEffect, For } from "solid-js";
+import { Component, Show, createMemo, createEffect, For, onMount, onCleanup } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { vaultData, notesData, vaultInfo } from "@/store";
 import { sendQuery } from "@/sync/websocket";
@@ -9,7 +9,7 @@ import { AstRenderer } from "@/components/markdown";
 import type { Pandoc } from "@/components/markdown";
 import type { FolderNode, Task, NotesData } from "@/types";
 import { buildTaskTree } from "@/utils/taskTree";
-import { isTaskVisible, showTasks } from "@/state/filters";
+import { isTaskVisible, showTasks, treeFilter, setTreeFilter } from "@/state/filters";
 import { Icons } from "@/utils/icons";
 
 /**
@@ -113,7 +113,12 @@ const VaultPage: Component = () => {
     }
 
     const target = getSubtree(tree.folderTree, path);
-    if (!target) return null;
+    if (!target) {
+      // Selected file/folder no longer exists (e.g. deleted from disk)
+      // — redirect to root so the user isn't left on a stale URL
+      navigate("/", { replace: true });
+      return null;
+    }
 
     if (target.type === "folder") {
       return {
@@ -144,6 +149,47 @@ const VaultPage: Component = () => {
     <div class="grid grid-cols-1 md:grid-cols-[minmax(200px,1fr)_2fr] gap-6 min-h-[calc(100vh-12rem)]">
       {/* Left pane: Folder tree */}
       <aside class="border-r border-stone-200 dark:border-stone-700 pr-4 overflow-y-auto md:max-h-[calc(100vh-12rem)]">
+        {/* Filter input — "/" to focus, Escape to clear */}
+        {(() => {
+          let filterRef!: HTMLInputElement;
+          onMount(() => {
+            const handler = (e: KeyboardEvent) => {
+              if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
+                e.preventDefault();
+                filterRef.focus();
+              }
+            };
+            document.addEventListener("keydown", handler);
+            onCleanup(() => document.removeEventListener("keydown", handler));
+          });
+          return (
+            <div class="relative mb-3">
+              <input
+                ref={filterRef}
+                data-testid="tree-filter"
+                type="text"
+                placeholder='Filter files… (press "/")'
+                value={treeFilter()}
+                onInput={(e) => setTreeFilter(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setTreeFilter("");
+                    filterRef.blur();
+                  }
+                }}
+                class="w-full px-3 py-1.5 text-sm bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-lg border border-stone-200 dark:border-stone-700 outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent placeholder:text-stone-400 dark:placeholder:text-stone-500"
+              />
+              <Show when={treeFilter()}>
+                <button
+                  onClick={() => setTreeFilter("")}
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 text-xs"
+                >
+                  ✕
+                </button>
+              </Show>
+            </div>
+          );
+        })()}
         <Show
           when={vaultData()}
           fallback={

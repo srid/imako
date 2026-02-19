@@ -135,6 +135,42 @@ test.describe("Live Sync", () => {
     }
   });
 
+  // ─── Structural: file deletion while viewing ──────────────────────
+
+  test("deleting the viewed file redirects to root", async ({ app }) => {
+    const tempFile = path.join(VAULT_PATH, "Notes", "ViewedFile.md");
+    fs.writeFileSync(tempFile, "# Viewed\n\nThis will be deleted.\n");
+
+    try {
+      await app.navigateTo("/");
+      const vault = app.vault();
+      await vault.waitForVault();
+      const tree = app.folderTree();
+
+      // Wait for file to appear in sidebar first
+      await expect(tree.files().filter({ hasText: "ViewedFile.md" })).toBeVisible({
+        timeout: SYNC_TIMEOUT,
+      });
+
+      // Navigate to the file
+      await app.navigateTo("/p/Notes%2FViewedFile.md");
+
+      // Delete it from disk
+      fs.unlinkSync(tempFile);
+
+      // URL should redirect to root (hash router: /#/ or /#)
+      await expect.poll(
+        () => new URL(app.page.url()).hash,
+        { timeout: SYNC_TIMEOUT }
+      ).toMatch(/^#?\/?$/);
+
+      // File should be gone from sidebar
+      await expect(tree.files().filter({ hasText: "ViewedFile.md" })).toHaveCount(0);
+    } finally {
+      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+    }
+  });
+
   // ─── Structural: file rename ──────────────────────────────────────
 
   test("renamed file shows new name in folder tree", async ({ app }) => {
