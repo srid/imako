@@ -16,3 +16,7 @@
 ## Git
 
 - DO NOT FUCKING `git commit` or mutate local Git repo, ever.
+
+## TypeScript Types
+
+- `frontend/src/types.ts` is AUTO-GENERATED from Haskell via `just generate-types`. NEVER edit it manually. Always run `just generate-types` after changing backend protocol types.
