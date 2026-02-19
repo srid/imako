@@ -70,6 +70,8 @@ $(deriveTypeScript defaultOptions ''VaultData)
 data NotesData = NotesData
   { notePath :: FilePath
   , noteAst :: Value
+  , backlinks :: [FilePath]
+  -- ^ Notes that link to this note (via resolved wikilinks)
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)

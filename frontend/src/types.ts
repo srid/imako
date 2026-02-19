@@ -72,6 +72,7 @@ export type NotesData = INotesData;
 export interface INotesData {
   notePath: string;
   noteAst: any;
+  backlinks: string[];
 }
 
 export type QueryResponse = IVaultResponse | INotesResponse;

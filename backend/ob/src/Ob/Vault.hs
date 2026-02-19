@@ -12,7 +12,7 @@ import Data.IxSet.Typed qualified as Ix
 import Data.LVar (LVar)
 import Data.LVar qualified as LVar
 import Ob.DailyNotes (DailyNote (..), DailyNotesConfig, loadDailyNotesConfig, mkDailyNote)
-import Ob.LinkGraph (LinkGraph, buildNoteEdges, removeNoteEdges)
+import Ob.LinkGraph (LinkGraph, buildLinkGraph, buildNoteEdges, removeNoteEdges)
 import Ob.Note (IxNote, Note (..), parseNote)
 import Ob.Task (IxTask, noteTasks)
 import Ob.Vault.Ix (deleteIxMulti, updateIxMulti)
@@ -45,10 +45,13 @@ getDailyNotes vault = case vault.dailyNotesConfig of
 getVault :: FilePath -> IO Vault
 getVault path = do
   runStdoutLoggingT $ filterLogger (\_ level -> level >= LevelInfo) $ do
-    ((notes0, tasks0, graph0), _) <- mountVault path
+    ((notes0, tasks0, _graph0), _) <- mountVault path
     dailyConfig <- liftIO $ loadDailyNotesConfig path
+    -- Rebuild graph from complete index (incremental build during mount
+    -- may miss edges when targets weren't loaded yet)
+    let graph = buildLinkGraph notes0
     liftIO $ putTextLn $ "Model ready; initial docs = " <> show (Ix.size notes0) <> "; sample = " <> show (take 4 $ map (.path) $ Ix.toList notes0)
-    pure $ Vault notes0 tasks0 graph0 dailyConfig
+    pure $ Vault notes0 tasks0 graph dailyConfig
 
 {- | Calls `f` with a `LVar` of `Vault` reflecting its current state in real-time.
 
@@ -57,9 +60,12 @@ Uses `System.UnionMount` to monitor the filesystem for changes.
 withLiveVault :: FilePath -> (LVar Vault -> IO ()) -> IO ()
 withLiveVault path f = do
   runStdoutLoggingT $ filterLogger (\_ level -> level >= LevelInfo) $ do
-    ((notes0, tasks0, graph0), modelF) <- mountVault path
+    ((notes0, tasks0, _graph0), modelF) <- mountVault path
     dailyConfig <- liftIO $ loadDailyNotesConfig path
-    let initialVault = Vault notes0 tasks0 graph0 dailyConfig
+    -- Rebuild graph from complete index (incremental build during mount
+    -- may miss edges when targets weren't loaded yet)
+    let graph0 = buildLinkGraph notes0
+        initialVault = Vault notes0 tasks0 graph0 dailyConfig
     liftIO $ putTextLn $ "Model ready; total docs = " <> show (Ix.size notes0)
     modelVar <- LVar.new initialVault
     concurrently_ (liftIO $ f modelVar) $ do
