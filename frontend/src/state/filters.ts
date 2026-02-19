@@ -1,3 +1,4 @@
+import { createSignal } from "solid-js";
 import { usePersistedSet } from "@/hooks/usePersistedSet";
 import type { Task } from "@/types";
 
@@ -11,6 +12,7 @@ export const FILTERS: Filter[] = ["ShowFuture", "ShowPast"];
 const STORAGE_KEYS = {
   filters: "imako-filters",
   collapsed: "imako-collapsed",
+  showTasks: "imako-show-tasks",
 };
 
 // Filter state - tracks which filters are active (persisted)
@@ -22,6 +24,20 @@ export const [activeFilters, toggleFilter, isFilterActive] = usePersistedSet(
 export const [collapsedNodes, toggleCollapse, isCollapsed] = usePersistedSet(
   STORAGE_KEYS.collapsed
 );
+
+// Show tasks toggle (persisted, default: on)
+const storedShowTasks = localStorage.getItem(STORAGE_KEYS.showTasks);
+export const [showTasks, setShowTasks] = createSignal(
+  storedShowTasks === null ? true : storedShowTasks === "true"
+);
+export const toggleShowTasks = () => {
+  const next = !showTasks();
+  setShowTasks(next);
+  localStorage.setItem(STORAGE_KEYS.showTasks, String(next));
+};
+
+// Tree filter for real-time search
+export const [treeFilter, setTreeFilter] = createSignal("");
 
 /**
  * Check if a task should be visible based on active filters.

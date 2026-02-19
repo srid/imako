@@ -12,7 +12,7 @@ export {
   TasksView,
   TaskExpectation,
   NoteView,
-  CommandPaletteView,
+  VaultView,
   FolderTreeView,
 } from "./views";
 

@@ -75,8 +75,8 @@ function handleServerMessage(msg: ServerMessage): void {
 
   // Update route-specific data based on response type
   const response = msg.response;
-  if (response.tag === "TasksResponse") {
-    setRouteData({ tag: "tasks", data: response.contents });
+  if (response.tag === "VaultResponse") {
+    setRouteData({ tag: "vault", data: response.contents });
   } else if (response.tag === "NotesResponse") {
     setRouteData({ tag: "notes", data: response.contents });
   }

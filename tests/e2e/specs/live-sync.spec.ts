@@ -14,7 +14,9 @@ const VAULT_PATH = path.join(process.cwd(), "..", "example");
 
 test.describe("Live Sync", () => {
   test("new task appears when file is modified", async ({ app }) => {
-    await app.navigateTo("/tasks");
+    await app.navigateTo("/");
+    const vault = app.vault();
+    await vault.waitForVault();
     const tasks = app.tasks();
     await tasks.waitForTasks();
 

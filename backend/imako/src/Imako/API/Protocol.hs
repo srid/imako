@@ -11,7 +11,7 @@ module Imako.API.Protocol (
   ServerMessage (..),
   QueryResponse (..),
   VaultInfo (..),
-  TasksData (..),
+  VaultData (..),
   NotesData (..),
   protocolTsDeclarations,
 )
@@ -35,8 +35,8 @@ instance TypeScript UTCTime where
 
 -- | Query sent from client to subscribe to data
 data Query
-  = -- | Subscribe to tasks view
-    TasksQuery
+  = -- | Subscribe to vault view (folder tree with all files and tasks)
+    VaultQuery
   | -- | Subscribe to a specific note (path is vault-relative)
     NotesQuery FilePath
   deriving stock (Show, Eq, Generic)
@@ -57,14 +57,14 @@ data VaultInfo = VaultInfo
 
 $(deriveTypeScript defaultOptions ''VaultInfo)
 
--- | Tasks-specific data
-newtype TasksData = TasksData
+-- | Vault tree data (all files with their tasks)
+newtype VaultData = VaultData
   { folderTree :: FolderNode
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
-$(deriveTypeScript defaultOptions ''TasksData)
+$(deriveTypeScript defaultOptions ''VaultData)
 
 -- | Notes-specific data (structured AST for client rendering)
 data NotesData = NotesData
@@ -78,7 +78,7 @@ $(deriveTypeScript defaultOptions ''NotesData)
 
 -- | Query-specific response data (one variant per query type)
 data QueryResponse
-  = TasksResponse TasksData
+  = VaultResponse VaultData
   | NotesResponse NotesData
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
@@ -101,7 +101,7 @@ protocolTsDeclarations =
   mconcat
     [ getTypeScriptDeclarations (Proxy @Query)
     , getTypeScriptDeclarations (Proxy @VaultInfo)
-    , getTypeScriptDeclarations (Proxy @TasksData)
+    , getTypeScriptDeclarations (Proxy @VaultData)
     , getTypeScriptDeclarations (Proxy @NotesData)
     , getTypeScriptDeclarations (Proxy @QueryResponse)
     , getTypeScriptDeclarations (Proxy @ServerMessage)

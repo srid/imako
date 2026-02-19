@@ -6,11 +6,12 @@
  *
  * - vaultInfo: Shared connection info (always available once connected)
  * - routeData: Route-specific data (sum type - one active at a time)
+ * - selectedPath: Currently selected path in the folder tree
  */
 
 import { createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { VaultInfo, TasksData, NotesData } from "@/types";
+import type { VaultInfo, VaultData, NotesData } from "@/types";
 
 const emptyVaultInfo: VaultInfo = {
   vaultName: "",
@@ -21,7 +22,7 @@ const emptyVaultInfo: VaultInfo = {
 
 /** Route-specific data - sum type (only one active at a time) */
 export type RouteData =
-  | { tag: "tasks"; data: TasksData }
+  | { tag: "vault"; data: VaultData }
   | { tag: "notes"; data: NotesData }
   | null;
 
@@ -33,3 +34,6 @@ export const [routeData, setRouteData] = createSignal<RouteData>(null);
 
 // Connection status
 export const [isConnected, setIsConnected] = createSignal(false);
+
+// Currently selected path in the folder tree (null = root)
+export const [selectedPath, setSelectedPath] = createSignal<string | null>(null);

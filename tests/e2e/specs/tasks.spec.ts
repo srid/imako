@@ -1,7 +1,8 @@
 /**
- * Tasks page tests.
+ * Vault tasks tests.
  *
- * Verifies task rendering, status display, folder tree, and hierarchical nesting.
+ * Verifies task rendering, status display, folder tree, and hierarchical nesting
+ * in the unified vault browser.
  *
  * Expected vault state (example/):
  * Filters hide Completed/Cancelled tasks by default.
@@ -39,12 +40,15 @@ const EXPECTED_TASKS: TaskExpectation[] = [
 
 const EXPECTED_FOLDERS = ["Notes", "Projects"];
 
-test.describe("Tasks Page", () => {
+test.describe("Vault Tasks", () => {
   test.beforeEach(async ({ app }) => {
-    await app.navigateTo("/tasks");
+    // Root "/" now loads the vault page with all tasks visible
+    await app.navigateTo("/");
+    const vault = app.vault();
+    await vault.waitForVault();
   });
 
-  test("renders visible tasks with correct content", async ({ app }) => {
+  test("renders visible tasks with correct content at root", async ({ app }) => {
     const tasks = app.tasks();
     await tasks.waitForTasks();
 
@@ -52,7 +56,7 @@ test.describe("Tasks Page", () => {
     await tasks.verifyTasks(EXPECTED_TASKS);
   });
 
-  test("displays folder tree with correct folders", async ({ app }) => {
+  test("displays folder tree with correct folders in sidebar", async ({ app }) => {
     const tree = app.folderTree();
 
     // Verify exact folder count and names
@@ -100,5 +104,82 @@ test.describe("Tasks Page", () => {
     for (const text of futureTexts) {
       await expect(tasks.taskItems().filter({ hasText: text })).toHaveCount(0);
     }
+  });
+
+  test("show tasks toggle hides and shows tasks", async ({ app }) => {
+    const vault = app.vault();
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+
+    // Initially tasks are visible
+    const initialCount = await tasks.taskCount();
+    expect(initialCount).toBeGreaterThan(0);
+
+    // Toggle tasks off
+    await vault.toggleShowTasks();
+
+    // Tasks should be hidden
+    await expect(tasks.taskItems()).toHaveCount(0);
+
+    // Toggle tasks back on
+    await vault.toggleShowTasks();
+
+    // Tasks should reappear
+    await tasks.waitForTasks();
+    expect(await tasks.taskCount()).toBe(initialCount);
+  });
+
+  test("folder selection scopes tasks to that subtree", async ({ app }) => {
+    const vault = app.vault();
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+
+    // Select "Notes" folder
+    await vault.selectFolder("Notes");
+
+    // Should only see Notes tasks (not Projects tasks)
+    await expect(tasks.taskItems().filter({ hasText: "Add mobile support" })).toBeVisible();
+    await expect(tasks.taskItems().filter({ hasText: "Add live sync tests" })).toHaveCount(0);
+
+    // Select root — should see all tasks again
+    await vault.selectRoot();
+    await expect(tasks.taskItems().filter({ hasText: "Add live sync tests" })).toBeVisible();
+  });
+
+  test("file selection shows tasks and note content", async ({ app }) => {
+    const vault = app.vault();
+
+    // Select a file with tasks
+    await vault.selectFile("Tasks.md");
+
+    // Should show tasks for this file
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+    await expect(tasks.taskItems().filter({ hasText: "Add mobile support" })).toBeVisible();
+
+    // Should show note content
+    const note = app.note();
+    await note.waitForContent();
+  });
+
+  test("inline search filters the folder tree", async ({ app }) => {
+    const vault = app.vault();
+    const tree = app.folderTree();
+
+    // Initially all files visible
+    const initialFiles = await tree.files().count();
+    expect(initialFiles).toBeGreaterThan(0);
+
+    // Filter by a file name
+    await vault.filterTree("Tasks");
+
+    // Only matching files should be visible
+    await expect(tree.files().filter({ hasText: "Tasks.md" })).toBeVisible();
+
+    // Clear filter
+    await vault.clearFilter();
+
+    // All files should be visible again
+    await expect(tree.files()).toHaveCount(initialFiles);
   });
 });
