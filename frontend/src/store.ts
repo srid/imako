@@ -5,7 +5,8 @@
  * synced via WebSocket.
  *
  * - vaultInfo: Shared connection info (always available once connected)
- * - routeData: Route-specific data (sum type - one active at a time)
+ * - vaultData: Folder tree with tasks (always available)
+ * - notesData: Currently loaded note content (lazy, one at a time)
  */
 
 import { createSignal } from "solid-js";
@@ -19,17 +20,14 @@ const emptyVaultInfo: VaultInfo = {
   notes: {},
 };
 
-/** Route-specific data - sum type (only one active at a time) */
-export type RouteData =
-  | { tag: "vault"; data: VaultData }
-  | { tag: "notes"; data: NotesData }
-  | null;
-
 // Shared vault info (extracted from any result)
 export const [vaultInfo, setVaultInfo] = createStore<VaultInfo>(emptyVaultInfo);
 
-// Route-specific data (sum type)
-export const [routeData, setRouteData] = createSignal<RouteData>(null);
+// Vault data (folder tree + tasks) — always available after connection
+export const [vaultData, setVaultData] = createSignal<VaultData | null>(null);
+
+// Notes data (currently loaded note) — lazy, one at a time
+export const [notesData, setNotesData] = createSignal<NotesData | null>(null);
 
 // Connection status
 export const [isConnected, setIsConnected] = createSignal(false);

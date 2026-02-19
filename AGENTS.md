@@ -2,11 +2,11 @@
 
 ## E2E Testing
 
-**Commands:**
+**Command:**
 - `just e2e` - Run all E2E tests (starts server, runs tests, exits)
-- `just e2e-server` - Start server with example vault (for developing tests)
-- `just e2e-test` - Run tests against running e2e-server
 
-**Workflow for developing tests:**
-1. `just e2e-server` in one terminal
-2. `just e2e-test` in another terminal (fast iteration, no Nix rebuild)
+**After test runs:** Read the Playwright error-context reports in `tests/test-results/*/error-context.md` to diagnose failures. These contain page snapshots at the time of failure.
+
+## Nix
+
+- Untracked (not modified) files need to be git staged for Nix to recognize them.

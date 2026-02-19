@@ -1,6 +1,6 @@
-import { Component, onMount, Show, createMemo, createEffect, For, on } from "solid-js";
+import { Component, Show, createMemo, createEffect, For } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
-import { routeData, vaultInfo } from "@/store";
+import { vaultData, notesData, vaultInfo } from "@/store";
 import { sendQuery } from "@/sync/websocket";
 import { FolderTree } from "@/components/FolderTree";
 import { TaskItem } from "@/components/TaskItem";
@@ -83,33 +83,19 @@ const VaultPage: Component = () => {
     return decodeURIComponent(raw);
   });
 
-  // Request vault data on mount
-  onMount(() => {
-    sendQuery({ tag: "VaultQuery" });
-  });
+  // VaultQuery is sent automatically on ws.onopen (see websocket.ts)
 
-  const vaultData = createMemo(() => {
-    const data = routeData();
-    return data?.tag === "vault" ? data.data : null;
+  // When a file is selected AND vault data is available, fetch its note content
+  createEffect(() => {
+    const path = selectedPath();
+    if (!path) return;
+    const tree = vaultData();
+    if (!tree) return;
+    const target = getSubtree(tree.folderTree, path);
+    if (target?.type === "file") {
+      sendQuery({ tag: "NotesQuery", contents: path });
+    }
   });
-
-  const notesData = createMemo(() => {
-    const data = routeData();
-    return data?.tag === "notes" ? data.data : null;
-  });
-
-  // When a file is selected, fetch its note content
-  createEffect(
-    on(selectedPath, (path) => {
-      if (!path) return;
-      const tree = vaultData();
-      if (!tree) return;
-      const target = getSubtree(tree.folderTree, path);
-      if (target?.type === "file") {
-        sendQuery({ tag: "NotesQuery", contents: path });
-      }
-    })
-  );
 
   // Compute what to show in the detail pane
   const detailData = createMemo(() => {
@@ -311,7 +297,7 @@ const FileDetailView: Component<{
       </Show>
 
       {/* Note content (lazily fetched) */}
-      <div data-testid="note-content">
+      <div>
         <h3 class="text-sm font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-3">
           Note
         </h3>
@@ -321,7 +307,9 @@ const FileDetailView: Component<{
             <p class="text-sm text-stone-400 dark:text-stone-500">Loading note…</p>
           }
         >
-          <AstRenderer ast={props.notesData!.noteAst as Pandoc} />
+          <div data-testid="note-content">
+            <AstRenderer ast={props.notesData!.noteAst as Pandoc} />
+          </div>
         </Show>
       </div>
     </div>

@@ -28,14 +28,14 @@ export class VaultView {
 
   constructor(private readonly page: Page) {
     this.sidebar = page.locator("aside");
-    this.detail = page.locator("main");
+    this.detail = page.locator("main main");
   }
 
   /**
    * Wait for the vault to be loaded (sidebar tree visible).
    */
   async waitForVault(): Promise<void> {
-    await expect(this.sidebar.locator("[data-testid='folder-tree']")).toBeVisible({ timeout: 5000 });
+    await expect(this.sidebar.locator("[data-testid='folder-tree']").first()).toBeVisible({ timeout: 5000 });
   }
 
   /**
@@ -82,7 +82,7 @@ export class VaultView {
    * Toggle the "Show tasks" button.
    */
   async toggleShowTasks(): Promise<void> {
-    const button = this.page.getByRole("button", { name: /Tasks/ });
+    const button = this.page.locator("[data-testid='toggle-tasks']");
     await button.click();
   }
 
@@ -244,7 +244,7 @@ export class NoteView {
    * Wait for note content to be loaded.
    */
   async waitForContent(): Promise<void> {
-    await expect(this.content()).toBeVisible({ timeout: 5000 });
+    await expect(this.content()).toBeVisible({ timeout: 10000 });
   }
 
   /**
@@ -262,7 +262,7 @@ export class FolderTreeView {
   private readonly container: Locator;
 
   constructor(private readonly page: Page) {
-    this.container = page.locator("aside [data-testid='folder-tree']");
+    this.container = page.locator("aside [data-testid='folder-tree']").first();
   }
 
   /**

@@ -30,6 +30,7 @@ export const Header: Component = () => {
         <div class="flex items-center gap-2">
           {/* Show tasks toggle (parent filter) */}
           <button
+            data-testid="toggle-tasks"
             onClick={toggleShowTasks}
             class={`px-3 py-1 text-sm font-medium rounded-full transition-all ${
               showTasks()
