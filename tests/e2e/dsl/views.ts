@@ -469,37 +469,9 @@ export class JournalView {
   }
 
   /**
-   * Get all journal entry cards.
-   */
-  entries(): Locator {
-    return this.container.locator("[data-testid='journal-entry']");
-  }
-
-  /**
-   * Get all month headers in the journal view.
+   * Get all month headers in the journal view (main panel).
    */
   monthHeaders(): Locator {
     return this.container.locator("[data-testid='journal-month-header']");
-  }
-
-  /**
-   * Get the "Today" badge.
-   */
-  todayBadge(): Locator {
-    return this.container.locator("[data-testid='journal-today-badge']");
-  }
-
-  /**
-   * Get entry dates.
-   */
-  entryDates(): Locator {
-    return this.container.locator("[data-testid='journal-entry-date']");
-  }
-
-  /**
-   * Get journal entry content (rendered note).
-   */
-  entryContent(): Locator {
-    return this.container.locator("[data-testid='journal-entry-content']");
   }
 }

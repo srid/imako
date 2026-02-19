@@ -1,24 +1,20 @@
 /**
  * Journals (Daily Notes) E2E tests.
  *
- * Verifies the calendar widget in the sidebar, journal view in the main panel,
- * and navigation between daily note entries.
+ * Verifies the calendar widget in the sidebar and calendar view in the main panel.
  *
  * Expected vault state (example/):
  * - .obsidian/daily-notes.json: { "folder": "Daily", "format": "YYYY-MM-DD" }
- * - Daily/2026-02-17.md: Journal entry with tasks and reading notes
- * - Daily/2026-02-18.md: Journal entry with meeting notes
- * - Daily/2026-02-19.md: Journal entry with tasks and code snippet
+ * - Daily/2026-02-17.md, 2026-02-18.md, 2026-02-19.md
  */
 
 import { test, expect } from "../dsl";
 
-test.describe("Journals - Calendar Widget", () => {
+test.describe("Journals - Sidebar Calendar", () => {
   test("shows calendar widget when daily notes folder is expanded", async ({ app }) => {
     const vault = app.vault();
     await vault.waitForVault();
 
-    // Expand the Daily folder to see the calendar
     await vault.toggleFolder("Daily");
     const journal = app.journal();
     await expect(journal.calendarWidget()).toBeVisible();
@@ -30,24 +26,22 @@ test.describe("Journals - Calendar Widget", () => {
 
     await vault.toggleFolder("Daily");
     const journal = app.journal();
-
-    // Calendar should show February 2026 (the month of our test data)
     await expect(journal.calendarMonth()).toContainText("February 2026");
   });
 
-  test("calendar shows dots for days with notes", async ({ app }) => {
+  test("calendar shows enabled days for notes and disabled for empty", async ({ app }) => {
     const vault = app.vault();
     await vault.waitForVault();
 
     await vault.toggleFolder("Daily");
     const journal = app.journal();
 
-    // Days 17, 18, 19 should have notes (be enabled buttons)
+    // Days with notes should be enabled
     await expect(journal.calendarDay(17)).toBeEnabled();
     await expect(journal.calendarDay(18)).toBeEnabled();
     await expect(journal.calendarDay(19)).toBeEnabled();
 
-    // Day 1 should not have a note (disabled)
+    // Day without a note should be disabled
     await expect(journal.calendarDay(1)).toBeDisabled();
   });
 
@@ -58,15 +52,12 @@ test.describe("Journals - Calendar Widget", () => {
     await vault.toggleFolder("Daily");
     const journal = app.journal();
 
-    // Navigate to previous month
     await journal.calendarPrev();
     await expect(journal.calendarMonth()).toContainText("January 2026");
 
-    // Navigate back to current month
     await journal.calendarNext();
     await expect(journal.calendarMonth()).toContainText("February 2026");
 
-    // Navigate to next month
     await journal.calendarNext();
     await expect(journal.calendarMonth()).toContainText("March 2026");
   });
@@ -78,72 +69,42 @@ test.describe("Journals - Calendar Widget", () => {
     await vault.toggleFolder("Daily");
     const journal = app.journal();
 
-    // Click on day 17
     await journal.clickDay(17);
-
-    // Should navigate to the daily note file
     await app.page.waitForURL("**/p/Daily%2F2026-02-17.md");
   });
 });
 
-test.describe("Journals - Journal View", () => {
-  test("shows journal view when daily notes folder is selected", async ({ app }) => {
+test.describe("Journals - Main Panel Calendar", () => {
+  test("shows calendar view when Daily folder is selected", async ({ app }) => {
     const vault = app.vault();
     await vault.waitForVault();
 
-    // Click the Daily folder label to navigate to journal view
     await vault.selectFolder("Daily");
     const journal = app.journal();
     await journal.waitForJournal();
-
-    // Journal view should be visible
-    await expect(journal.entries()).not.toHaveCount(0);
   });
 
-  test("shows entries in reverse chronological order", async ({ app }) => {
+  test("shows month grids with correct header", async ({ app }) => {
     await app.navigateTo("/p/Daily");
     const journal = app.journal();
     await journal.waitForJournal();
 
-    // Should have 3 entries
-    await expect(journal.entries()).toHaveCount(3);
-
-    // Entries should be in reverse chronological order
-    const dates = journal.entryDates();
-    await expect(dates.nth(0)).toContainText("February 19, 2026");
-    await expect(dates.nth(1)).toContainText("February 18, 2026");
-    await expect(dates.nth(2)).toContainText("February 17, 2026");
+    // Should have a February month header
+    await expect(journal.monthHeaders().first()).toContainText("February");
   });
 
-  test("shows month header", async ({ app }) => {
+  test("month grid days with notes are clickable", async ({ app }) => {
     await app.navigateTo("/p/Daily");
     const journal = app.journal();
     await journal.waitForJournal();
 
-    // Should show month header
-    await expect(journal.monthHeaders().first()).toContainText("February 2026");
-  });
+    // Day 19 should be enabled (has a note)
+    const main = app.page.locator("[data-testid='journal-view']");
+    const day19 = main.locator("[data-testid='calendar-day-19']");
+    await expect(day19).toBeEnabled();
 
-  test("shows Today badge on current date entry", async ({ app }) => {
-    await app.navigateTo("/p/Daily");
-    const journal = app.journal();
-    await journal.waitForJournal();
-
-    // Today badge should be visible (for the 2026-02-19 entry)
-    // Note: this depends on vaultInfo.today matching 2026-02-19
-    const todayBadge = journal.todayBadge();
-    await expect.poll(async () => await todayBadge.count()).toBeGreaterThanOrEqual(0);
-  });
-
-  test("expanding an entry loads note content", async ({ app }) => {
-    await app.navigateTo("/p/Daily");
-    const journal = app.journal();
-    await journal.waitForJournal();
-
-    // The first entry (most recent) should auto-expand and load content
-    await expect.poll(
-      async () => await journal.entryContent().count(),
-      { timeout: 5000 }
-    ).toBeGreaterThan(0);
+    // Click navigates to the note
+    await day19.click();
+    await app.page.waitForURL("**/p/Daily%2F2026-02-19.md");
   });
 });

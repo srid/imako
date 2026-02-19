@@ -254,11 +254,12 @@ const VaultPage: Component = () => {
                     />
                   }
                 >
-                  {/* Daily notes folder: journal view */}
+                  {/* Daily notes folder: calendar view */}
                   <JournalView
                     node={(detail() as any).node}
                     folderPath={(detail() as any).folderPath}
                     today={vaultInfo.today}
+                    onSelectPath={selectPath}
                   />
                 </Show>
               }

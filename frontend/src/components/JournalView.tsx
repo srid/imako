@@ -1,13 +1,5 @@
-import { Component, createMemo, createEffect, Show, For, createSignal } from "solid-js";
-import { sendQuery } from "@/sync/websocket";
-import { notesData } from "@/store";
-import { AstRenderer } from "@/components/markdown";
-import type { Pandoc } from "@/components/markdown";
-import type { FolderNode, Task } from "@/types";
-import { ObsidianEditLink } from "@/components/ObsidianEditLink";
-import { TaskItem } from "@/components/TaskItem";
-import { buildTaskTree } from "@/utils/taskTree";
-import { isTaskVisible, showTasks } from "@/state/filters";
+import { Component, createMemo, For } from "solid-js";
+import type { FolderNode } from "@/types";
 
 interface JournalViewProps {
   /** The daily notes folder node */
@@ -16,135 +8,98 @@ interface JournalViewProps {
   folderPath: string;
   /** Today's date as ISO string, e.g. "2026-02-19" */
   today: string;
+  /** Navigate to a vault path */
+  onSelectPath: (path: string) => void;
 }
 
-interface JournalEntry {
-  /** ISO date string, e.g. "2026-02-19" */
-  date: string;
-  /** Filename, e.g. "2026-02-19.md" */
+interface ParsedNote {
+  year: number;
+  month: number; // 1-indexed
+  day: number;
   filename: string;
-  /** Full path, e.g. "Daily/2026-02-19.md" */
-  path: string;
-  /** Date object for formatting */
-  dateObj: Date;
-  /** Tasks from this file */
-  tasks: Task[];
+}
+
+const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
+/**
+ * Parse YYYY-MM-DD.md filenames into structured data.
+ */
+function parseNoteFiles(files: string[]): ParsedNote[] {
+  const notes: ParsedNote[] = [];
+  for (const f of files) {
+    const m = f.match(/^(\d{4})-(\d{2})-(\d{2})\.md$/);
+    if (m) {
+      notes.push({ year: +m[1], month: +m[2], day: +m[3], filename: f });
+    }
+  }
+  return notes;
 }
 
 /**
- * Parse daily note filenames into sorted journal entries.
- * O(n log n) where n = number of files in the folder.
+ * Group parsed notes by year → month.
  */
-function buildEntries(node: FolderNode, folderPath: string): JournalEntry[] {
-  const entries: JournalEntry[] = [];
-  for (const [filename, tasks] of Object.entries(node.files)) {
-    const m = filename.match(/^(\d{4})-(\d{2})-(\d{2})\.md$/);
-    if (!m) continue;
-    const date = `${m[1]}-${m[2]}-${m[3]}`;
-    entries.push({
-      date,
-      filename,
-      path: folderPath ? `${folderPath}/${filename}` : filename,
-      dateObj: new Date(+m[1], +m[2] - 1, +m[3]),
-      tasks,
+function groupByYearMonth(notes: ParsedNote[]): { year: number; months: { month: number; days: ParsedNote[] }[] }[] {
+  const yearMap = new Map<number, Map<number, ParsedNote[]>>();
+  for (const n of notes) {
+    if (!yearMap.has(n.year)) yearMap.set(n.year, new Map());
+    const monthMap = yearMap.get(n.year)!;
+    if (!monthMap.has(n.month)) monthMap.set(n.month, []);
+    monthMap.get(n.month)!.push(n);
+  }
+
+  // Sort years descending, months ascending within each year
+  const result: { year: number; months: { month: number; days: ParsedNote[] }[] }[] = [];
+  const sortedYears = [...yearMap.keys()].sort((a, b) => b - a);
+  for (const year of sortedYears) {
+    const monthMap = yearMap.get(year)!;
+    const sortedMonths = [...monthMap.keys()].sort((a, b) => b - a);
+    result.push({
+      year,
+      months: sortedMonths.map((month) => ({
+        month,
+        days: monthMap.get(month)!,
+      })),
     });
   }
-  // Sort reverse chronological
-  entries.sort((a, b) => b.date.localeCompare(a.date));
-  return entries;
+  return result;
 }
 
 /**
- * Format a date as a nice heading, e.g. "Wednesday, February 19, 2026"
+ * Full calendar view for the daily notes folder.
+ * Shows all months that have notes as mini calendar grids.
+ * Zero server requests — renders entirely from the folder file list.
  */
-function formatDateHeading(d: Date): string {
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 export const JournalView: Component<JournalViewProps> = (props) => {
-  const entries = createMemo(() => buildEntries(props.node, props.folderPath));
+  const parsed = createMemo(() => parseNoteFiles(Object.keys(props.node.files)));
+  const grouped = createMemo(() => groupByYearMonth(parsed()));
 
-  // Group entries by month (for the month header) — O(n) single pass
-  const entriesByMonth = createMemo(() => {
-    const groups: { label: string; entries: JournalEntry[] }[] = [];
-    let currentLabel = "";
-    for (const entry of entries()) {
-      const label = entry.dateObj.toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      });
-      if (label !== currentLabel) {
-        currentLabel = label;
-        groups.push({ label, entries: [] });
-      }
-      groups[groups.length - 1].entries.push(entry);
-    }
-    return groups;
-  });
-
-  // Cache of loaded note ASTs by path
-  const [noteCache, setNoteCache] = createSignal<Record<string, Pandoc>>({});
-
-  // Track which note we're currently loading
-  const [loadingPath, setLoadingPath] = createSignal<string | null>(null);
-
-  // When notesData updates, cache the result and load the next entry
-  createEffect(() => {
-    const data = notesData();
-    if (!data) return;
-    const path = data.notePath;
-    const ast = data.noteAst as Pandoc;
-    setNoteCache((prev) => ({ ...prev, [path]: ast }));
-
-    // Load the next entry that hasn't been cached yet
-    const all = entries();
-    const cached = noteCache();
-    const next = all.find((e) => !(e.path in cached) && e.path !== path);
-    if (next) {
-      setLoadingPath(next.path);
-      sendQuery({ tag: "NotesQuery", contents: next.path });
-    } else {
-      setLoadingPath(null);
-    }
-  });
-
-  // Kick off loading the first entry
-  createEffect(() => {
-    const all = entries();
-    if (all.length > 0 && Object.keys(noteCache()).length === 0) {
-      setLoadingPath(all[0].path);
-      sendQuery({ tag: "NotesQuery", contents: all[0].path });
-    }
+  const todayParts = createMemo(() => {
+    const [y, m, d] = props.today.split("-").map(Number);
+    return { year: y, month: m, day: d };
   });
 
   return (
-    <div data-testid="journal-view" class="space-y-6">
-      <For each={entriesByMonth()}>
-        {(group) => (
-          <div>
-            {/* Month header */}
-            <h2
-              data-testid="journal-month-header"
-              class="text-lg font-bold text-stone-700 dark:text-stone-200 mb-4 flex items-center gap-2"
-            >
+    <div data-testid="journal-view">
+      <For each={grouped()}>
+        {(yearGroup) => (
+          <div class="mb-8">
+            {/* Year header */}
+            <h2 class="text-xl font-bold text-stone-700 dark:text-stone-200 mb-4 flex items-center gap-2">
               <span class="text-accent-500">📅</span>
-              {group.label}
+              {yearGroup.year}
             </h2>
 
-            {/* Journal entries */}
-            <div class="space-y-4">
-              <For each={group.entries}>
-                {(entry) => (
-                  <JournalEntryCard
-                    entry={entry}
-                    today={props.today}
-                    noteAst={noteCache()[entry.path] ?? null}
-                    isLoading={loadingPath() === entry.path}
+            {/* Month grids in a responsive grid */}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <For each={yearGroup.months}>
+                {(monthGroup) => (
+                  <MonthGrid
+                    year={yearGroup.year}
+                    month={monthGroup.month}
+                    notes={monthGroup.days}
+                    today={todayParts()}
+                    folderPath={props.folderPath}
+                    onSelectPath={props.onSelectPath}
                   />
                 )}
               </For>
@@ -152,97 +107,117 @@ export const JournalView: Component<JournalViewProps> = (props) => {
           </div>
         )}
       </For>
-
-      <Show when={entries().length === 0}>
-        <div class="flex items-center justify-center h-32 text-stone-400 dark:text-stone-500">
-          <p class="text-sm">No daily notes found</p>
-        </div>
-      </Show>
     </div>
   );
 };
 
 /**
- * Individual journal entry card — always visible, non-collapsible.
+ * A single month calendar grid with clickable days.
  */
-const JournalEntryCard: Component<{
-  entry: JournalEntry;
-  today: string;
-  noteAst: Pandoc | null;
-  isLoading: boolean;
+const MonthGrid: Component<{
+  year: number;
+  month: number;
+  notes: ParsedNote[];
+  today: { year: number; month: number; day: number };
+  folderPath: string;
+  onSelectPath: (path: string) => void;
 }> = (props) => {
-  const isToday = () => props.entry.date === props.today;
+  const monthName = createMemo(() => {
+    const d = new Date(props.year, props.month - 1);
+    return d.toLocaleDateString("en-US", { month: "long" });
+  });
 
-  const visibleTasks = createMemo(() =>
-    props.entry.tasks.filter((t) => isTaskVisible(t, props.today))
-  );
-  const tree = createMemo(() => buildTaskTree(visibleTasks()));
+  const noteDays = createMemo(() => {
+    const map = new Map<number, string>();
+    for (const n of props.notes) {
+      map.set(n.day, n.filename);
+    }
+    return map;
+  });
+
+  // Build 6-row calendar grid
+  const calendarDays = createMemo(() => {
+    const y = props.year;
+    const m = props.month - 1; // JS 0-indexed
+    const firstDay = new Date(y, m, 1);
+    const startDow = (firstDay.getDay() + 6) % 7; // Monday=0
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < startDow; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  });
+
+  const isToday = (day: number) =>
+    props.year === props.today.year &&
+    props.month === props.today.month &&
+    day === props.today.day;
 
   return (
-    <div
-      data-testid="journal-entry"
-      class="rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900/50 overflow-hidden transition-all hover:border-accent-300 dark:hover:border-accent-600"
-    >
-      {/* Header */}
-      <div class="px-5 py-4 flex items-center gap-3">
-        {/* Date heading */}
-        <span class="flex-1 min-w-0">
-          <span
-            data-testid="journal-entry-date"
-            class="text-sm font-semibold text-stone-700 dark:text-stone-200"
-          >
-            {formatDateHeading(props.entry.dateObj)}
-          </span>
-        </span>
+    <div class="rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900/50 p-4 transition-all">
+      {/* Month name */}
+      <h3
+        data-testid="journal-month-header"
+        class="text-sm font-bold text-stone-600 dark:text-stone-300 mb-3 text-center"
+      >
+        {monthName()}
+      </h3>
 
-        {/* Today badge */}
-        <Show when={isToday()}>
-          <span
-            data-testid="journal-today-badge"
-            class="px-2 py-0.5 text-xs font-bold rounded-full bg-accent-500 text-white"
-          >
-            Today
-          </span>
-        </Show>
-
-        {/* Edit link */}
-        <ObsidianEditLink
-          filePath={props.entry.path}
-          class="text-stone-400 hover:text-accent-600 dark:hover:text-accent-400"
-        />
+      {/* Day-of-week headers */}
+      <div class="grid grid-cols-7 gap-0 mb-1">
+        <For each={DAYS}>
+          {(d) => (
+            <span class="text-center text-[10px] font-medium text-stone-400 dark:text-stone-500 leading-5">
+              {d}
+            </span>
+          )}
+        </For>
       </div>
 
-      {/* Content — always visible */}
-      <div class="px-5 pb-5 border-t border-stone-100 dark:border-stone-800">
-        {/* Tasks section */}
-        <Show when={showTasks() && visibleTasks().length > 0}>
-          <div data-testid="journal-entry-tasks" class="mt-3 mb-4">
-            <h4 class="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">
-              Tasks
-            </h4>
-            <div class="flex flex-col">
-              <For each={tree()}>
-                {(node) => <TaskItem node={node} today={props.today} />}
-              </For>
-            </div>
-          </div>
-        </Show>
+      {/* Day cells */}
+      <div class="grid grid-cols-7 gap-0.5">
+        <For each={calendarDays()}>
+          {(day) => {
+            if (day === null) {
+              return <span class="w-full aspect-square" />;
+            }
 
-        {/* Note content */}
-        <Show
-          when={props.noteAst}
-          fallback={
-            <Show when={props.isLoading}>
-              <p class="text-sm text-stone-400 dark:text-stone-500 animate-pulse mt-3">
-                Loading note…
-              </p>
-            </Show>
-          }
-        >
-          <div data-testid="journal-entry-content" class="mt-3">
-            <AstRenderer ast={props.noteAst!} />
-          </div>
-        </Show>
+            const filename = () => noteDays().get(day);
+            const hasNote = () => !!filename();
+            const today = () => isToday(day);
+
+            return (
+              <button
+                data-testid={`calendar-day-${day}`}
+                onClick={() => {
+                  const f = filename();
+                  if (f) {
+                    const path = props.folderPath ? `${props.folderPath}/${f}` : f;
+                    props.onSelectPath(path);
+                  }
+                }}
+                disabled={!hasNote()}
+                class={`
+                  w-full aspect-square flex flex-col items-center justify-center rounded-md text-xs transition-all relative
+                  ${today()
+                    ? "bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 font-bold ring-1 ring-accent-400"
+                    : hasNote()
+                      ? "text-stone-700 dark:text-stone-200 hover:bg-accent-50 dark:hover:bg-accent-900/20 cursor-pointer font-medium"
+                      : "text-stone-300 dark:text-stone-600 cursor-default"
+                  }
+                `}
+              >
+                {day}
+                {/* Note indicator dot */}
+                {hasNote() && (
+                  <span class="absolute bottom-0.5 w-1 h-1 rounded-full bg-accent-500" />
+                )}
+              </button>
+            );
+          }}
+        </For>
       </div>
     </div>
   );
