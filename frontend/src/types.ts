@@ -41,10 +41,10 @@ export interface IFolderNode {
   files: {[k in string]: Task[]};
 }
 
-export type Query = ITasksQuery | INotesQuery;
+export type Query = IVaultQuery | INotesQuery;
 
-export interface ITasksQuery {
-  tag: "TasksQuery";
+export interface IVaultQuery {
+  tag: "VaultQuery";
 }
 
 export interface INotesQuery {
@@ -61,9 +61,9 @@ export interface IVaultInfo {
   notes: {[k in string]: string};
 }
 
-export type TasksData = ITasksData;
+export type VaultData = IVaultData;
 
-export interface ITasksData {
+export interface IVaultData {
   folderTree: FolderNode;
 }
 
@@ -74,11 +74,11 @@ export interface INotesData {
   noteAst: any;
 }
 
-export type QueryResponse = ITasksResponse | INotesResponse;
+export type QueryResponse = IVaultResponse | INotesResponse;
 
-export interface ITasksResponse {
-  tag: "TasksResponse";
-  contents: TasksData;
+export interface IVaultResponse {
+  tag: "VaultResponse";
+  contents: VaultData;
 }
 
 export interface INotesResponse {

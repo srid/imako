@@ -6,13 +6,12 @@
  */
 
 import type { Query, ServerMessage } from "@/types";
-import { setVaultInfo, setRouteData, setIsConnected } from "@/store";
+import { setVaultInfo, setVaultData, setNotesData, setIsConnected } from "@/store";
 
 let ws: WebSocket | null = null;
 
 /**
  * Connect to the backend WebSocket.
- * Call sendQuery() after connection to subscribe to data.
  */
 export function connectVault(): () => void {
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -20,6 +19,8 @@ export function connectVault(): () => void {
 
   ws.onopen = () => {
     setIsConnected(true);
+    // Always subscribe to vault data on connect/reconnect
+    sendQuery({ tag: "VaultQuery" });
   };
 
   ws.onmessage = (event) => {
@@ -39,7 +40,6 @@ export function connectVault(): () => void {
   };
 
   // Gracefully close WebSocket before page unload to avoid EPIPE errors
-  // Use both events for maximum compatibility
   window.addEventListener("beforeunload", disconnectVault);
   window.addEventListener("pagehide", disconnectVault);
 
@@ -67,17 +67,14 @@ export function sendQuery(query: Query): void {
 
 /**
  * Handle incoming server messages and update stores.
- * ServerMessage has { vaultInfo, response } structure.
  */
 function handleServerMessage(msg: ServerMessage): void {
-  // Update shared vault info
   setVaultInfo(msg.vaultInfo);
 
-  // Update route-specific data based on response type
   const response = msg.response;
-  if (response.tag === "TasksResponse") {
-    setRouteData({ tag: "tasks", data: response.contents });
+  if (response.tag === "VaultResponse") {
+    setVaultData(response.contents);
   } else if (response.tag === "NotesResponse") {
-    setRouteData({ tag: "notes", data: response.contents });
+    setNotesData(response.contents);
   }
 }

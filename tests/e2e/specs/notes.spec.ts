@@ -18,7 +18,7 @@ const WELCOME_HEADINGS = [
 
 test.describe("Notes Page", () => {
   test("renders note content with correct title", async ({ app }) => {
-    await app.navigateTo("/n/Notes%2FWelcome.md");
+    await app.navigateTo("/p/Notes%2FWelcome.md");
     const note = app.note();
     await note.waitForContent();
 
@@ -28,7 +28,7 @@ test.describe("Notes Page", () => {
   });
 
   test("renders all expected headings", async ({ app }) => {
-    await app.navigateTo("/n/Notes%2FWelcome.md");
+    await app.navigateTo("/p/Notes%2FWelcome.md");
     const note = app.note();
     await note.waitForContent();
 
@@ -42,7 +42,7 @@ test.describe("Notes Page", () => {
   });
 
   test("renders code block with correct content", async ({ app }) => {
-    await app.navigateTo("/n/Notes%2FWelcome.md");
+    await app.navigateTo("/p/Notes%2FWelcome.md");
     const note = app.note();
     await note.waitForContent();
 
@@ -53,7 +53,7 @@ test.describe("Notes Page", () => {
   });
 
   test("renders correct number of wikilinks", async ({ app }) => {
-    await app.navigateTo("/n/Notes%2FWikilinks.md");
+    await app.navigateTo("/p/Notes%2FWikilinks.md");
     const note = app.note();
     await note.waitForContent();
 
@@ -63,7 +63,7 @@ test.describe("Notes Page", () => {
   });
 
   test("renders correct broken wikilinks", async ({ app }) => {
-    await app.navigateTo("/n/Notes%2FWikilinks.md");
+    await app.navigateTo("/p/Notes%2FWikilinks.md");
     const note = app.note();
     await note.waitForContent();
 
@@ -75,7 +75,7 @@ test.describe("Notes Page", () => {
   });
 
   test("wikilink navigation navigates to correct page", async ({ app }) => {
-    await app.navigateTo("/n/Notes%2FWikilinks.md");
+    await app.navigateTo("/p/Notes%2FWikilinks.md");
     const note = app.note();
     await note.waitForContent();
 
@@ -84,6 +84,6 @@ test.describe("Notes Page", () => {
     await welcomeLink.click();
 
     // Should navigate to the Welcome note
-    await app.page.waitForURL("**/n/Notes%2FWelcome.md");
+    await app.page.waitForURL("**/p/Notes%2FWelcome.md");
   });
 });

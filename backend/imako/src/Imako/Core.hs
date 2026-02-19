@@ -10,7 +10,7 @@ module Imako.Core (
 
   -- * Message building
   mkVaultInfo,
-  mkTasksData,
+  mkVaultData,
   mkNotesData,
   mkServerMessage,
 )
@@ -25,7 +25,7 @@ import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
-import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), TasksData (..), VaultInfo (..))
+import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), VaultData (..), VaultInfo (..))
 import Imako.Core.FolderTree (buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
 import Network.URI (escapeURIString, isUnreserved)
@@ -91,16 +91,17 @@ mkVaultInfo path appState =
         , notes = notesMap
         }
 
--- | Build tasks data from app state
-mkTasksData :: FilePath -> AppState -> TasksData
-mkTasksData vaultPath appState =
+-- | Build vault data including all files from app state
+mkVaultData :: FilePath -> AppState -> VaultData
+mkVaultData vaultPath appState =
   let notes = appState.vault.notes
       allTasks = appState.vault.tasks
       enrichTask t = t {description = enrichInlines notes t.description}
       tasks = map enrichTask $ Ix.toList allTasks
       incomplete = filter (\t -> t.status /= Completed && t.status /= Cancelled) tasks
       completedTasks = filter (\t -> t.status == Completed || t.status == Cancelled) tasks
-      groupedAll =
+      -- Group tasks by their source note (relative path)
+      groupedTasks =
         List.foldl
           ( \acc task ->
               let relativePath = makeRelative vaultPath task.sourceNote
@@ -108,8 +109,11 @@ mkTasksData vaultPath appState =
           )
           Map.empty
           (incomplete <> completedTasks)
-      tree = FolderTree.flattenTree $ buildFolderTree groupedAll
-   in TasksData {folderTree = tree}
+      -- Include all vault notes (those without tasks get empty lists)
+      allNotePaths = map (\n -> makeRelative vaultPath n.path) $ Ix.toList notes
+      allFiles = List.foldl' (\acc p -> Map.insertWith (flip (++)) p [] acc) groupedTasks allNotePaths
+      tree = FolderTree.flattenTree $ buildFolderTree allFiles
+   in VaultData {folderTree = tree}
 
 -- | Build notes data by serializing the requested note to AST
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
@@ -138,7 +142,7 @@ enrichInlines notes = map enrichInline
            in case resolved of
                 Just note ->
                   -- Resolved: set URL to internal route
-                  let newUrl = "/n/" <> encodePathComponent (toText note.path)
+                  let newUrl = "/p/" <> encodePathComponent (toText note.path)
                    in Link (id', classes, wikilinkAttr : cleanKvs) linkInlines (newUrl, title)
                 Nothing ->
                   -- Broken: empty URL, add data-broken
@@ -160,6 +164,6 @@ mkServerMessage vaultPath appState query =
   ServerMessage
     { vaultInfo = mkVaultInfo vaultPath appState
     , response = case query of
-        TasksQuery -> TasksResponse (mkTasksData vaultPath appState)
+        VaultQuery -> VaultResponse (mkVaultData vaultPath appState)
         NotesQuery path -> NotesResponse (mkNotesData vaultPath appState.vault path)
     }

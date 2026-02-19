@@ -6,7 +6,7 @@
  */
 
 import { Page, expect } from "@playwright/test";
-import { TasksView, NoteView, CommandPaletteView, FolderTreeView } from "./views";
+import { TasksView, NoteView, FolderTreeView, VaultView } from "./views";
 
 export class App {
   constructor(public readonly page: Page) {}
@@ -21,14 +21,14 @@ export class App {
       timeout: timeoutMs,
     });
     // Verify the main app container is visible
-    await expect(this.page.locator(".max-w-4xl")).toBeVisible();
+    await expect(this.page.locator(".max-w-6xl")).toBeVisible();
   }
 
   /**
    * Navigate to a specific route (uses hash-based routing).
    * Routes are prefixed with /#/ for HashRouter compatibility.
    */
-  async navigateTo(route: "/" | "/tasks" | `/n/${string}`): Promise<void> {
+  async navigateTo(route: "/" | `/p/${string}`): Promise<void> {
     // With HashRouter, routes become /#/path - navigate to root and let hash handle it
     const hashRoute = route === "/" ? "/" : `/#${route}`;
     await this.page.goto(hashRoute);
@@ -36,7 +36,14 @@ export class App {
   }
 
   /**
-   * Get the TasksView for interacting with the tasks page.
+   * Get the VaultView for interacting with the unified vault page.
+   */
+  vault(): VaultView {
+    return new VaultView(this.page);
+  }
+
+  /**
+   * Get the TasksView for interacting with tasks in the detail pane.
    */
   tasks(): TasksView {
     return new TasksView(this.page);
@@ -50,14 +57,7 @@ export class App {
   }
 
   /**
-   * Get the CommandPaletteView.
-   */
-  commandPalette(): CommandPaletteView {
-    return new CommandPaletteView(this.page);
-  }
-
-  /**
-   * Get the FolderTreeView.
+   * Get the FolderTreeView for the sidebar tree.
    */
   folderTree(): FolderTreeView {
     return new FolderTreeView(this.page);
@@ -67,7 +67,7 @@ export class App {
    * Get the vault name displayed in the header.
    */
   async vaultName(): Promise<string> {
-    const header = this.page.locator("header");
+    const header = this.page.locator("header h1");
     const text = await header.textContent();
     return text?.trim() ?? "";
   }

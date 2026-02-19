@@ -1,27 +1,22 @@
 import { Component, onMount, Show } from "solid-js";
-import { HashRouter, Route, Navigate } from "@solidjs/router";
+import { HashRouter, Route } from "@solidjs/router";
 import { isConnected } from "@/store";
 import { connectVault } from "@/sync/websocket";
 import { Header } from "@/components/Header";
-import { CommandPalette } from "@/components/CommandPalette";
-import TasksPage from "@/pages/TasksPage";
-import NotesPage from "@/pages/NotesPage";
+import VaultPage from "@/pages/VaultPage";
 
 const Layout: Component<{ children?: any }> = (props) => {
   return (
-    <div class="max-w-4xl mx-auto my-8 px-4">
+    <div class="max-w-6xl mx-auto my-8 px-4">
       <div class="bg-white dark:bg-stone-950 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-700 p-6 sm:p-8">
         <Header />
         <main>
           {props.children}
         </main>
       </div>
-      <CommandPalette />
     </div>
   );
 };
-
-
 
 const App: Component = () => {
   onMount(() => {
@@ -42,10 +37,8 @@ const App: Component = () => {
         }
       >
         <HashRouter root={Layout}>
-          <Route path="/" component={() => <Navigate href="/tasks" />} />
-          <Route path="/tasks" component={TasksPage} />
-          <Route path="/n" component={NotesPage} />
-          <Route path="/n/*notePath" component={NotesPage} />
+          <Route path="/" component={VaultPage} />
+          <Route path="/p/*vaultPath" component={VaultPage} />
         </HashRouter>
       </Show>
     </div>

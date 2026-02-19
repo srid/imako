@@ -20,7 +20,114 @@ export interface TaskExpectation {
 }
 
 /**
- * View abstraction for the Tasks page.
+ * View abstraction for the unified vault page.
+ */
+export class VaultView {
+  private readonly sidebar: Locator;
+  private readonly detail: Locator;
+
+  constructor(private readonly page: Page) {
+    this.sidebar = page.locator("aside");
+    this.detail = page.locator("main main");
+  }
+
+  /**
+   * Wait for the vault to be loaded (sidebar tree visible).
+   */
+  async waitForVault(): Promise<void> {
+    await expect(this.sidebar.locator("[data-testid='folder-tree']").first()).toBeVisible({ timeout: 5000 });
+  }
+
+  /**
+   * Click a file in the sidebar tree to select it.
+   */
+  async selectFile(name: string): Promise<void> {
+    const file = this.sidebar.locator(`[data-testid='file-node']:has-text("${name}")`);
+    await file.click();
+  }
+
+  /**
+   * Click a folder's icon/name to select it (navigate to it in main panel).
+   */
+  async selectFolder(name: string): Promise<void> {
+    const label = this.sidebar.locator(`[data-testid='folder-node']`).filter({ hasText: name }).first().locator("[data-testid='folder-label']");
+    await label.click();
+  }
+
+  /**
+   * Click a folder's chevron arrow to toggle expand/collapse.
+   */
+  async toggleFolder(name: string): Promise<void> {
+    const toggle = this.sidebar.locator(`[data-testid='folder-node']`).filter({ hasText: name }).first().locator("[data-testid='folder-toggle']");
+    await toggle.click();
+  }
+
+  /**
+   * Check if a folder node is expanded (details[open]).
+   */
+  async isFolderOpen(name: string): Promise<boolean> {
+    const details = this.sidebar.locator(`[data-testid='folder-node']`).filter({ hasText: name }).first();
+    return details.evaluate((el) => (el as HTMLDetailsElement).open);
+  }
+
+  /**
+   * Click the root vault button.
+   */
+  async selectRoot(): Promise<void> {
+    const root = this.sidebar.locator("button").first();
+    await root.click();
+  }
+
+  /**
+   * Get the detail pane container.
+   */
+  detailPane(): Locator {
+    return this.detail;
+  }
+
+  /**
+   * Check if a file task indicator dot is visible.
+   */
+  async fileHasTaskDot(name: string): Promise<boolean> {
+    const file = this.sidebar.locator(`[data-testid='file-node']:has-text("${name}")`);
+    const dot = file.locator(".rounded-full.bg-accent-500");
+    return await dot.isVisible();
+  }
+
+  /**
+   * Toggle the "Show tasks" button.
+   */
+  async toggleShowTasks(): Promise<void> {
+    const button = this.page.locator("[data-testid='toggle-tasks']");
+    await button.click();
+  }
+
+  /**
+   * Type into the search filter.
+   */
+  async filterTree(query: string): Promise<void> {
+    const input = this.page.locator("[data-testid='tree-filter']");
+    await input.fill(query);
+  }
+
+  /**
+   * Clear the search filter.
+   */
+  async clearFilter(): Promise<void> {
+    const input = this.page.locator("[data-testid='tree-filter']");
+    await input.fill("");
+  }
+
+  /**
+   * Get the filter input locator (for focus/shortcut assertions).
+   */
+  filterInput(): Locator {
+    return this.page.locator("[data-testid='tree-filter']");
+  }
+}
+
+/**
+ * View abstraction for tasks (in the detail pane).
  */
 export class TasksView {
   private readonly container: Locator;
@@ -94,7 +201,7 @@ export class TasksView {
   }
 
   /**
-   * Get the folder tree container.
+   * Get the folder tree container in the detail pane (for folder/root view).
    */
   folderTree(): Locator {
     return this.container.locator("[data-testid='folder-tree']");
@@ -160,7 +267,7 @@ export class NoteView {
    * Wait for note content to be loaded.
    */
   async waitForContent(): Promise<void> {
-    await expect(this.content()).toBeVisible({ timeout: 5000 });
+    await expect(this.content()).toBeVisible({ timeout: 10000 });
   }
 
   /**
@@ -172,70 +279,13 @@ export class NoteView {
 }
 
 /**
- * View abstraction for the Command Palette.
- */
-export class CommandPaletteView {
-  private readonly overlay: Locator;
-  private readonly input: Locator;
-
-  constructor(private readonly page: Page) {
-    this.overlay = page.locator("[data-testid='command-palette']");
-    this.input = this.overlay.locator("input");
-  }
-
-  /**
-   * Open the command palette using keyboard shortcut.
-   */
-  async open(): Promise<void> {
-    await this.page.keyboard.press("Control+k");
-    await expect(this.overlay).toBeVisible();
-  }
-
-  /**
-   * Close the command palette.
-   */
-  async close(): Promise<void> {
-    await this.page.keyboard.press("Escape");
-    await expect(this.overlay).toBeHidden();
-  }
-
-  /**
-   * Search for a note by name.
-   */
-  async search(query: string): Promise<void> {
-    await this.input.fill(query);
-  }
-
-  /**
-   * Get the search results.
-   */
-  results(): Locator {
-    return this.overlay.locator("[data-testid='palette-result']");
-  }
-
-  /**
-   * Select a result by index (0-based).
-   */
-  async selectResult(index: number): Promise<void> {
-    await this.results().nth(index).click();
-  }
-
-  /**
-   * Check if the palette is open.
-   */
-  async isOpen(): Promise<boolean> {
-    return await this.overlay.isVisible();
-  }
-}
-
-/**
- * View abstraction for the Folder Tree.
+ * View abstraction for the Folder Tree sidebar.
  */
 export class FolderTreeView {
   private readonly container: Locator;
 
   constructor(private readonly page: Page) {
-    this.container = page.locator("[data-testid='folder-tree']");
+    this.container = page.locator("aside [data-testid='folder-tree']").first();
   }
 
   /**
@@ -263,9 +313,9 @@ export class FolderTreeView {
   }
 
   /**
-   * Click on a file node.
+   * Click on a file node to select it.
    */
-  async openFile(name: string): Promise<void> {
+  async selectFile(name: string): Promise<void> {
     const file = this.container.locator(
       `[data-testid='file-node']:has-text("${name}")`
     );

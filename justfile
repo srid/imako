@@ -62,13 +62,3 @@ dev:
 [group('e2e')]
 e2e:
     nix run .#e2e
-
-# Start e2e server with example vault (for developing tests)
-[group('e2e')]
-e2e-server:
-    nix run .#e2e-server
-
-# Run e2e tests against running e2e-server
-[group('e2e')]
-e2e-test:
-    cd tests && E2E_BASE_URL=http://localhost:4019 npm run e2e
