@@ -20,3 +20,7 @@
 ## TypeScript Types
 
 - `frontend/src/types.ts` is AUTO-GENERATED from Haskell via `just generate-types`. NEVER edit it manually. Always run `just generate-types` after changing backend protocol types.
+
+## Haskell
+
+- Use `FilePath` for file/folder paths in protocol types, not `Text`. Keep types semantically consistent (e.g. `vaultPath :: FilePath`, `dailyNotesFolder :: Maybe FilePath`).

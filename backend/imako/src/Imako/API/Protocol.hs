@@ -51,7 +51,7 @@ data VaultInfo = VaultInfo
   , today :: Day
   , notes :: Map Text UTCTime
   -- ^ All note paths (vault-relative) with last modified time
-  , dailyNotesFolder :: Maybe Text
+  , dailyNotesFolder :: Maybe FilePath
   -- ^ Folder path for daily notes (from Obsidian config), Nothing if not configured
   }
   deriving stock (Show, Eq, Generic)

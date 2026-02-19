@@ -84,7 +84,7 @@ mkVaultInfo :: FilePath -> AppState -> VaultInfo
 mkVaultInfo path appState =
   let todayVal = appState.today
       notesMap = Map.fromList $ map (\n -> (toText n.path, n.modifiedAt)) $ Ix.toList appState.vault.notes
-      dailyFolder = toText . (.folder) <$> appState.vault.dailyNotesConfig
+      dailyFolder = (.folder) <$> appState.vault.dailyNotesConfig
    in VaultInfo
         { vaultPath = path
         , vaultName = toText $ takeBaseName path
