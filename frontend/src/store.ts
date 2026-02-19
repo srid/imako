@@ -6,7 +6,6 @@
  *
  * - vaultInfo: Shared connection info (always available once connected)
  * - routeData: Route-specific data (sum type - one active at a time)
- * - selectedPath: Currently selected path in the folder tree
  */
 
 import { createSignal } from "solid-js";
@@ -34,6 +33,3 @@ export const [routeData, setRouteData] = createSignal<RouteData>(null);
 
 // Connection status
 export const [isConnected, setIsConnected] = createSignal(false);
-
-// Currently selected path in the folder tree (null = root)
-export const [selectedPath, setSelectedPath] = createSignal<string | null>(null);

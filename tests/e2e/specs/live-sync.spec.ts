@@ -43,7 +43,7 @@ test.describe("Live Sync", () => {
   });
 
   test("note content updates when file changes", async ({ app }) => {
-    await app.navigateTo("/n/Notes%2FWelcome.md");
+    await app.navigateTo("/p/Notes%2FWelcome.md");
     const note = app.note();
     await note.waitForContent();
 

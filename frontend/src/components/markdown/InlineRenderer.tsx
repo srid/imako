@@ -122,8 +122,8 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
               const isWikilink = kvs.some(([k, _v]) => k === "data-wikilink");
               const wikilinkTarget = kvs.find(([k]) => k === "data-wikilink")?.[1];
               
-              // Internal link (starts with /n/)
-              const isInternal = url.startsWith("/n/");
+              // Internal link (starts with /p/)
+              const isInternal = url.startsWith("/p/");
               
               // Broken link: render as non-clickable span
               if (isBroken) {
@@ -147,7 +147,7 @@ export const InlineRenderer: Component<{ inlines: Inline[] }> = (props) => {
                 const handleClick = () => navigate(url);
                 const displayText = inlines.length > 0 
                   ? inlines.map(il => il.t === "Str" ? il.c : il.t === "Space" ? " " : "").join("")
-                  : wikilinkTarget || decodeURIComponent(url.slice(3)); // Remove /n/ prefix
+                  : wikilinkTarget || decodeURIComponent(url.slice(3)); // Remove /p/ prefix
                 return (
                   <span 
                     class={isWikilink 

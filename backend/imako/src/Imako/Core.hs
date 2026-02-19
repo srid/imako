@@ -142,7 +142,7 @@ enrichInlines notes = map enrichInline
            in case resolved of
                 Just note ->
                   -- Resolved: set URL to internal route
-                  let newUrl = "/n/" <> encodePathComponent (toText note.path)
+                  let newUrl = "/p/" <> encodePathComponent (toText note.path)
                    in Link (id', classes, wikilinkAttr : cleanKvs) linkInlines (newUrl, title)
                 Nothing ->
                   -- Broken: empty URL, add data-broken

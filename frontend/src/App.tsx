@@ -4,7 +4,6 @@ import { isConnected } from "@/store";
 import { connectVault } from "@/sync/websocket";
 import { Header } from "@/components/Header";
 import VaultPage from "@/pages/VaultPage";
-import NotesPage from "@/pages/NotesPage";
 
 const Layout: Component<{ children?: any }> = (props) => {
   return (
@@ -18,8 +17,6 @@ const Layout: Component<{ children?: any }> = (props) => {
     </div>
   );
 };
-
-
 
 const App: Component = () => {
   onMount(() => {
@@ -41,7 +38,7 @@ const App: Component = () => {
       >
         <HashRouter root={Layout}>
           <Route path="/" component={VaultPage} />
-          <Route path="/n/*notePath" component={NotesPage} />
+          <Route path="/p/*vaultPath" component={VaultPage} />
         </HashRouter>
       </Show>
     </div>

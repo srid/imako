@@ -2,7 +2,6 @@ import { Component, For, Show, createMemo } from "solid-js";
 import type { FolderNode as FolderNodeType, Task } from "@/types";
 import { Icons } from "@/utils/icons";
 import { isCollapsed, toggleCollapse, showTasks, treeFilter } from "@/state/filters";
-import { selectedPath, setSelectedPath } from "@/store";
 
 /**
  * Check if a folder/file name matches the tree filter (case-insensitive).
@@ -31,7 +30,14 @@ const folderMatchesFilter = (node: FolderNodeType, filter: string): boolean => {
  */
 const hasTasks = (tasks: Task[]): boolean => tasks.length > 0;
 
-export const FolderTree: Component<{ node: FolderNodeType; path?: string }> = (props) => {
+interface FolderTreeProps {
+  node: FolderNodeType;
+  path?: string;
+  onSelect: (path: string | null) => void;
+  selectedPath: string | null;
+}
+
+export const FolderTree: Component<FolderTreeProps> = (props) => {
   const data = createMemo(() => ({
     currentPath: props.path ?? "",
     folders: Object.entries(props.node.subfolders),
@@ -44,9 +50,12 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string }> = (p
     <div data-testid="folder-tree" class="flex flex-col gap-0.5">
       <For each={data().folders}>
         {([name, subnode]) => {
-          const folderPath = () => `${data().currentPath}/${name}`;
+          const folderPath = () => {
+            const base = data().currentPath;
+            return base ? `${base}/${name}` : name;
+          };
           const nodeId = () => `folder:${folderPath()}`;
-          const isSelected = () => selectedPath() === folderPath();
+          const isSelected = () => props.selectedPath === folderPath();
 
           return (
             <Show when={folderMatchesFilter(subnode, filter())}>
@@ -67,11 +76,9 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string }> = (p
                       : "text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400"
                   }`}
                   onClick={(e) => {
-                    // Only select folder on click, don't toggle open/close
-                    // The toggle is handled by the details element natively
                     e.preventDefault();
                     e.stopPropagation();
-                    setSelectedPath(folderPath());
+                    props.onSelect(folderPath());
                     // Toggle open/close manually
                     const details = e.currentTarget.parentElement as HTMLDetailsElement;
                     details.open = !details.open;
@@ -86,7 +93,7 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string }> = (p
                   </span>
                 </summary>
                 <div class="pl-6 mt-0.5">
-                  <FolderTree node={subnode} path={folderPath()} />
+                  <FolderTree node={subnode} path={folderPath()} onSelect={props.onSelect} selectedPath={props.selectedPath} />
                 </div>
               </details>
             </Show>
@@ -96,14 +103,17 @@ export const FolderTree: Component<{ node: FolderNodeType; path?: string }> = (p
       <For each={data().files}>
         {([filename, tasks]) => {
           const isVisible = () => matchesFilter(filename, filter());
-          const filePath = () => `${data().currentPath}/${filename}`;
-          const isSelected = () => selectedPath() === filePath();
+          const filePath = () => {
+            const base = data().currentPath;
+            return base ? `${base}/${filename}` : filename;
+          };
+          const isSelected = () => props.selectedPath === filePath();
 
           return (
             <Show when={isVisible()}>
               <button
                 data-testid="file-node"
-                onClick={() => setSelectedPath(filePath())}
+                onClick={() => props.onSelect(filePath())}
                 class={`w-full text-left py-1.5 flex items-center gap-2 text-sm transition-colors rounded-md ${
                   isSelected()
                     ? "text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/20 font-medium px-2 -mx-2"

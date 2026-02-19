@@ -1,5 +1,6 @@
 import { Component, onMount, Show, createMemo, createEffect, For, on } from "solid-js";
-import { routeData, vaultInfo, selectedPath, setSelectedPath } from "@/store";
+import { useParams, useNavigate } from "@solidjs/router";
+import { routeData, vaultInfo } from "@/store";
 import { sendQuery } from "@/sync/websocket";
 import { FolderTree } from "@/components/FolderTree";
 import { TaskItem } from "@/components/TaskItem";
@@ -13,7 +14,7 @@ import { Icons } from "@/utils/icons";
 
 /**
  * Extract a subtree from a FolderNode by path.
- * Path format: "/folder/subfolder" or "/folder/file.md"
+ * Path format: "Notes/Tasks.md" or "Notes"
  */
 function getSubtree(
   node: FolderNode,
@@ -57,19 +58,31 @@ function collectTasks(
   // Files at this level
   for (const [filename, tasks] of Object.entries(node.files)) {
     if (tasks.length > 0) {
-      result.push({ path: `${basePath}/${filename}`, tasks });
+      const p = basePath ? `${basePath}/${filename}` : filename;
+      result.push({ path: p, tasks });
     }
   }
 
   // Recurse into subfolders
   for (const [name, subfolder] of Object.entries(node.subfolders)) {
-    result.push(...collectTasks(subfolder, `${basePath}/${name}`));
+    const p = basePath ? `${basePath}/${name}` : name;
+    result.push(...collectTasks(subfolder, p));
   }
 
   return result;
 }
 
 const VaultPage: Component = () => {
+  const params = useParams<{ vaultPath?: string }>();
+  const navigate = useNavigate();
+
+  // Derive selectedPath from route params (null = root)
+  const selectedPath = createMemo(() => {
+    const raw = params.vaultPath;
+    if (!raw) return null;
+    return decodeURIComponent(raw);
+  });
+
   // Request vault data on mount
   onMount(() => {
     sendQuery({ tag: "VaultQuery" });
@@ -93,9 +106,7 @@ const VaultPage: Component = () => {
       if (!tree) return;
       const target = getSubtree(tree.folderTree, path);
       if (target?.type === "file") {
-        // Strip leading "/" for the backend path
-        const notePath = path.startsWith("/") ? path.slice(1) : path;
-        sendQuery({ tag: "NotesQuery", contents: notePath });
+        sendQuery({ tag: "NotesQuery", contents: path });
       }
     })
   );
@@ -134,6 +145,15 @@ const VaultPage: Component = () => {
     };
   });
 
+  /** Navigate to a vault path */
+  const selectPath = (path: string | null) => {
+    if (path) {
+      navigate(`/p/${encodeURIComponent(path)}`);
+    } else {
+      navigate("/");
+    }
+  };
+
   return (
     <div class="grid grid-cols-1 md:grid-cols-[minmax(200px,1fr)_2fr] gap-6 min-h-[calc(100vh-12rem)]">
       {/* Left pane: Folder tree */}
@@ -150,7 +170,7 @@ const VaultPage: Component = () => {
             <>
               {/* Root node - click to deselect all */}
               <button
-                onClick={() => setSelectedPath(null)}
+                onClick={() => selectPath(null)}
                 class={`w-full text-left py-2 mb-2 text-sm font-semibold transition-colors rounded-md ${
                   selectedPath() === null
                     ? "text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/20 px-2 -mx-2"
@@ -162,7 +182,7 @@ const VaultPage: Component = () => {
                   {vaultInfo.vaultName || "Vault"}
                 </span>
               </button>
-              <FolderTree node={data().folderTree} />
+              <FolderTree node={data().folderTree} onSelect={selectPath} selectedPath={selectedPath()} />
             </>
           )}
         </Show>
@@ -258,11 +278,6 @@ const FileDetailView: Component<{
   today: string;
   notesData: NotesData | null;
 }> = (props) => {
-  const filePath = () => {
-    const p = props.path;
-    return p.startsWith("/") ? p.slice(1) : p;
-  };
-
   const visibleTasks = createMemo(() =>
     props.tasks.filter((t) => isTaskVisible(t, props.today))
   );
@@ -276,7 +291,7 @@ const FileDetailView: Component<{
           {props.name}
         </h2>
         <ObsidianEditLink
-          filePath={filePath()}
+          filePath={props.path}
           class="text-stone-400 hover:text-accent-600 dark:hover:text-accent-400"
         />
       </div>
@@ -301,7 +316,7 @@ const FileDetailView: Component<{
           Note
         </h3>
         <Show
-          when={props.notesData && props.notesData.notePath === filePath()}
+          when={props.notesData && props.notesData.notePath === props.path}
           fallback={
             <p class="text-sm text-stone-400 dark:text-stone-500">Loading note…</p>
           }
