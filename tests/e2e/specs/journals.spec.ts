@@ -15,7 +15,6 @@ test.describe("Journals - Sidebar Calendar", () => {
     const vault = app.vault();
     await vault.waitForVault();
 
-    await vault.toggleFolder("Daily");
     const journal = app.journal();
     await expect(journal.calendarWidget()).toBeVisible();
   });
@@ -24,7 +23,6 @@ test.describe("Journals - Sidebar Calendar", () => {
     const vault = app.vault();
     await vault.waitForVault();
 
-    await vault.toggleFolder("Daily");
     const journal = app.journal();
     await expect(journal.calendarMonth()).toContainText("February 2026");
   });
@@ -33,7 +31,6 @@ test.describe("Journals - Sidebar Calendar", () => {
     const vault = app.vault();
     await vault.waitForVault();
 
-    await vault.toggleFolder("Daily");
     const journal = app.journal();
 
     // Days with notes should be enabled
@@ -49,7 +46,6 @@ test.describe("Journals - Sidebar Calendar", () => {
     const vault = app.vault();
     await vault.waitForVault();
 
-    await vault.toggleFolder("Daily");
     const journal = app.journal();
 
     await journal.calendarPrev();
@@ -66,7 +62,6 @@ test.describe("Journals - Sidebar Calendar", () => {
     const vault = app.vault();
     await vault.waitForVault();
 
-    await vault.toggleFolder("Daily");
     const journal = app.journal();
 
     await journal.clickDay(17);

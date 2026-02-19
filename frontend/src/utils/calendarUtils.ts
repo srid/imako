@@ -14,16 +14,6 @@ export interface ParsedDate {
 }
 
 /**
- * Parse a "YYYY-MM-DD.md" filename into year/month/day.
- * Returns null if the filename doesn't match the expected pattern.
- */
-export function parseDateFilename(f: string): ParsedDate | null {
-  const m = f.match(/^(\d{4})-(\d{2})-(\d{2})\.md$/);
-  if (!m) return null;
-  return { year: +m[1], month: +m[2], day: +m[3] };
-}
-
-/**
  * Parse an ISO date string like "2026-02-19" into year/month/day.
  */
 export function parseISODate(iso: string): ParsedDate {
@@ -53,13 +43,4 @@ export function buildCalendarGrid(year: number, month: number): (number | null)[
  */
 export function isDayToday(year: number, month: number, day: number, today: ParsedDate): boolean {
   return year === today.year && month === today.month && day === today.day;
-}
-
-/**
- * Build a filename from year/month/day, e.g. "2026-02-19.md".
- */
-export function dateToFilename(year: number, month: number, day: number): string {
-  const mm = String(month).padStart(2, "0");
-  const dd = String(day).padStart(2, "0");
-  return `${year}-${mm}-${dd}.md`;
 }

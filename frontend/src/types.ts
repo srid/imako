@@ -39,6 +39,7 @@ export type FolderNode = IFolderNode;
 export interface IFolderNode {
   subfolders: {[k in string]: FolderNode};
   files: {[k in string]: Task[]};
+  dailyNoteDates: {[k in string]: string} | null;
 }
 
 export type Query = IVaultQuery | INotesQuery;

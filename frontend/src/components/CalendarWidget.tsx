@@ -1,16 +1,18 @@
 import { Component, createMemo, createSignal } from "solid-js";
-import { parseDateFilename, parseISODate, dateToFilename } from "@/utils/calendarUtils";
+import { parseISODate } from "@/utils/calendarUtils";
 import { MonthCalendar } from "@/components/MonthCalendar";
 
 interface CalendarWidgetProps {
-  /** Set of filenames (without path) that exist as daily notes, e.g. "2026-02-19.md" */
-  noteFiles: string[];
+  /** Map of filename → ISO date string (from FolderNode.dailyNoteDates) */
+  dailyNoteDates: Record<string, string>;
   /** ISO date string for today, e.g. "2026-02-19" */
   today: string;
-  /** Called when user clicks a day that has a note */
-  onSelectDate: (filename: string) => void;
-  /** Currently selected filename (for highlight) */
-  selectedFile?: string | null;
+  /** Called when user clicks a day that has a note; receives vault-relative path */
+  onSelectPath: (path: string) => void;
+  /** Currently selected vault path (for highlight) */
+  selectedPath?: string | null;
+  /** Folder path prefix for building vault-relative paths */
+  folderPath: string;
 }
 
 /**
@@ -23,13 +25,14 @@ export const CalendarWidget: Component<CalendarWidgetProps> = (props) => {
   const [viewYear, setViewYear] = createSignal(todayParsed().year);
   const [viewMonth, setViewMonth] = createSignal(todayParsed().month);
 
-  // Build map of day → filename for the currently viewed month
+  // Build map of day → vault path for the currently viewed month
   const noteDays = createMemo(() => {
     const map = new Map<number, string>();
-    for (const f of props.noteFiles) {
-      const p = parseDateFilename(f);
-      if (p && p.year === viewYear() && p.month === viewMonth()) {
-        map.set(p.day, f);
+    for (const [filename, dateStr] of Object.entries(props.dailyNoteDates)) {
+      const d = parseISODate(dateStr);
+      if (d.year === viewYear() && d.month === viewMonth()) {
+        const vaultPath = props.folderPath ? `${props.folderPath}/${filename}` : filename;
+        map.set(d.day, vaultPath);
       }
     }
     return map;
@@ -90,8 +93,8 @@ export const CalendarWidget: Component<CalendarWidgetProps> = (props) => {
         month={viewMonth()}
         noteDays={noteDays()}
         today={todayParsed()}
-        onClickDay={props.onSelectDate}
-        selectedFile={props.selectedFile}
+        onClickDay={props.onSelectPath}
+        selectedPath={props.selectedPath}
       />
     </div>
   );

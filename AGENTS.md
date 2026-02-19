@@ -20,7 +20,12 @@
 ## TypeScript Types
 
 - `frontend/src/types.ts` is AUTO-GENERATED from Haskell via `just generate-types`. NEVER edit it manually. Always run `just generate-types` after changing backend protocol types.
+- After adding/removing fields in `VaultInfo`, update the `emptyVaultInfo` default in `frontend/src/store.ts`.
 
 ## Haskell
 
 - Use `FilePath` for file/folder paths in protocol types, not `Text`. Keep types semantically consistent (e.g. `vaultPath :: FilePath`, `dailyNotesFolder :: Maybe FilePath`).
+
+## Architecture
+
+- Heavy lifting (parsing, data processing, structuring) belongs in the **backend**. The frontend should receive structured data and only handle rendering/UI logic. Do NOT duplicate backend logic (e.g. date parsing) in the frontend.

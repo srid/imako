@@ -5,14 +5,14 @@ interface MonthCalendarProps {
   year: number;
   /** 1-indexed month */
   month: number;
-  /** Map of day number → filename for days that have notes */
+  /** Map of day number → vault-relative path for days that have notes */
   noteDays: Map<number, string>;
   /** Today's parsed date */
   today: ParsedDate;
-  /** Called when a day with a note is clicked; receives the filename */
-  onClickDay: (filename: string) => void;
-  /** Currently selected filename (for highlight), sidebar only */
-  selectedFile?: string | null;
+  /** Called when a day with a note is clicked; receives the vault-relative path */
+  onClickDay: (path: string) => void;
+  /** Currently selected vault path (for highlight) */
+  selectedPath?: string | null;
   /** Whether to show the month name header (used in main panel grids) */
   showHeader?: boolean;
 }
@@ -61,17 +61,17 @@ export const MonthCalendar: Component<MonthCalendarProps> = (props) => {
               return <span class="w-full aspect-square" />;
             }
 
-            const filename = () => props.noteDays.get(day);
-            const hasNote = () => !!filename();
+            const notePath = () => props.noteDays.get(day);
+            const hasNote = () => !!notePath();
             const today = () => isDayToday(props.year, props.month, day, props.today);
-            const selected = () => props.selectedFile != null && props.selectedFile === filename();
+            const selected = () => props.selectedPath != null && props.selectedPath === notePath();
 
             return (
               <button
                 data-testid={`calendar-day-${day}`}
                 onClick={() => {
-                  const f = filename();
-                  if (f) props.onClickDay(f);
+                  const p = notePath();
+                  if (p) props.onClickDay(p);
                 }}
                 disabled={!hasNote()}
                 class={`

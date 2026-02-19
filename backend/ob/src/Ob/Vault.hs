@@ -2,6 +2,7 @@
 module Ob.Vault (
   Vault (..),
   getVault,
+  getDailyNotes,
   withLiveVault,
 )
 where

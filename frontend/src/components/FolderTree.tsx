@@ -115,17 +115,11 @@ export const FolderTree: Component<FolderTreeProps> = (props) => {
                     }
                   >
                     <CalendarWidget
-                      noteFiles={Object.keys(subnode.files)}
+                      dailyNoteDates={subnode.dailyNoteDates!}
                       today={vaultInfo.today}
-                      onSelectDate={(filename: string) => {
-                        const path = folderPath() ? `${folderPath()}/${filename}` : filename;
-                        props.onSelect(path);
-                      }}
-                      selectedFile={
-                        props.selectedPath?.startsWith(folderPath() + "/")
-                          ? props.selectedPath.slice(folderPath().length + 1)
-                          : null
-                      }
+                      onSelectPath={props.onSelect}
+                      selectedPath={props.selectedPath}
+                      folderPath={folderPath()}
                     />
                   </Show>
                 </div>

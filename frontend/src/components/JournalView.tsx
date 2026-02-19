@@ -1,11 +1,10 @@
 import { Component, createMemo, For } from "solid-js";
-import type { FolderNode } from "@/types";
-import { parseDateFilename, parseISODate, type ParsedDate } from "@/utils/calendarUtils";
+import { parseISODate, type ParsedDate } from "@/utils/calendarUtils";
 import { MonthCalendar } from "@/components/MonthCalendar";
 
 interface JournalViewProps {
-  /** The daily notes folder node */
-  node: FolderNode;
+  /** Map of filename → ISO date string (from FolderNode.dailyNoteDates) */
+  dailyNoteDates: Record<string, string>;
   /** Path of the daily notes folder (e.g. "Daily") */
   folderPath: string;
   /** Today's date as ISO string, e.g. "2026-02-19" */
@@ -14,26 +13,24 @@ interface JournalViewProps {
   onSelectPath: (path: string) => void;
 }
 
-interface ParsedNote {
-  year: number;
-  month: number;
-  day: number;
+interface NoteEntry {
   filename: string;
+  date: ParsedDate;
 }
 
 /**
- * Group parsed notes by year → month (both descending).
+ * Group note entries by year → month (both descending).
  */
-function groupByYearMonth(notes: ParsedNote[]): { year: number; months: { month: number; days: ParsedNote[] }[] }[] {
-  const yearMap = new Map<number, Map<number, ParsedNote[]>>();
-  for (const n of notes) {
-    if (!yearMap.has(n.year)) yearMap.set(n.year, new Map());
-    const monthMap = yearMap.get(n.year)!;
-    if (!monthMap.has(n.month)) monthMap.set(n.month, []);
-    monthMap.get(n.month)!.push(n);
+function groupByYearMonth(entries: NoteEntry[]): { year: number; months: { month: number; entries: NoteEntry[] }[] }[] {
+  const yearMap = new Map<number, Map<number, NoteEntry[]>>();
+  for (const e of entries) {
+    if (!yearMap.has(e.date.year)) yearMap.set(e.date.year, new Map());
+    const monthMap = yearMap.get(e.date.year)!;
+    if (!monthMap.has(e.date.month)) monthMap.set(e.date.month, []);
+    monthMap.get(e.date.month)!.push(e);
   }
 
-  const result: { year: number; months: { month: number; days: ParsedNote[] }[] }[] = [];
+  const result: { year: number; months: { month: number; entries: NoteEntry[] }[] }[] = [];
   const sortedYears = [...yearMap.keys()].sort((a, b) => b - a);
   for (const year of sortedYears) {
     const monthMap = yearMap.get(year)!;
@@ -42,7 +39,7 @@ function groupByYearMonth(notes: ParsedNote[]): { year: number; months: { month:
       year,
       months: sortedMonths.map((month) => ({
         month,
-        days: monthMap.get(month)!,
+        entries: monthMap.get(month)!,
       })),
     });
   }
@@ -52,23 +49,21 @@ function groupByYearMonth(notes: ParsedNote[]): { year: number; months: { month:
 /**
  * Full calendar view for the daily notes folder.
  * Shows all months that have notes as mini calendar grids.
- * Zero server requests — renders entirely from the folder file list.
+ * Uses structured data from the backend — zero parsing.
  */
 export const JournalView: Component<JournalViewProps> = (props) => {
-  const parsed = createMemo(() => {
-    const notes: ParsedNote[] = [];
-    for (const f of Object.keys(props.node.files)) {
-      const p = parseDateFilename(f);
-      if (p) notes.push({ ...p, filename: f });
+  const entries = createMemo(() => {
+    const result: NoteEntry[] = [];
+    for (const [filename, dateStr] of Object.entries(props.dailyNoteDates)) {
+      result.push({ filename, date: parseISODate(dateStr) });
     }
-    return notes;
+    return result;
   });
-  const grouped = createMemo(() => groupByYearMonth(parsed()));
+  const grouped = createMemo(() => groupByYearMonth(entries()));
   const todayParts = createMemo(() => parseISODate(props.today));
 
-  const handleClickDay = (filename: string) => {
-    const path = props.folderPath ? `${props.folderPath}/${filename}` : filename;
-    props.onSelectPath(path);
+  const handleClickDay = (vaultPath: string) => {
+    props.onSelectPath(vaultPath);
   };
 
   return (
@@ -86,8 +81,9 @@ export const JournalView: Component<JournalViewProps> = (props) => {
                 {(monthGroup) => {
                   const noteDays = createMemo(() => {
                     const map = new Map<number, string>();
-                    for (const n of monthGroup.days) {
-                      map.set(n.day, n.filename);
+                    for (const e of monthGroup.entries) {
+                      const vaultPath = props.folderPath ? `${props.folderPath}/${e.filename}` : e.filename;
+                      map.set(e.date.day, vaultPath);
                     }
                     return map;
                   });

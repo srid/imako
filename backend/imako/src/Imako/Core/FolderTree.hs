@@ -1,10 +1,12 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Imako.Core.FolderTree (
   FolderNode (..),
   buildFolderTree,
+  annotateDailyNotes,
   hasDueTasks,
   isTaskDue,
   flattenTree,
@@ -16,14 +18,21 @@ import Data.Aeson.TypeScript.Internal (TSDeclaration)
 import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
 import Data.Map.Strict qualified as Map
 import Data.Time (Day)
-import Ob (Task)
+import Ob (DailyNote (..), Task)
 import Ob.Task (TaskProperties (..))
 import Ob.Task qualified
 import System.FilePath (splitDirectories)
 
+-- | Day serializes as ISO date string
+instance TypeScript Day where
+  getTypeScriptType _ = "string"
+  getTypeScriptDeclarations _ = []
+
 data FolderNode = FolderNode
   { subfolders :: Map Text FolderNode
   , files :: Map Text [Task]
+  , dailyNoteDates :: Maybe (Map Text Day)
+  -- ^ Only set on the daily notes folder; maps filename to parsed date
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
@@ -38,7 +47,7 @@ folderTreeTsDeclarations = getTypeScriptDeclarations (Proxy @FolderNode)
 buildFolderTree :: Map FilePath [Task] -> FolderNode
 buildFolderTree = Map.foldlWithKey' insertFile emptyNode
   where
-    emptyNode = FolderNode Map.empty Map.empty
+    emptyNode = FolderNode Map.empty Map.empty Nothing
 
     insertFile :: FolderNode -> FilePath -> [Task] -> FolderNode
     insertFile node filepath tasks =
@@ -53,9 +62,28 @@ buildFolderTree = Map.foldlWithKey' insertFile emptyNode
     insertPath node (folder : rest) tasks =
       -- Branch: recurse into subfolder
       let subfolderName = toText folder
-          existingSubfolder = Map.findWithDefault emptyNode subfolderName node.subfolders
+          existingSubfolder = Map.findWithDefault (FolderNode Map.empty Map.empty Nothing) subfolderName node.subfolders
           updatedSubfolder = insertPath existingSubfolder rest tasks
        in node {subfolders = Map.insert subfolderName updatedSubfolder node.subfolders}
+
+{- | Annotate the daily notes folder in the tree with parsed dates.
+Finds the subfolder matching the daily notes folder path and sets its dailyNoteDates.
+-}
+annotateDailyNotes :: [DailyNote] -> FilePath -> FolderNode -> FolderNode
+annotateDailyNotes dailyNotes folderPath root =
+  let dateMap =
+        Map.fromList $
+          map (\dn -> (toText $ takeFileName dn.notePath, dn.day)) dailyNotes
+      folderName = toText folderPath
+   in case Map.lookup folderName root.subfolders of
+        Just sub ->
+          let annotated = sub {dailyNoteDates = Just dateMap}
+           in root {subfolders = Map.insert folderName annotated root.subfolders}
+        Nothing -> root
+  where
+    takeFileName fp = case reverse (splitDirectories fp) of
+      (f : _) -> f
+      [] -> fp
 
 -- | Check if a task is due (incomplete/in-progress and due date <= today)
 isTaskDue :: Day -> Task -> Bool

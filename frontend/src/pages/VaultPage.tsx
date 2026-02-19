@@ -130,7 +130,7 @@ const VaultPage: Component = () => {
         return {
           type: "dailyNotes" as const,
           name: target.name,
-          node: target.node,
+          dailyNoteDates: target.node.dailyNoteDates ?? {},
           folderPath: path,
         };
       }
@@ -263,7 +263,7 @@ const VaultPage: Component = () => {
                 >
                   {/* Daily notes folder: calendar view */}
                   <JournalView
-                    node={(detail() as any).node}
+                    dailyNoteDates={(detail() as any).dailyNoteDates}
                     folderPath={(detail() as any).folderPath}
                     today={vaultInfo.today}
                     onSelectPath={selectPath}
