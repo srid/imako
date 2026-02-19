@@ -2,6 +2,8 @@
 
 ## E2E Testing
 
+**Standards:** Follow the best practices at <https://srid.ca/playwright>.
+
 **Command:**
 - `just e2e` - Run all E2E tests (starts server, runs tests, exits)
 

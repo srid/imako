@@ -29,6 +29,12 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('tests/package-lock.json') }}
+
       - name: Install test dependencies
         run: |
           cd tests

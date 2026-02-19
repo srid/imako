@@ -17,6 +17,7 @@ const VAULT_PATH = path.join(process.cwd(), "..", "example");
 const SYNC_TIMEOUT = 10000;
 
 test.describe("Live Sync", () => {
+  test.describe.configure({ mode: 'serial' });
   // ─── Content modification ────────────────────────────────────────
 
   test("new task appears when file is modified", async ({ app }) => {
