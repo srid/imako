@@ -14,6 +14,8 @@ module Ob.LinkGraph (
   -- * Graph construction
   buildNoteEdges,
   removeNoteEdges,
+  updateNoteEdges,
+  buildLinkGraph,
 
   -- * Queries
   backlinksOf,

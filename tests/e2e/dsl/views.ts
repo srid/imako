@@ -381,6 +381,20 @@ export class NoteView {
   async textContent(): Promise<string> {
     return (await this.content().textContent()) ?? "";
   }
+
+  /**
+   * Get the backlinks section container.
+   */
+  backlinksSection(): Locator {
+    return this.container.locator("[data-testid='backlinks-section']");
+  }
+
+  /**
+   * Get individual backlink items.
+   */
+  backlinkItems(): Locator {
+    return this.container.locator("[data-testid='backlink-item']");
+  }
 }
 
 /**

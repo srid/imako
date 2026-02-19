@@ -129,7 +129,7 @@ mkNotesData _vaultPath vault reqPath =
   let ast = case Ix.getOne (Ix.getEQ reqPath vault.notes) of
         Just note -> toJSON $ enrichWikilinks vault.notes note.content
         Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
-   in NotesData {notePath = reqPath, noteAst = ast}
+   in NotesData {notePath = reqPath, noteAst = ast, backlinks = Ob.backlinksOf reqPath vault.linkGraph}
 
 {- | Transform wikilinks in inline elements into regular internal links.
 

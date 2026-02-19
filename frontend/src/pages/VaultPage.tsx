@@ -278,6 +278,7 @@ const VaultPage: Component = () => {
                 tasks={(detail() as any).tasks}
                 today={vaultInfo.today}
                 notesData={notesData()}
+                onSelectPath={selectPath}
               />
             </Show>
           )}
@@ -389,6 +390,7 @@ const FileDetailView: Component<{
   tasks: Task[];
   today: string;
   notesData: NotesData | null;
+  onSelectPath: (path: string) => void;
 }> = (props) => {
   const visibleTasks = createMemo(() =>
     props.tasks.filter((t) => isTaskVisible(t, props.today))
@@ -438,6 +440,29 @@ const FileDetailView: Component<{
           </div>
         </Show>
       </div>
+
+      {/* Backlinks */}
+      <Show when={props.notesData && props.notesData.notePath === props.path && props.notesData!.backlinks.length > 0}>
+        <div data-testid="backlinks-section" class="border-t border-stone-200 dark:border-stone-700 pt-4">
+          <h3 class="text-sm font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-3">
+            Backlinks
+          </h3>
+          <div class="grid gap-1">
+            <For each={props.notesData!.backlinks}>
+              {(path) => (
+                <button
+                  data-testid="backlink-item"
+                  onClick={() => props.onSelectPath(path)}
+                  class="w-full text-left py-2 px-3 flex items-center gap-2.5 text-sm rounded-lg transition-colors hover:bg-accent-50 dark:hover:bg-accent-900/20 text-stone-600 dark:text-stone-300 hover:text-accent-600 dark:hover:text-accent-400"
+                >
+                  <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>
+                  <span class="truncate">{path}</span>
+                </button>
+              )}
+            </For>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 };
