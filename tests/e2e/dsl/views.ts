@@ -47,11 +47,27 @@ export class VaultView {
   }
 
   /**
-   * Click a folder in the sidebar tree to select it.
+   * Click a folder's icon/name to select it (navigate to it in main panel).
    */
   async selectFolder(name: string): Promise<void> {
-    const folder = this.sidebar.locator(`[data-testid='folder-node'] summary:has-text("${name}")`);
-    await folder.click();
+    const label = this.sidebar.locator(`[data-testid='folder-node']`).filter({ hasText: name }).first().locator("[data-testid='folder-label']");
+    await label.click();
+  }
+
+  /**
+   * Click a folder's chevron arrow to toggle expand/collapse.
+   */
+  async toggleFolder(name: string): Promise<void> {
+    const toggle = this.sidebar.locator(`[data-testid='folder-node']`).filter({ hasText: name }).first().locator("[data-testid='folder-toggle']");
+    await toggle.click();
+  }
+
+  /**
+   * Check if a folder node is expanded (details[open]).
+   */
+  async isFolderOpen(name: string): Promise<boolean> {
+    const details = this.sidebar.locator(`[data-testid='folder-node']`).filter({ hasText: name }).first();
+    return details.evaluate((el) => (el as HTMLDetailsElement).open);
   }
 
   /**

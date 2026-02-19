@@ -62,32 +62,41 @@ export const FolderTree: Component<FolderTreeProps> = (props) => {
               <details
                 data-testid="folder-node"
                 open={!isCollapsed(nodeId())}
-                onToggle={(e) => {
-                  const isOpen = (e.target as HTMLDetailsElement).open;
-                  if (isOpen && isCollapsed(nodeId())) toggleCollapse(nodeId());
-                  else if (!isOpen && !isCollapsed(nodeId())) toggleCollapse(nodeId());
-                }}
                 class="group/folder"
               >
                 <summary
-                  class={`list-none cursor-pointer py-1.5 flex items-center gap-2 text-sm font-semibold select-none transition-colors ${
+                  class={`list-none cursor-default py-1.5 flex items-center gap-2 text-sm font-semibold select-none transition-colors ${
                     isSelected()
                       ? "text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/20 rounded-md px-2 -mx-2"
                       : "text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400"
                   }`}
                   onClick={(e) => {
+                    // Prevent default <summary> toggle — we handle it per-area
                     e.preventDefault();
-                    e.stopPropagation();
-                    props.onSelect(folderPath());
-                    // Toggle open/close manually
-                    const details = e.currentTarget.parentElement as HTMLDetailsElement;
-                    details.open = !details.open;
                   }}
                 >
-                  <span class="w-4 h-4 flex items-center justify-center text-stone-400 dark:text-stone-500 transition-transform group-open/folder:rotate-90">
+                  {/* Chevron: toggle expand/collapse only */}
+                  <span
+                    data-testid="folder-toggle"
+                    class="w-4 h-4 flex items-center justify-center text-stone-400 dark:text-stone-500 transition-transform group-open/folder:rotate-90 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleCollapse(nodeId());
+                    }}
+                  >
                     {Icons.chevronRight}
                   </span>
-                  <span class="flex items-center gap-2">
+                  {/* Icon + name: navigate to folder */}
+                  <span
+                    data-testid="folder-label"
+                    class="flex items-center gap-2 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      props.onSelect(folderPath());
+                    }}
+                  >
                     <span class="text-accent-500">{Icons.folder}</span>
                     <span>{name}</span>
                   </span>

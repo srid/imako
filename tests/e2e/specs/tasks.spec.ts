@@ -129,6 +129,40 @@ test.describe("Vault Tasks", () => {
     expect(await tasks.taskCount()).toBe(initialCount);
   });
 
+  test("folder chevron toggles expand without navigating, label navigates without toggling", async ({ app }) => {
+    const vault = app.vault();
+    await vault.waitForVault();
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+    const tree = app.folderTree();
+
+    // Initially folder is expanded (default open)
+    expect(await vault.isFolderOpen("Notes")).toBe(true);
+
+    // Click chevron — should collapse, but NOT navigate (root tasks still visible)
+    await vault.toggleFolder("Notes");
+    expect(await vault.isFolderOpen("Notes")).toBe(false);
+    // Verify we're still at root (all task groups visible)
+    await expect(tasks.taskItems().filter({ hasText: "Add live sync tests" })).toBeVisible();
+
+    // Click chevron again — should expand, still no navigation
+    await vault.toggleFolder("Notes");
+    expect(await vault.isFolderOpen("Notes")).toBe(true);
+
+    // Note the folder's open state before label click
+    const openBefore = await vault.isFolderOpen("Notes");
+
+    // Click folder label — should navigate to Notes folder, NOT toggle expand/collapse
+    await vault.selectFolder("Notes");
+
+    // The folder's expand state should be unchanged
+    expect(await vault.isFolderOpen("Notes")).toBe(openBefore);
+
+    // Should see only Notes-scoped tasks
+    await expect(tasks.taskItems().filter({ hasText: "Add mobile support" })).toBeVisible();
+    await expect(tasks.taskItems().filter({ hasText: "Add live sync tests" })).toHaveCount(0);
+  });
+
   test("folder selection scopes tasks to that subtree", async ({ app }) => {
     const vault = app.vault();
     const tasks = app.tasks();
