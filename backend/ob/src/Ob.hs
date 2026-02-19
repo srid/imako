@@ -9,6 +9,7 @@ module Ob (
   IxTask,
   Vault (..),
   IxNote,
+  LinkGraph,
   DailyNote (..),
   DailyNotesConfig (..),
   getVault,
@@ -23,6 +24,7 @@ where
 import Ob.DailyNotes (DailyNote (..), DailyNotesConfig (..), getTodayNotePath, loadDailyNotesConfig)
 import Ob.Html (noteToHtml)
 import Ob.Link (obsidianOpenUrl)
+import Ob.LinkGraph (LinkGraph)
 import Ob.Note (IxNote, Note (..))
 import Ob.Task (IxTask, Task (..), TaskStatus (..))
 import Ob.Vault (Vault (..), getVault, withLiveVault)

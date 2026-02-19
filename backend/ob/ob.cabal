@@ -27,6 +27,7 @@ library
     Ob.DailyNotes
     Ob.Html
     Ob.Link
+    Ob.LinkGraph
     Ob.Markdown
     Ob.Note
     Ob.Task
@@ -60,6 +61,7 @@ library
   build-depends:
     , aeson
     , aeson-typescript
+    , algebraic-graphs
     , async
     , base
     , commonmark-simple

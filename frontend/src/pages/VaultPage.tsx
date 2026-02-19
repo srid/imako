@@ -281,7 +281,7 @@ const VaultPage: Component = () => {
 };
 
 /**
- * Folder task view: shows tasks grouped by files, same hierarchy as original Tasks page.
+ * Folder task view: shows tasks grouped by files.
  */
 const FolderTaskView: Component<{
   name: string;

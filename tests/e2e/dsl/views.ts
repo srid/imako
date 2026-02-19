@@ -86,6 +86,27 @@ export class VaultView {
   }
 
   /**
+   * Get the folder contents listing container.
+   */
+  folderContents(): Locator {
+    return this.detail.locator("[data-testid='folder-contents']");
+  }
+
+  /**
+   * Get folder items in the folder contents listing.
+   */
+  folderContentsFolders(): Locator {
+    return this.detail.locator("[data-testid='folder-contents-folder']");
+  }
+
+  /**
+   * Get file items in the folder contents listing.
+   */
+  folderContentsFiles(): Locator {
+    return this.detail.locator("[data-testid='folder-contents-file']");
+  }
+
+  /**
    * Check if a file task indicator dot is visible.
    */
   async fileHasTaskDot(name: string): Promise<boolean> {
