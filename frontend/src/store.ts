@@ -18,6 +18,7 @@ const emptyVaultInfo: VaultInfo = {
   vaultPath: "",
   today: "",
   notes: {},
+  dailyNotesFolder: null,
 };
 
 // Shared vault info (extracted from any result)

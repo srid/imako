@@ -6,10 +6,12 @@
  *
  * Expected vault state (example/):
  * Filters hide Completed/Cancelled tasks by default.
- * Visible tasks (17 total):
+ * Visible tasks (21 total):
  * - Notes/Tasks.md: 13 visible (2 completed/cancelled hidden)
  *   - 6 are nested subtasks rendered inside their parents
  * - Projects/Active.md: 4 visible (1 completed hidden)
+ * - Daily/2026-02-17.md: 2 visible (1 completed hidden)
+ * - Daily/2026-02-19.md: 2 visible (1 completed hidden)
  */
 
 import { test, expect, TaskExpectation } from "../dsl";
@@ -36,9 +38,15 @@ const EXPECTED_TASKS: TaskExpectation[] = [
   { text: "Add screenshots", status: "Incomplete" },
   { text: "Complete E2E test infrastructure", status: "Incomplete" },
   { text: "Write user guide", status: "Incomplete" },
+  // Daily/2026-02-17.md
+  { text: "Schedule team sync meeting", status: "Incomplete" },
+  { text: "Update documentation", status: "Incomplete" },
+  // Daily/2026-02-19.md
+  { text: "Implement CalendarWidget component", status: "Incomplete" },
+  { text: "Build JournalView for main panel", status: "Incomplete" },
 ];
 
-const EXPECTED_FOLDERS = ["Notes", "Projects"];
+const EXPECTED_FOLDERS = ["Daily", "Notes", "Projects"];
 
 test.describe("Vault Tasks", () => {
   test.beforeEach(async ({ app }) => {

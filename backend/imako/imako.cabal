@@ -79,6 +79,7 @@ library
   import:          shared
   exposed-modules:
     Imako.API.Protocol
+    Imako.API.TypeScriptOrphans
     Imako.Core
     Imako.Core.FolderTree
 
@@ -87,6 +88,7 @@ executable imako
   main-is:       Main.hs
   other-modules:
     Imako.API.Protocol
+    Imako.API.TypeScriptOrphans
     Imako.API.WebSocket
     Imako.CLI
     Imako.Core

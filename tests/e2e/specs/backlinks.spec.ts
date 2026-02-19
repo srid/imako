@@ -7,11 +7,12 @@
  * Expected wikilink graph (example/):
  * - Notes/Welcome.md → Tasks, Projects/Active
  * - Notes/Wikilinks.md → Welcome, Tasks, Projects/Active
+ * - Notes/MarkdownShowcase.md → Welcome
  * - Projects/Active.md → Notes/Welcome
  * - Notes/Tasks.md → (Alice, Box — broken, no backlink edges)
  *
  * Therefore:
- * - Welcome: backlinks from Wikilinks, Active
+ * - Welcome: backlinks from Wikilinks, Active, MarkdownShowcase
  * - Tasks: backlinks from Welcome, Wikilinks
  * - Active: backlinks from Welcome, Wikilinks
  * - Wikilinks: no backlinks
@@ -20,7 +21,7 @@
 import { test, expect } from "../dsl";
 
 test.describe("Backlinks", () => {
-  test("Welcome note shows backlinks from Wikilinks and Active", async ({ app }) => {
+  test("Welcome note shows backlinks from Wikilinks, Active, and MarkdownShowcase", async ({ app }) => {
     await app.navigateTo("/p/Notes%2FWelcome.md");
     const note = app.note();
     await note.waitForContent();
@@ -29,9 +30,10 @@ test.describe("Backlinks", () => {
     await expect(section).toBeVisible();
 
     const items = note.backlinkItems();
-    await expect(items).toHaveCount(2);
+    await expect(items).toHaveCount(3);
     await expect(items.filter({ hasText: "Notes/Wikilinks.md" })).toBeVisible();
     await expect(items.filter({ hasText: "Projects/Active.md" })).toBeVisible();
+    await expect(items.filter({ hasText: "Notes/MarkdownShowcase.md" })).toBeVisible();
   });
 
   test("Tasks note shows backlinks from Welcome and Wikilinks", async ({ app }) => {

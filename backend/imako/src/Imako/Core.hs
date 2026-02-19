@@ -85,11 +85,13 @@ mkVaultInfo :: FilePath -> AppState -> VaultInfo
 mkVaultInfo path appState =
   let todayVal = appState.today
       notesMap = Map.fromList $ map (\n -> (toText n.path, n.modifiedAt)) $ Ix.toList appState.vault.notes
+      dailyFolder = (.folder) <$> appState.vault.dailyNotesConfig
    in VaultInfo
         { vaultPath = path
         , vaultName = toText $ takeBaseName path
         , today = todayVal
         , notes = notesMap
+        , dailyNotesFolder = dailyFolder
         }
 
 -- | Build vault data including all files from app state
@@ -114,7 +116,13 @@ mkVaultData vaultPath appState =
       allNotePaths = map (\n -> makeRelative vaultPath n.path) $ Ix.toList notes
       allFiles = List.foldl' (\acc p -> Map.insertWith (flip (++)) p [] acc) groupedTasks allNotePaths
       tree = FolderTree.flattenTree $ buildFolderTree allFiles
-   in VaultData {folderTree = tree}
+      -- Annotate the daily notes folder with parsed dates
+      annotatedTree = case appState.vault.dailyNotesConfig of
+        Just config ->
+          let dailyNotes = Ob.getDailyNotes appState.vault
+           in FolderTree.annotateDailyNotes dailyNotes config.folder tree
+        Nothing -> tree
+   in VaultData {folderTree = annotatedTree}
 
 -- | Build notes data by serializing the requested note to AST
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData

@@ -395,6 +395,20 @@ export class NoteView {
   async textContent(): Promise<string> {
     return (await this.content().textContent()) ?? "";
   }
+
+  /**
+   * Get the backlinks section container.
+   */
+  backlinksSection(): Locator {
+    return this.container.locator("[data-testid='backlinks-section']");
+  }
+
+  /**
+   * Get individual backlink items.
+   */
+  backlinkItems(): Locator {
+    return this.container.locator("[data-testid='backlink-item']");
+  }
 }
 
 /**
@@ -439,5 +453,74 @@ export class FolderTreeView {
       `[data-testid='file-node']:has-text("${name}")`
     );
     await file.click();
+  }
+}
+
+/**
+ * View abstraction for the Journal page (daily notes folder).
+ */
+export class JournalView {
+  private readonly container: Locator;
+  private readonly sidebar: Locator;
+
+  constructor(private readonly page: Page) {
+    this.container = page.locator("[data-testid='journal-view']");
+    this.sidebar = page.locator("aside");
+  }
+
+  /**
+   * Wait for the journal view to be visible.
+   */
+  async waitForJournal(): Promise<void> {
+    await expect(this.container).toBeVisible({ timeout: 5000 });
+  }
+
+  /**
+   * Get the calendar widget locator.
+   */
+  calendarWidget(): Locator {
+    return this.sidebar.locator("[data-testid='calendar-widget']");
+  }
+
+  /**
+   * Get the displayed month label in the calendar.
+   */
+  calendarMonth(): Locator {
+    return this.sidebar.locator("[data-testid='calendar-month']");
+  }
+
+  /**
+   * Click previous month in calendar.
+   */
+  async calendarPrev(): Promise<void> {
+    await this.sidebar.locator("[data-testid='calendar-prev']").click();
+  }
+
+  /**
+   * Click next month in calendar.
+   */
+  async calendarNext(): Promise<void> {
+    await this.sidebar.locator("[data-testid='calendar-next']").click();
+  }
+
+  /**
+   * Click a specific day in the calendar.
+   */
+  async clickDay(day: number): Promise<void> {
+    await this.sidebar.locator(`[data-testid='calendar-day-${day}']`).click();
+  }
+
+  /**
+   * Get a specific calendar day button.
+   */
+  calendarDay(day: number): Locator {
+    return this.sidebar.locator(`[data-testid='calendar-day-${day}']`);
+  }
+
+  /**
+   * Get all month headers in the journal view (main panel).
+   */
+  monthHeaders(): Locator {
+    return this.container.locator("[data-testid='journal-month-header']");
   }
 }

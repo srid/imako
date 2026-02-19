@@ -39,6 +39,7 @@ export type FolderNode = IFolderNode;
 export interface IFolderNode {
   subfolders: {[k in string]: FolderNode};
   files: {[k in string]: Task[]};
+  dailyNoteDates: {[k in string]: string} | null;
 }
 
 export type Query = IVaultQuery | INotesQuery;
@@ -59,6 +60,7 @@ export interface IVaultInfo {
   vaultName: string;
   today: string;
   notes: {[k in string]: string};
+  dailyNotesFolder: string | null;
 }
 
 export type VaultData = IVaultData;
