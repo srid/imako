@@ -10,7 +10,7 @@ module Imako.Core (
 
   -- * Message building
   mkVaultInfo,
-  mkVaultData,
+  mkFolderTree,
   mkNotesData,
   mkServerMessage,
 )
@@ -25,8 +25,8 @@ import Data.LVar qualified as LVar
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Data.Time (Day, getZonedTime, localDay, zonedTimeToLocalTime)
-import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), VaultData (..), VaultInfo (..))
-import Imako.Core.FolderTree (buildFolderTree)
+import Imako.API.Protocol (NotesData (..), Query (..), QueryResponse (..), ServerMessage (..), VaultInfo (..))
+import Imako.Core.FolderTree (FolderNode, buildFolderTree)
 import Imako.Core.FolderTree qualified as FolderTree
 import Network.URI (escapeURIString, isUnreserved)
 import Ob (IxNote, Note (..), Task (..), TaskStatus (..), Vault (..))
@@ -83,20 +83,17 @@ withAppState path f = do
 -- | Build vault info from path and app state
 mkVaultInfo :: FilePath -> AppState -> VaultInfo
 mkVaultInfo path appState =
-  let todayVal = appState.today
-      notesMap = Map.fromList $ map (\n -> (toText n.path, n.modifiedAt)) $ Ix.toList appState.vault.notes
-      dailyFolder = (.folder) <$> appState.vault.dailyNotesConfig
+  let dailyFolder = (.folder) <$> appState.vault.dailyNotesConfig
    in VaultInfo
         { vaultPath = path
         , vaultName = toText $ takeBaseName path
-        , today = todayVal
-        , notes = notesMap
+        , today = appState.today
         , dailyNotesFolder = dailyFolder
         }
 
--- | Build vault data including all files from app state
-mkVaultData :: FilePath -> AppState -> VaultData
-mkVaultData vaultPath appState =
+-- | Build folder tree from app state
+mkFolderTree :: FilePath -> AppState -> FolderNode
+mkFolderTree vaultPath appState =
   let notes = appState.vault.notes
       allTasks = appState.vault.tasks
       enrichTask t = t {description = enrichInlines notes t.description}
@@ -122,7 +119,7 @@ mkVaultData vaultPath appState =
           let dailyNotes = Ob.getDailyNotes appState.vault
            in FolderTree.annotateDailyNotes dailyNotes config.folder tree
         Nothing -> tree
-   in VaultData {folderTree = annotatedTree}
+   in annotatedTree
 
 -- | Build notes data by serializing the requested note to AST
 mkNotesData :: FilePath -> Vault -> FilePath -> NotesData
@@ -173,6 +170,6 @@ mkServerMessage vaultPath appState query =
   ServerMessage
     { vaultInfo = mkVaultInfo vaultPath appState
     , response = case query of
-        VaultQuery -> VaultResponse (mkVaultData vaultPath appState)
+        FolderTreeQuery -> FolderTreeResponse (mkFolderTree vaultPath appState)
         NotesQuery path -> NotesResponse (mkNotesData vaultPath appState.vault path)
     }

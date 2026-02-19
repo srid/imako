@@ -84,15 +84,15 @@ const VaultPage: Component = () => {
     return decodeURIComponent(raw);
   });
 
-  // VaultQuery is sent automatically on ws.onopen (see websocket.ts).
+  // FolderTreeQuery is sent automatically on ws.onopen (see websocket.ts).
   // The server accumulates all queries and pushes responses for each
-  // on model change, so sending NotesQuery here won't overwrite VaultQuery.
+  // on model change, so sending NotesQuery here won't overwrite FolderTreeQuery.
   createEffect(() => {
     const path = selectedPath();
     if (!path) return;
     const tree = vaultData();
     if (!tree) return;
-    const target = getSubtree(tree.folderTree, path);
+    const target = getSubtree(tree, path);
     if (target?.type === "file") {
       sendQuery({ tag: "NotesQuery", contents: path });
     }
@@ -109,13 +109,13 @@ const VaultPage: Component = () => {
       return {
         type: "folder" as const,
         name: vaultInfo.vaultName || "Vault",
-        node: tree.folderTree,
+        node: tree,
         basePath: "",
-        taskGroups: collectTasks(tree.folderTree, ""),
+        taskGroups: collectTasks(tree, ""),
       };
     }
 
-    const target = getSubtree(tree.folderTree, path);
+    const target = getSubtree(tree, path);
     if (!target) {
       // Selected file/folder no longer exists (e.g. deleted from disk)
       // — redirect to root so the user isn't left on a stale URL
@@ -230,7 +230,7 @@ const VaultPage: Component = () => {
                   {vaultInfo.vaultName || "Vault"}
                 </span>
               </button>
-              <FolderTree node={data().folderTree} onSelect={selectPath} selectedPath={selectedPath()} />
+              <FolderTree node={data()} onSelect={selectPath} selectedPath={selectedPath()} />
             </>
           )}
         </Show>

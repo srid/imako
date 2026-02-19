@@ -11,7 +11,6 @@ module Imako.API.Protocol (
   ServerMessage (..),
   QueryResponse (..),
   VaultInfo (..),
-  VaultData (..),
   NotesData (..),
   protocolTsDeclarations,
 )
@@ -20,14 +19,14 @@ where
 import Data.Aeson (FromJSON, ToJSON, Value, defaultOptions)
 import Data.Aeson.TypeScript.Internal (TSDeclaration)
 import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
-import Data.Time (Day, UTCTime)
+import Data.Time (Day)
 import Imako.API.TypeScriptOrphans ()
 import Imako.Core.FolderTree (FolderNode)
 
 -- | Query sent from client to subscribe to data
 data Query
   = -- | Subscribe to vault view (folder tree with all files and tasks)
-    VaultQuery
+    FolderTreeQuery
   | -- | Subscribe to a specific note (path is vault-relative)
     NotesQuery FilePath
   deriving stock (Show, Eq, Generic)
@@ -40,8 +39,6 @@ data VaultInfo = VaultInfo
   { vaultPath :: FilePath
   , vaultName :: Text
   , today :: Day
-  , notes :: Map Text UTCTime
-  -- ^ All note paths (vault-relative) with last modified time
   , dailyNotesFolder :: Maybe FilePath
   -- ^ Folder path for daily notes (from Obsidian config), Nothing if not configured
   }
@@ -49,15 +46,6 @@ data VaultInfo = VaultInfo
   deriving anyclass (ToJSON)
 
 $(deriveTypeScript defaultOptions ''VaultInfo)
-
--- | Vault tree data (all files with their tasks)
-newtype VaultData = VaultData
-  { folderTree :: FolderNode
-  }
-  deriving stock (Show, Eq, Generic)
-  deriving anyclass (ToJSON)
-
-$(deriveTypeScript defaultOptions ''VaultData)
 
 -- | Notes-specific data (structured AST for client rendering)
 data NotesData = NotesData
@@ -73,7 +61,7 @@ $(deriveTypeScript defaultOptions ''NotesData)
 
 -- | Query-specific response data (one variant per query type)
 data QueryResponse
-  = VaultResponse VaultData
+  = FolderTreeResponse FolderNode
   | NotesResponse NotesData
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
@@ -96,7 +84,6 @@ protocolTsDeclarations =
   mconcat
     [ getTypeScriptDeclarations (Proxy @Query)
     , getTypeScriptDeclarations (Proxy @VaultInfo)
-    , getTypeScriptDeclarations (Proxy @VaultData)
     , getTypeScriptDeclarations (Proxy @NotesData)
     , getTypeScriptDeclarations (Proxy @QueryResponse)
     , getTypeScriptDeclarations (Proxy @ServerMessage)

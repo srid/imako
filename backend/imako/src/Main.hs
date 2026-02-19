@@ -43,7 +43,7 @@ mkApp vaultPath appStateVar = do
 Queries with the same slot replace each other; different slots coexist.
 -}
 querySlot :: Query -> Text
-querySlot VaultQuery = "vault"
+querySlot FolderTreeQuery = "vault"
 querySlot (NotesQuery _) = "notes"
 
 -- | Middleware that responds to /health with 200 OK (for readiness probes)

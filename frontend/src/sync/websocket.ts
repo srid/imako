@@ -20,7 +20,7 @@ export function connectVault(): () => void {
   ws.onopen = () => {
     setIsConnected(true);
     // Always subscribe to vault data on connect/reconnect
-    sendQuery({ tag: "VaultQuery" });
+    sendQuery({ tag: "FolderTreeQuery" });
   };
 
   ws.onmessage = (event) => {
@@ -72,7 +72,7 @@ function handleServerMessage(msg: ServerMessage): void {
   setVaultInfo(msg.vaultInfo);
 
   const response = msg.response;
-  if (response.tag === "VaultResponse") {
+  if (response.tag === "FolderTreeResponse") {
     setVaultData(response.contents);
   } else if (response.tag === "NotesResponse") {
     setNotesData(response.contents);

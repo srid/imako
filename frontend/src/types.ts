@@ -42,10 +42,10 @@ export interface IFolderNode {
   dailyNoteDates: {[k in string]: string} | null;
 }
 
-export type Query = IVaultQuery | INotesQuery;
+export type Query = IFolderTreeQuery | INotesQuery;
 
-export interface IVaultQuery {
-  tag: "VaultQuery";
+export interface IFolderTreeQuery {
+  tag: "FolderTreeQuery";
 }
 
 export interface INotesQuery {
@@ -59,14 +59,7 @@ export interface IVaultInfo {
   vaultPath: string;
   vaultName: string;
   today: string;
-  notes: {[k in string]: string};
   dailyNotesFolder: string | null;
-}
-
-export type VaultData = IVaultData;
-
-export interface IVaultData {
-  folderTree: FolderNode;
 }
 
 export type NotesData = INotesData;
@@ -77,11 +70,11 @@ export interface INotesData {
   backlinks: string[];
 }
 
-export type QueryResponse = IVaultResponse | INotesResponse;
+export type QueryResponse = IFolderTreeResponse | INotesResponse;
 
-export interface IVaultResponse {
-  tag: "VaultResponse";
-  contents: VaultData;
+export interface IFolderTreeResponse {
+  tag: "FolderTreeResponse";
+  contents: FolderNode;
 }
 
 export interface INotesResponse {

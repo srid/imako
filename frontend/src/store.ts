@@ -11,13 +11,12 @@
 
 import { createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { VaultInfo, VaultData, NotesData } from "@/types";
+import type { VaultInfo, FolderNode, NotesData } from "@/types";
 
 const emptyVaultInfo: VaultInfo = {
   vaultName: "",
   vaultPath: "",
   today: "",
-  notes: {},
   dailyNotesFolder: null,
 };
 
@@ -25,7 +24,7 @@ const emptyVaultInfo: VaultInfo = {
 export const [vaultInfo, setVaultInfo] = createStore<VaultInfo>(emptyVaultInfo);
 
 // Vault data (folder tree + tasks) — always available after connection
-export const [vaultData, setVaultData] = createSignal<VaultData | null>(null);
+export const [vaultData, setVaultData] = createSignal<FolderNode | null>(null);
 
 // Notes data (currently loaded note) — lazy, one at a time
 export const [notesData, setNotesData] = createSignal<NotesData | null>(null);
