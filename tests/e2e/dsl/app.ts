@@ -6,7 +6,7 @@
  */
 
 import { Page, expect } from "@playwright/test";
-import { TasksView, NoteView, FolderTreeView, VaultView } from "./views";
+import { TasksView, NoteView, FolderTreeView, VaultView, JournalView } from "./views";
 
 export class App {
   constructor(public readonly page: Page) {}
@@ -61,6 +61,13 @@ export class App {
    */
   folderTree(): FolderTreeView {
     return new FolderTreeView(this.page);
+  }
+
+  /**
+   * Get the JournalView for interacting with the journal/daily-notes page.
+   */
+  journal(): JournalView {
+    return new JournalView(this.page);
   }
 
   /**

@@ -11,6 +11,7 @@ import type { FolderNode, Task, NotesData } from "@/types";
 import { buildTaskTree } from "@/utils/taskTree";
 import { isTaskVisible, showTasks, treeFilter, setTreeFilter } from "@/state/filters";
 import { Icons } from "@/utils/icons";
+import { JournalView } from "@/components/JournalView";
 
 /**
  * Extract a subtree from a FolderNode by path.
@@ -121,6 +122,17 @@ const VaultPage: Component = () => {
     }
 
     if (target.type === "folder") {
+      // Check if this is the daily notes folder
+      const dnf = vaultInfo.dailyNotesFolder;
+      if (dnf != null && path === dnf) {
+        return {
+          type: "dailyNotes" as const,
+          name: target.name,
+          node: target.node,
+          folderPath: path,
+        };
+      }
+
       return {
         type: "folder" as const,
         name: target.name,
@@ -231,12 +243,24 @@ const VaultPage: Component = () => {
             <Show
               when={detail().type === "file"}
               fallback={
-                /* Folder / Root: scoped task hierarchy */
-                <FolderTaskView
-                  name={(detail() as any).name}
-                  taskGroups={(detail() as any).taskGroups}
-                  today={vaultInfo.today}
-                />
+                <Show
+                  when={detail().type === "dailyNotes"}
+                  fallback={
+                    /* Folder / Root: scoped task hierarchy */
+                    <FolderTaskView
+                      name={(detail() as any).name}
+                      taskGroups={(detail() as any).taskGroups}
+                      today={vaultInfo.today}
+                    />
+                  }
+                >
+                  {/* Daily notes folder: journal view */}
+                  <JournalView
+                    node={(detail() as any).node}
+                    folderPath={(detail() as any).folderPath}
+                    today={vaultInfo.today}
+                  />
+                </Show>
               }
             >
               {/* File: tasks + note content */}

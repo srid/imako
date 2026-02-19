@@ -2,6 +2,8 @@ import { Component, For, Show, createMemo } from "solid-js";
 import type { FolderNode as FolderNodeType, Task } from "@/types";
 import { Icons } from "@/utils/icons";
 import { isCollapsed, toggleCollapse, showTasks, treeFilter } from "@/state/filters";
+import { vaultInfo } from "@/store";
+import { CalendarWidget } from "@/components/CalendarWidget";
 
 /**
  * Check if a folder/file name matches the tree filter (case-insensitive).
@@ -56,6 +58,10 @@ export const FolderTree: Component<FolderTreeProps> = (props) => {
           };
           const nodeId = () => `folder:${folderPath()}`;
           const isSelected = () => props.selectedPath === folderPath();
+          const isDailyFolder = () => {
+            const dnf = vaultInfo.dailyNotesFolder;
+            return dnf != null && folderPath() === dnf;
+          };
 
           return (
             <Show when={folderMatchesFilter(subnode, filter())}>
@@ -97,12 +103,31 @@ export const FolderTree: Component<FolderTreeProps> = (props) => {
                       props.onSelect(folderPath());
                     }}
                   >
-                    <span class="text-accent-500">{Icons.folder}</span>
+                    <span class="text-accent-500">{isDailyFolder() ? Icons.calendar : Icons.folder}</span>
                     <span>{name}</span>
                   </span>
                 </summary>
                 <div class="pl-6 mt-0.5">
-                  <FolderTree node={subnode} path={folderPath()} onSelect={props.onSelect} selectedPath={props.selectedPath} />
+                  <Show
+                    when={isDailyFolder()}
+                    fallback={
+                      <FolderTree node={subnode} path={folderPath()} onSelect={props.onSelect} selectedPath={props.selectedPath} />
+                    }
+                  >
+                    <CalendarWidget
+                      noteFiles={Object.keys(subnode.files)}
+                      today={vaultInfo.today}
+                      onSelectDate={(filename: string) => {
+                        const path = folderPath() ? `${folderPath()}/${filename}` : filename;
+                        props.onSelect(path);
+                      }}
+                      selectedFile={
+                        props.selectedPath?.startsWith(folderPath() + "/")
+                          ? props.selectedPath.slice(folderPath().length + 1)
+                          : null
+                      }
+                    />
+                  </Show>
                 </div>
               </details>
             </Show>

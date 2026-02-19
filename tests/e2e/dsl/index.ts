@@ -14,6 +14,7 @@ export {
   NoteView,
   VaultView,
   FolderTreeView,
+  JournalView,
 } from "./views";
 
 /**

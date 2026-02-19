@@ -59,6 +59,7 @@ export interface IVaultInfo {
   vaultName: string;
   today: string;
   notes: {[k in string]: string};
+  dailyNotesFolder?: string;
 }
 
 export type VaultData = IVaultData;
