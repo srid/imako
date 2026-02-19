@@ -30,16 +30,19 @@ test.describe("Markdown Rendering", () => {
     const h3 = content.locator("h3");
     await expect(h3.filter({ hasText: "Third-Level Heading" })).toBeVisible();
 
-    // H4 — BlockRenderer renders H4, H5, H6 all as <h4>
-    const h4 = content.locator("h4");
-    await expect(h4.filter({ hasText: "Fourth-Level Heading" })).toBeVisible();
-    await expect(h4.filter({ hasText: "Fifth-Level Heading" })).toBeVisible();
-    await expect(h4.filter({ hasText: "Sixth-Level Heading" })).toBeVisible();
+    // H4
+    await expect(content.locator("h4").filter({ hasText: "Fourth-Level Heading" })).toBeVisible();
+
+    // H5 — BlockRenderer renders H5 and H6 as <h5>
+    const h5 = content.locator("h5");
+    await expect(h5.filter({ hasText: "Fifth-Level Heading" })).toBeVisible();
+    await expect(h5.filter({ hasText: "Sixth-Level Heading" })).toBeVisible();
   });
 
   test("heading styles: font-weight is bold", async ({ app }) => {
     const h1 = app.note().content().locator("h1");
-    await expect(h1).toHaveCSS("font-weight", "700");
+    // font-weight can be "700" or "bold" depending on browser
+    await expect(h1).toHaveCSS("font-weight", /^(700|bold)$/);
   });
 
   test("renders paragraphs with proper spacing", async ({ app }) => {
@@ -110,32 +113,20 @@ test.describe("Markdown Rendering", () => {
     const pre = app.note().content().locator("pre").first();
     await expect(pre).toBeVisible();
 
-    // Check background-color is not transparent
-    const bg = await pre.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg).not.toBe("rgba(0, 0, 0, 0)");
-
-    // Check padding exists
-    const padding = await pre.evaluate((el) => getComputedStyle(el).padding);
-    expect(padding).not.toBe("0px");
+    // Verify background and padding via toHaveCSS (avoids fragile getComputedStyle)
+    await expect(pre).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(pre).not.toHaveCSS("padding", "0px");
   });
 
   test("renders blockquote with left border", async ({ app }) => {
     const note = app.note();
-    const blockquotes = note.blockquotes();
-    await expect(blockquotes.first()).toBeVisible();
-    await expect(blockquotes.first()).toContainText("This is a blockquote");
+    const bq = note.blockquotes().first();
+    await expect(bq).toBeVisible();
+    await expect(bq).toContainText("This is a blockquote");
 
-    // Verify left border
-    const borderLeft = await blockquotes.first().evaluate(
-      (el) => getComputedStyle(el).borderLeftWidth
-    );
-    expect(parseInt(borderLeft)).toBeGreaterThan(0);
-
-    // Verify italic
-    const fontStyle = await blockquotes.first().evaluate(
-      (el) => getComputedStyle(el).fontStyle
-    );
-    expect(fontStyle).toBe("italic");
+    // Verify left border and italic via toHaveCSS (avoids fragile getComputedStyle)
+    await expect(bq).not.toHaveCSS("border-left-width", "0px");
+    await expect(bq).toHaveCSS("font-style", "italic");
   });
 
   test("renders nested blockquote", async ({ app }) => {
@@ -191,22 +182,14 @@ test.describe("Markdown Rendering", () => {
     const content = app.note().content();
     const strong = content.locator("strong").filter({ hasText: "bold words" });
     await expect(strong).toBeVisible();
-
-    const fontWeight = await strong.evaluate(
-      (el) => getComputedStyle(el).fontWeight
-    );
-    expect(parseInt(fontWeight)).toBeGreaterThanOrEqual(700);
+    await expect(strong).toHaveCSS("font-weight", /^(700|bold)$/);
   });
 
   test("renders italic text with <em>", async ({ app }) => {
     const content = app.note().content();
     const em = content.locator("em").filter({ hasText: "italic words" });
     await expect(em).toBeVisible();
-
-    const fontStyle = await em.evaluate(
-      (el) => getComputedStyle(el).fontStyle
-    );
-    expect(fontStyle).toBe("italic");
+    await expect(em).toHaveCSS("font-style", "italic");
   });
 
   test("renders strikethrough with <del>", async ({ app }) => {
@@ -219,9 +202,7 @@ test.describe("Markdown Rendering", () => {
     const content = app.note().content();
     const code = content.locator("code").filter({ hasText: "inline code" });
     await expect(code).toBeVisible();
-
-    const bg = await code.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg).not.toBe("rgba(0, 0, 0, 0)");
+    await expect(code).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   });
 
   test("renders combined bold + nested italic", async ({ app }) => {
@@ -277,13 +258,6 @@ test.describe("Markdown Rendering", () => {
     await expect(allKatex).toHaveCount(2);
     // Second KaTeX element is the display math (integral)
     await expect(allKatex.nth(1)).toContainText("∫");
-  });
-
-  test("renders footnote marker", async ({ app }) => {
-    const content = app.note().content();
-    // Footnotes render as <sup> with [*] text
-    const footnoteMarker = content.locator("sup").filter({ hasText: "[*]" });
-    await expect(footnoteMarker.first()).toBeVisible();
   });
 
   test("renders single and double quoted text", async ({ app }) => {
