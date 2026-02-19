@@ -392,6 +392,7 @@ const FileDetailView: Component<{
   notesData: NotesData | null;
   onSelectPath: (path: string) => void;
 }> = (props) => {
+  const navigate = useNavigate();
   const visibleTasks = createMemo(() =>
     props.tasks.filter((t) => isTaskVisible(t, props.today))
   );
@@ -452,7 +453,7 @@ const FileDetailView: Component<{
               {(path) => (
                 <button
                   data-testid="backlink-item"
-                  onClick={() => props.onSelectPath(path)}
+                  onClick={() => navigate(`/p/${encodeURIComponent(path)}`)}
                   class="w-full text-left py-2 px-3 flex items-center gap-2.5 text-sm rounded-lg transition-colors hover:bg-accent-50 dark:hover:bg-accent-900/20 text-stone-600 dark:text-stone-300 hover:text-accent-600 dark:hover:text-accent-400"
                 >
                   <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>

@@ -14,12 +14,10 @@ module Ob.LinkGraph (
   -- * Graph construction
   buildNoteEdges,
   removeNoteEdges,
-  updateNoteEdges,
   buildLinkGraph,
 
   -- * Queries
   backlinksOf,
-  frontlinksOf,
 ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
@@ -64,11 +62,6 @@ buildNoteEdges notes note =
 removeNoteEdges :: FilePath -> LinkGraph -> LinkGraph
 removeNoteEdges = AM.removeVertex
 
--- | Incremental update: remove old edges, overlay new ones.
-updateNoteEdges :: IxNote -> Note -> LinkGraph -> LinkGraph
-updateNoteEdges notes note graph =
-  AM.overlay (buildNoteEdges notes note) (removeNoteEdges note.path graph)
-
 -- | Build the full link graph from all notes.
 buildLinkGraph :: IxNote -> LinkGraph
 buildLinkGraph notes =
@@ -77,7 +70,3 @@ buildLinkGraph notes =
 -- | Get backlinks (notes that link TO this path). O(n · log n).
 backlinksOf :: FilePath -> LinkGraph -> [FilePath]
 backlinksOf path graph = sort . Set.toList $ AM.preSet path graph
-
--- | Get frontlinks (notes that this path links TO). O(log n).
-frontlinksOf :: FilePath -> LinkGraph -> [FilePath]
-frontlinksOf path graph = sort . Set.toList $ AM.postSet path graph

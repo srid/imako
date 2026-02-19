@@ -369,6 +369,20 @@ export class NoteView {
   }
 
   /**
+   * Get the backlinks section container.
+   */
+  backlinksSection(): Locator {
+    return this.container.locator("[data-testid='backlinks-section']");
+  }
+
+  /**
+   * Get individual backlink items.
+   */
+  backlinkItems(): Locator {
+    return this.container.locator("[data-testid='backlink-item']");
+  }
+
+  /**
    * Wait for note content to be loaded.
    */
   async waitForContent(): Promise<void> {

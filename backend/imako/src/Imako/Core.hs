@@ -31,6 +31,7 @@ import Imako.Core.FolderTree qualified as FolderTree
 import Network.URI (escapeURIString, isUnreserved)
 import Ob (IxNote, Note (..), Task (..), TaskStatus (..), Vault (..))
 import Ob qualified
+import Ob.LinkGraph (backlinksOf)
 import System.FilePath (makeRelative, takeBaseName)
 import Text.Pandoc.Definition (Inline (..), Pandoc)
 import Text.Pandoc.Walk (walk)
@@ -129,7 +130,7 @@ mkNotesData _vaultPath vault reqPath =
   let ast = case Ix.getOne (Ix.getEQ reqPath vault.notes) of
         Just note -> toJSON $ enrichWikilinks vault.notes note.content
         Nothing -> toJSON (object ["error" .= ("Note not found: " <> reqPath)])
-   in NotesData {notePath = reqPath, noteAst = ast, backlinks = Ob.backlinksOf reqPath vault.linkGraph}
+   in NotesData {notePath = reqPath, noteAst = ast, backlinks = backlinksOf reqPath vault.linkGraph}
 
 {- | Transform wikilinks in inline elements into regular internal links.
 
