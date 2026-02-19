@@ -1,7 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Imako.Core.FolderTree (
   FolderNode (..),
@@ -18,15 +17,11 @@ import Data.Aeson.TypeScript.Internal (TSDeclaration)
 import Data.Aeson.TypeScript.TH (TypeScript (..), deriveTypeScript)
 import Data.Map.Strict qualified as Map
 import Data.Time (Day)
+import Imako.API.TypeScriptOrphans ()
 import Ob (DailyNote (..), Task)
 import Ob.Task (TaskProperties (..))
 import Ob.Task qualified
 import System.FilePath (splitDirectories)
-
--- | Day serializes as ISO date string
-instance TypeScript Day where
-  getTypeScriptType _ = "string"
-  getTypeScriptDeclarations _ = []
 
 data FolderNode = FolderNode
   { subfolders :: Map Text FolderNode
