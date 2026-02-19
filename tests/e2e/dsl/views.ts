@@ -264,6 +264,90 @@ export class NoteView {
   }
 
   /**
+   * Get paragraphs.
+   */
+  paragraphs(): Locator {
+    return this.content().locator("p");
+  }
+
+  /**
+   * Get blockquotes.
+   */
+  blockquotes(): Locator {
+    return this.content().locator("blockquote");
+  }
+
+  /**
+   * Get horizontal rules.
+   */
+  horizontalRules(): Locator {
+    return this.content().locator("hr");
+  }
+
+  /**
+   * Get tables.
+   */
+  tables(): Locator {
+    return this.content().locator("table");
+  }
+
+  /**
+   * Get ordered lists.
+   */
+  orderedLists(): Locator {
+    return this.content().locator("ol");
+  }
+
+  /**
+   * Get definition lists.
+   */
+  definitionLists(): Locator {
+    return this.content().locator("dl");
+  }
+
+  /**
+   * Get definition terms.
+   */
+  definitionTerms(): Locator {
+    return this.content().locator("dt");
+  }
+
+  /**
+   * Get definition descriptions.
+   */
+  definitionDescriptions(): Locator {
+    return this.content().locator("dd");
+  }
+
+  /**
+   * Get external links (<a> tags with href).
+   */
+  externalLinks(): Locator {
+    return this.content().locator("a[href]");
+  }
+
+  /**
+   * Get images.
+   */
+  images(): Locator {
+    return this.content().locator("img");
+  }
+
+  /**
+   * Get superscript elements.
+   */
+  superscripts(): Locator {
+    return this.content().locator("sup");
+  }
+
+  /**
+   * Get subscript elements.
+   */
+  subscripts(): Locator {
+    return this.content().locator("sub");
+  }
+
+  /**
    * Wait for note content to be loaded.
    */
   async waitForContent(): Promise<void> {
