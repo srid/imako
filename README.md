@@ -7,12 +7,7 @@ Imako provides journaling and planning based on the principle of [infinitude of 
 Project origin: https://x.com/sridca/status/1896560964088271161
 
 > [!warning]
-> **WIP**: The author is developing Imako as he figures out what he needs.
-
-## Screenshot
-
-<img width="694" height="598" alt="image" src="https://github.com/user-attachments/assets/c097037c-9072-4d06-8d0e-f82fc417bf46" />
-
+> **WIP**: This software is bound to undergo radical change, whilst the author experiments with various UXes.
 
 ## Running
 
