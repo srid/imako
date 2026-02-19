@@ -12,3 +12,7 @@
 ## Nix
 
 - Untracked (not modified) files need to be git staged for Nix to recognize them.
+
+## Git
+
+- DO NOT FUCKING `git commit` or mutate local Git repo, ever.
