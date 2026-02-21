@@ -28,3 +28,31 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Shiki syntax highlighting overrides */
+.code-block pre.shiki {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border: 1px solid oklch(0.87 0 0);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.code-block pre.shiki code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Shiki dual-theme: light theme uses inline styles directly, dark theme uses CSS vars */
+
+@media (prefers-color-scheme: dark) {
+  .code-block pre.shiki {
+    background-color: var(--shiki-dark-bg) !important;
+    border-color: oklch(0.37 0 0);
+  }
+
+  .code-block pre.shiki span {
+    color: var(--shiki-dark) !important;
+  }
+}

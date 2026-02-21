@@ -119,9 +119,12 @@ test.describe("Vault Tasks", () => {
     const tasks = app.tasks();
     await tasks.waitForTasks();
 
-    // Initially tasks are visible
-    const initialCount = await tasks.taskCount();
-    expect(initialCount).toBeGreaterThan(0);
+    // Wait for vault model to stabilize (live-sync tests may still be settling)
+    await expect.poll(
+      () => tasks.taskCount(),
+      { timeout: 5000, message: "task count should stabilize" }
+    ).toBe(21);
+    const initialCount = 21;
 
     // Toggle tasks off
     await vault.toggleShowTasks();
@@ -132,7 +135,7 @@ test.describe("Vault Tasks", () => {
     // Toggle tasks back on
     await vault.toggleShowTasks();
 
-    // Tasks should reappear
+    // Tasks should reappear with exact same count
     await tasks.waitForTasks();
     expect(await tasks.taskCount()).toBe(initialCount);
   });

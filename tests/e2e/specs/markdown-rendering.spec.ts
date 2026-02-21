@@ -91,22 +91,38 @@ test.describe("Markdown Rendering", () => {
     await expect(content.getByText("Third ordered item")).toBeVisible();
   });
 
-  test("renders code blocks with monospace font", async ({ app }) => {
-    const note = app.note();
-    const codeBlocks = note.codeBlocks();
+  test("renders code blocks with syntax highlighting", async ({ app }) => {
+    const content = app.note().content();
 
-    // At least 2 code blocks (haskell and javascript)
-    await expect(codeBlocks).toHaveCount(2);
+    // 14 code blocks total in expanded MarkdownShowcase
+    const codeBlocks = content.locator("pre code");
+    const count = await codeBlocks.count();
+    expect(count).toBe(14);
 
-    // Verify content
-    await expect(codeBlocks.first()).toContainText("putStrLn");
-    await expect(codeBlocks.nth(1)).toContainText("greet");
+    // Wait for Shiki to finish rendering (highlighted spans appear)
+    const firstShikiBlock = content.locator(".code-block").first();
+    const highlightedSpans = firstShikiBlock.locator("span[style]");
+    await expect(highlightedSpans.first()).toBeVisible({ timeout: 5000 });
 
-    // Verify monospace font-family
-    const fontFamily = await codeBlocks.first().evaluate(
-      (el) => getComputedStyle(el).fontFamily
-    );
-    expect(fontFamily.toLowerCase()).toContain("mono");
+    // Verify Haskell content present
+    await expect(firstShikiBlock).toContainText("fib");
+
+    // Verify Shiki pre element has the expected classes
+    const shikiPre = firstShikiBlock.locator("pre.shiki");
+    await expect(shikiPre).toBeVisible();
+  });
+
+  test("syntax highlighting: markdown block with embedded bash injection", async ({ app }) => {
+    const content = app.note().content();
+
+    // The markdown code block is lang="markdown" and contains embedded bash
+    // Shiki's TextMate markdown grammar supports bash injection in fenced blocks
+    const markdownBlock = content.locator(".code-block").filter({ hasText: "My Haskell Project" });
+    await expect(markdownBlock).toBeVisible({ timeout: 5000 });
+
+    // The embedded bash ("cabal run") should have highlighted spans
+    const bashSpans = markdownBlock.locator("span[style]").filter({ hasText: "cabal" });
+    await expect(bashSpans.first()).toBeVisible();
   });
 
   test("code blocks have background and padding", async ({ app }) => {

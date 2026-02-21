@@ -5,6 +5,7 @@
 import { Component, For, Switch, Match } from "solid-js";
 import type { Block, Inline, Attr } from "./types";
 import { InlineRenderer } from "./InlineRenderer";
+import { CodeBlock } from "./CodeBlock";
 
 /**
  * Renders an array of Pandoc Block nodes.
@@ -81,15 +82,11 @@ export const BlockRenderer: Component<{ blocks: Block[] }> = (props) => {
             }}
           </Match>
 
-          {/* CodeBlock - [Attr, string] */}
+          {/* CodeBlock - [Attr, string] — syntax highlighted via Shiki */}
           <Match when={block.t === "CodeBlock" && block}>
             {(b) => {
-              const [_attr, code] = b().c;
-              return (
-                <pre class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-xl my-6 overflow-x-auto shadow-sm">
-                  <code class="text-sm font-mono text-stone-800 dark:text-stone-200 leading-normal">{code}</code>
-                </pre>
-              );
+              const [attr, code] = b().c;
+              return <CodeBlock attr={attr} code={code} />;
             }}
           </Match>
 
