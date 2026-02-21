@@ -11,6 +11,14 @@ Project origin: https://x.com/sridca/status/1896560964088271161
 
 ## Running
 
+### Usage
+
+```sh
+nix run github:srid/imako -- /path/to/your/notebook
+```
+
+### Development
+
 In Nix devShell,
 
 ```sh

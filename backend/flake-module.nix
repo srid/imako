@@ -56,6 +56,9 @@
 
     # Default package & app.
     packages.default = self'.packages.imako-with-frontend;
-    apps.default = self'.apps.imako;
+    apps.default = {
+      type = "app";
+      program = "${self'.packages.imako-with-frontend}/bin/imako";
+    };
   };
 }
