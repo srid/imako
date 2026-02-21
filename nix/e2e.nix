@@ -7,6 +7,8 @@
   perSystem = { self', pkgs, lib, ... }: {
     # Local development: ghcid backend + Vite frontend with hot-reload
     process-compose."dev" = {
+      # Disable web UI to avoid port 8080 conflicts
+      cli.options.no-server = true;
       settings = {
         processes = {
           backend = {
