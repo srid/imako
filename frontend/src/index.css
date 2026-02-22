@@ -3,6 +3,9 @@
 
 @import "tailwindcss";
 
+/* Use class-based dark mode so the manual toggle works */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * Theme Configuration
  * Change these to switch the accent color throughout the app.
@@ -46,13 +49,11 @@
 
 /* Shiki dual-theme: light theme uses inline styles directly, dark theme uses CSS vars */
 
-@media (prefers-color-scheme: dark) {
-  .code-block pre.shiki {
-    background-color: var(--shiki-dark-bg) !important;
-    border-color: oklch(0.37 0 0);
-  }
+.dark .code-block pre.shiki {
+  background-color: var(--shiki-dark-bg) !important;
+  border-color: oklch(0.37 0 0);
+}
 
-  .code-block pre.shiki span {
-    color: var(--shiki-dark) !important;
-  }
+.dark .code-block pre.shiki span {
+  color: var(--shiki-dark) !important;
 }

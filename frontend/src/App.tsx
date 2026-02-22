@@ -2,6 +2,7 @@ import { Component, onMount, Show } from "solid-js";
 import { HashRouter, Route } from "@solidjs/router";
 import { isConnected } from "@/store";
 import { connectVault } from "@/sync/websocket";
+import { initTheme } from "@/state/theme";
 import { Header } from "@/components/Header";
 import VaultPage from "@/pages/VaultPage";
 
@@ -20,6 +21,7 @@ const Layout: Component<{ children?: any }> = (props) => {
 
 const App: Component = () => {
   onMount(() => {
+    initTheme();
     connectVault();
   });
 
