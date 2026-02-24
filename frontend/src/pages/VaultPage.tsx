@@ -308,41 +308,6 @@ const FolderTaskView: Component<{
 
   return (
     <div class="space-y-6">
-      {/* Folder contents listing */}
-      <Show when={hasChildren()}>
-        <div data-testid="folder-contents">
-          <h3 class="text-sm font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-3">
-            Contents
-          </h3>
-          <div class="grid gap-1">
-            <For each={subfolders()}>
-              {(name) => (
-                <button
-                  data-testid="folder-contents-folder"
-                  onClick={() => props.onSelect(childPath(name))}
-                  class="w-full text-left py-2 px-3 flex items-center gap-2.5 text-sm rounded-lg transition-colors hover:bg-accent-50 dark:hover:bg-accent-900/20 text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400"
-                >
-                  <span class="text-accent-500">{Icons.folder}</span>
-                  <span class="truncate">{name}</span>
-                </button>
-              )}
-            </For>
-            <For each={files()}>
-              {(name) => (
-                <button
-                  data-testid="folder-contents-file"
-                  onClick={() => props.onSelect(childPath(name))}
-                  class="w-full text-left py-2 px-3 flex items-center gap-2.5 text-sm rounded-lg transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-accent-600 dark:hover:text-accent-400"
-                >
-                  <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>
-                  <span class="truncate">{name}</span>
-                </button>
-              )}
-            </For>
-          </div>
-        </div>
-      </Show>
-
       {/* Tasks section */}
       <Show when={showTasks()}>
         <div data-testid="folder-task-view" class="space-y-4">
@@ -375,6 +340,41 @@ const FolderTaskView: Component<{
               );
             }}
           </For>
+        </div>
+      </Show>
+
+      {/* Folder contents listing */}
+      <Show when={hasChildren()}>
+        <div data-testid="folder-contents">
+          <h3 class="text-sm font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-3">
+            Contents
+          </h3>
+          <div class="grid gap-1">
+            <For each={subfolders()}>
+              {(name) => (
+                <button
+                  data-testid="folder-contents-folder"
+                  onClick={() => props.onSelect(childPath(name))}
+                  class="w-full text-left py-2 px-3 flex items-center gap-2.5 text-sm rounded-lg transition-colors hover:bg-accent-50 dark:hover:bg-accent-900/20 text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400"
+                >
+                  <span class="text-accent-500">{Icons.folder}</span>
+                  <span class="truncate">{name}</span>
+                </button>
+              )}
+            </For>
+            <For each={files()}>
+              {(name) => (
+                <button
+                  data-testid="folder-contents-file"
+                  onClick={() => props.onSelect(childPath(name))}
+                  class="w-full text-left py-2 px-3 flex items-center gap-2.5 text-sm rounded-lg transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-accent-600 dark:hover:text-accent-400"
+                >
+                  <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>
+                  <span class="truncate">{name}</span>
+                </button>
+              )}
+            </For>
+          </div>
         </div>
       </Show>
     </div>
