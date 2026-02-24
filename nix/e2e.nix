@@ -13,7 +13,7 @@
         processes = {
           backend = {
             # Use ghcid for hot-reload development (NOTEBOOK env var for vault path)
-            command = "${pkgs.ghcid}/bin/ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl --enable-multi-repl imako:exe:imako' --setup \":set args $NOTEBOOK\"";
+            command = "${pkgs.ghcid}/bin/ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl --enable-multi-repl imako:exe:imako' --setup \":set args $NOTEBOOK --port 4009\"";
             # Without SIGINT (2), ghcid doesn't terminate its child GHC process
             shutdown.signal = 2;
             readiness_probe = {

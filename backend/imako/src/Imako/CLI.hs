@@ -25,9 +25,8 @@ optionsParser =
       ( long "port"
           <> short 'p'
           <> metavar "PORT"
-          <> value 4009
-          <> showDefault
-          <> help "Port to run the web server on"
+          <> value 0
+          <> help "Port to run the web server on (0 = auto-select free port)"
       )
     <*> strOption
       ( long "host"

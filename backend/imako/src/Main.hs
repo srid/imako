@@ -56,17 +56,26 @@ main :: IO ()
 main = do
   Utf8.withUtf8 $ do
     options <- liftIO $ execParser CLI.opts
-    let url = "http://" <> options.host <> ":" <> show options.port
     hSetBuffering stdout LineBuffering
     hSetBuffering stderr LineBuffering
-    putTextLn $ "Starting server on " <> url
 
     Core.withAppState options.path $ \appStateVar -> do
       app <- mkApp options.path appStateVar
 
-      let warpSettings =
+      let baseSettings =
             Warp.defaultSettings
               & Warp.setHost (fromString $ toString options.host)
-              & Warp.setPort options.port
               & Warp.setTimeout 600 -- 10 minutes (for long WebSocket connections)
-      liftIO $ Warp.runSettings warpSettings app
+      if options.port == 0
+        then do
+          -- Auto-select a free port
+          (actualPort, sock) <- Warp.openFreePort
+          let url = "http://" <> options.host <> ":" <> show actualPort
+          putTextLn $ "Starting server on " <> url
+          let settings = baseSettings & Warp.setPort actualPort
+          liftIO $ Warp.runSettingsSocket settings sock app
+        else do
+          let url = "http://" <> options.host <> ":" <> show options.port
+          putTextLn $ "Starting server on " <> url
+          let settings = baseSettings & Warp.setPort options.port
+          liftIO $ Warp.runSettings settings app

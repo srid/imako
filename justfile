@@ -20,7 +20,7 @@ repl *ARGS:
 # Run ghcid -- auto-recompile and run `main` function
 [group('backend')]
 backend-dev:
-    ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }} imako:exe:imako' --setup ":set args {{ NOTEBOOK }}"
+    ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }} imako:exe:imako' --setup ":set args {{ NOTEBOOK }} --port 4009"
 
 # Run tests
 [group('backend')]
