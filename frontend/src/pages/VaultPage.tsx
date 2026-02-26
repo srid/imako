@@ -325,6 +325,10 @@ const FolderTaskView: Component<{
                       <summary class="list-none cursor-pointer py-1.5 flex items-center gap-2 text-sm font-medium text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400 select-none">
                         <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>
                         <span class="truncate">{group.path}</span>
+                        <ObsidianEditLink
+                          filePath={group.path}
+                          class="text-stone-400 hover:text-accent-600 dark:hover:text-accent-400 flex-shrink-0"
+                        />
                         <span class="text-xs text-stone-400 dark:text-stone-500 ml-auto flex-shrink-0">
                           {visibleTasks().length}
                         </span>
