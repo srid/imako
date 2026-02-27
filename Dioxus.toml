@@ -1,0 +1,12 @@
+[application]
+name = "imako"
+default_platform = "web"
+
+[web.app]
+title = "Imako"
+
+[web.watcher]
+reload_html = true
+watch_path = ["src", "crates", "assets"]
+
+[web.resource.dev]

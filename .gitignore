@@ -1,25 +1,14 @@
-# cabal
-dist
-dist-*
-cabal.project.local
-cabal.project.local~
+# Rust / Cargo
+/target/
 
 # nix
 result
 result-*
 
-/ghcid.log
-
 # direnv
 .direnv
 
-/.pre-commit-config.yaml
 .claude/settings.local.json
-ghcid.txt
 
-node_modules
-
-# Playwright
-tests/test-results/
-tests/playwright-report/
-tests/.playwright/
+# Dioxus
+/dx/

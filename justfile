@@ -1,64 +1,44 @@
 default:
     @just --list
 
-import 'home-units/mod.just'
-
-CABAL_REPL_ARGS:="--enable-multi-repl $MULTI_REPL_LIBRARIES"
 NOTEBOOK:=justfile_directory() / "example"
 
-# Run hoogle
+# Run the Dioxus dev server
 [group('dev')]
-docs:
-    echo http://127.0.0.1:8888
-    hoogle serve -p 8888 --local
-
-# Run cabal repl
-[group('dev')]
-repl *ARGS:
-    cabal repl {{ CABAL_REPL_ARGS }} {{ ARGS }}
-
-# Run ghcid -- auto-recompile and run `main` function
-[group('backend')]
-backend-dev:
-    ghcid --outputfile=ghcid.txt -T Main.main -c 'cabal repl {{ CABAL_REPL_ARGS }} imako:exe:imako' --setup ":set args {{ NOTEBOOK }} --port 4009"
+dev:
+    IMAKO_VAULT_PATH={{ NOTEBOOK }} dx serve
 
 # Run tests
-[group('backend')]
+[group('dev')]
 test:
-    cabal test all
+    cargo test --workspace
 
-# Install frontend dependencies
-[group('frontend')]
-frontend-install:
-    cd frontend && npm install
+# Run clippy
+[group('dev')]
+clippy:
+    cargo clippy --workspace -- -D warnings
 
-# Run frontend dev server (with proxy to backend)
-[group('frontend')]
-frontend-dev:
-    cd frontend && npm run dev
+# Format code
+[group('dev')]
+fmt:
+    cargo fmt --all
 
-# Build frontend for production
-[group('frontend')]
-frontend-build:
-    cd frontend && npm run build
-
-# Generate TypeScript types from Haskell ToJSON instances
-[group('types')]
-generate-types:
-    cabal build generate-types
-    nix run .#generate-types-to -- . "cabal run generate-types --"
+# Check formatting
+[group('dev')]
+fmt-check:
+    cargo fmt --all -- --check
 
 # Install e2e test dependencies
 [group('e2e')]
 e2e-install:
     cd tests && npm install && npx playwright install chromium
 
-# Start dev servers (ghcid backend + Vite frontend) via process-compose
+# Start dev servers via process-compose
 [group('dev')]
-dev:
+dev-compose:
     NOTEBOOK={{ NOTEBOOK }} nix run .#dev
 
-# Run all e2e tests (via process-compose: starts servers, runs tests, exits)
+# Run all e2e tests
 [group('e2e')]
 e2e:
     nix run .#e2e

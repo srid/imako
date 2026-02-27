@@ -1,0 +1,42 @@
+[workspace]
+members = ["crates/ob", "crates/imako-core"]
+resolver = "2"
+
+[package]
+name = "imako"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "Journaling and planning for your Obsidian notebook"
+
+[dependencies]
+# Dioxus fullstack
+dioxus = { version = "0.6", features = ["fullstack", "router"] }
+
+# Workspace crates
+ob = { path = "crates/ob" }
+imako-core = { path = "crates/imako-core" }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# URL encoding
+urlencoding = "2"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Async
+tokio = { version = "1", features = ["full"] }
+
+# Logging
+tracing = "0.1"
+
+[features]
+default = []
+server = ["dioxus/server"]
+web = ["dioxus/web"]
