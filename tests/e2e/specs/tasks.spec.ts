@@ -6,10 +6,12 @@
  *
  * Expected vault state (example/):
  * Filters hide Completed/Cancelled tasks by default.
- * Visible tasks (21 total):
+ * Visible tasks (24 total):
  * - Notes/Tasks.md: 13 visible (2 completed/cancelled hidden)
  *   - 6 are nested subtasks rendered inside their parents
  * - Projects/Active.md: 4 visible (1 completed hidden)
+ * - Projects/Team/Backend.md: 2 visible (1 completed hidden)
+ * - Projects/Team/Frontend.md: 1 visible (1 completed hidden)
  * - Daily/2026-02-17.md: 2 visible (1 completed hidden)
  * - Daily/2026-02-19.md: 2 visible (1 completed hidden)
  */
@@ -44,6 +46,11 @@ const EXPECTED_TASKS: TaskExpectation[] = [
   // Daily/2026-02-19.md
   { text: "Implement CalendarWidget component", status: "Incomplete" },
   { text: "Build JournalView for main panel", status: "Incomplete" },
+  // Projects/Team/Backend.md
+  { text: "Set up CI pipeline", status: "Incomplete" },
+  { text: "Add health check endpoint", status: "Incomplete" },
+  // Projects/Team/Frontend.md
+  { text: "Build dashboard page", status: "Incomplete" },
 ];
 
 const EXPECTED_FOLDERS = ["Daily", "Notes", "Projects"];
@@ -67,12 +74,13 @@ test.describe("Vault Tasks", () => {
   test("displays folder tree with correct folders in sidebar", async ({ app }) => {
     const tree = app.folderTree();
 
-    // Verify exact folder count and names
+    // Verify folder count (3 top-level + 1 nested Team subfolder = 4)
     const folders = tree.folders();
-    await expect(folders).toHaveCount(EXPECTED_FOLDERS.length);
+    await expect(folders).toHaveCount(4);
 
+    // Verify top-level folders exist by name
     for (const folderName of EXPECTED_FOLDERS) {
-      await expect(folders.filter({ hasText: folderName })).toBeVisible();
+      await expect(folders.filter({ hasText: folderName }).first()).toBeVisible();
     }
   });
 
@@ -123,8 +131,8 @@ test.describe("Vault Tasks", () => {
     await expect.poll(
       () => tasks.taskCount(),
       { timeout: 5000, message: "task count should stabilize" }
-    ).toBe(21);
-    const initialCount = 21;
+    ).toBe(24);
+    const initialCount = 24;
 
     // Toggle tasks off
     await vault.toggleShowTasks();
@@ -248,5 +256,32 @@ test.describe("Vault Tasks", () => {
     await app.page.keyboard.press("Escape");
     await expect(filterInput).toHaveValue("");
     await expect(filterInput).not.toBeFocused();
+  });
+
+  test("subfolder tasks are grouped under a collapsible folder header", async ({ app }) => {
+    const tasks = app.tasks();
+    await tasks.waitForTasks();
+
+    // "Projects" contains a "Team" subfolder — tasks should be grouped under it
+    // Navigate to Projects folder to scope down
+    await app.page.locator("aside [data-testid='folder-label']").filter({ hasText: "Projects" }).click();
+
+    // The Team subfolder should render as a folder-tasks-group
+    const teamGroup = tasks.folderTaskGroup("Team");
+    await expect(teamGroup).toBeVisible();
+
+    // Inside the folder group, there should be file-tasks-group entries
+    const filesInTeamGroup = teamGroup.locator("[data-testid='file-tasks-group']");
+    await expect(filesInTeamGroup).toHaveCount(2); // Backend.md, Frontend.md
+
+    // Tasks within the folder group should be visible
+    await expect(teamGroup.locator("[data-testid='task-item']").filter({ hasText: "Set up CI pipeline" })).toBeVisible();
+    await expect(teamGroup.locator("[data-testid='task-item']").filter({ hasText: "Build dashboard page" })).toBeVisible();
+
+    // Direct file tasks (Active.md) should NOT be inside the Team folder group
+    const activeFileGroup = tasks.fileTaskGroups().filter({ hasText: "Active.md" });
+    await expect(activeFileGroup).toBeVisible();
+    // Active.md should be a direct file group, not inside Team
+    await expect(activeFileGroup.locator("[data-testid='task-item']").filter({ hasText: "Complete E2E test infrastructure" })).toBeVisible();
   });
 });

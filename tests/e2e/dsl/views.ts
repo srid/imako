@@ -227,6 +227,27 @@ export class TasksView {
   folderTree(): Locator {
     return this.container.locator("[data-testid='folder-tree']");
   }
+
+  /**
+   * Get all file task groups (collapsible file headers in the task list).
+   */
+  fileTaskGroups(): Locator {
+    return this.container.locator("[data-testid='file-tasks-group']");
+  }
+
+  /**
+   * Get all folder task groups (collapsible folder headers in the task list).
+   */
+  folderTaskGroups(): Locator {
+    return this.container.locator("[data-testid='folder-tasks-group']");
+  }
+
+  /**
+   * Get a specific folder task group by name.
+   */
+  folderTaskGroup(name: string): Locator {
+    return this.container.locator("[data-testid='folder-tasks-group']").filter({ hasText: name });
+  }
 }
 
 /**

@@ -9,7 +9,7 @@ import { AstRenderer } from "@/components/markdown";
 import type { Pandoc } from "@/components/markdown";
 import type { FolderNode, Task, NotesData } from "@/types";
 import { buildTaskTree } from "@/utils/taskTree";
-import { isTaskVisible, showTasks, treeFilter, setTreeFilter } from "@/state/filters";
+import { isTaskVisible, showTasks, treeFilter, setTreeFilter, isCollapsed, toggleCollapse } from "@/state/filters";
 import { Icons } from "@/utils/icons";
 import { JournalView } from "@/components/JournalView";
 
@@ -48,29 +48,20 @@ function getSubtree(
 }
 
 /**
- * Collect all tasks from a FolderNode recursively, grouped by file path.
+ * Count visible tasks in a FolderNode subtree.
  */
-function collectTasks(
+function countVisibleTasks(
   node: FolderNode,
-  basePath: string
-): { path: string; tasks: Task[] }[] {
-  const result: { path: string; tasks: Task[] }[] = [];
-
-  // Files at this level
-  for (const [filename, tasks] of Object.entries(node.files)) {
-    if (tasks.length > 0) {
-      const p = basePath ? `${basePath}/${filename}` : filename;
-      result.push({ path: p, tasks });
-    }
+  today: string
+): number {
+  let count = 0;
+  for (const tasks of Object.values(node.files)) {
+    count += tasks.filter((t) => isTaskVisible(t, today)).length;
   }
-
-  // Recurse into subfolders
-  for (const [name, subfolder] of Object.entries(node.subfolders)) {
-    const p = basePath ? `${basePath}/${name}` : name;
-    result.push(...collectTasks(subfolder, p));
+  for (const subfolder of Object.values(node.subfolders)) {
+    count += countVisibleTasks(subfolder, today);
   }
-
-  return result;
+  return count;
 }
 
 const VaultPage: Component = () => {
@@ -111,7 +102,6 @@ const VaultPage: Component = () => {
         name: vaultInfo.vaultName || "Vault",
         node: tree,
         basePath: "",
-        taskGroups: collectTasks(tree, ""),
       };
     }
 
@@ -140,7 +130,6 @@ const VaultPage: Component = () => {
         name: target.name,
         node: target.node,
         basePath: path,
-        taskGroups: collectTasks(target.node, path),
       };
     }
 
@@ -255,7 +244,6 @@ const VaultPage: Component = () => {
                       name={(detail() as any).name}
                       node={(detail() as any).node}
                       basePath={(detail() as any).basePath}
-                      taskGroups={(detail() as any).taskGroups}
                       today={vaultInfo.today}
                       onSelect={selectPath}
                     />
@@ -289,13 +277,111 @@ const VaultPage: Component = () => {
 };
 
 /**
- * Folder task view: shows folder contents listing + tasks grouped by files.
+ * Recursive task tree: renders files with tasks + subfolder groups from a FolderNode.
+ */
+const TaskGroupTree: Component<{
+  node: FolderNode;
+  basePath: string;
+  today: string;
+}> = (props) => {
+  const files = createMemo(() =>
+    Object.entries(props.node.files)
+      .filter(([, tasks]) => tasks.some((t) => isTaskVisible(t, props.today)))
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+
+  const folders = createMemo(() =>
+    Object.entries(props.node.subfolders)
+      .filter(([, sub]) => countVisibleTasks(sub, props.today) > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+
+  const childPath = (name: string) =>
+    props.basePath ? `${props.basePath}/${name}` : name;
+
+  return (
+    <>
+      {/* Files with tasks at this level */}
+      <For each={files()}>
+        {([filename, tasks]) => {
+          const filePath = () => childPath(filename);
+          const visibleTasks = createMemo(() =>
+            tasks.filter((t) => isTaskVisible(t, props.today))
+          );
+          const tree = createMemo(() => buildTaskTree(visibleTasks()));
+
+          return (
+            <div data-testid="file-tasks-group">
+              <details open>
+                <summary class="list-none cursor-pointer py-1.5 flex items-center gap-2 text-sm font-medium text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400 select-none">
+                  <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>
+                  <span class="truncate">{filename}</span>
+                  <ObsidianEditLink
+                    filePath={filePath()}
+                    class="text-stone-400 hover:text-accent-600 dark:hover:text-accent-400 flex-shrink-0"
+                  />
+                  <span class="text-xs text-stone-400 dark:text-stone-500 ml-auto flex-shrink-0">
+                    {visibleTasks().length}
+                  </span>
+                </summary>
+                <div class="pl-6 flex flex-col">
+                  <For each={tree()}>
+                    {(node) => <TaskItem node={node} today={props.today} />}
+                  </For>
+                </div>
+              </details>
+            </div>
+          );
+        }}
+      </For>
+
+      {/* Subfolder groups */}
+      <For each={folders()}>
+        {([name, subnode]) => {
+          const folderPath = () => childPath(name);
+          const nodeId = () => `task-folder:${folderPath()}`;
+          const taskCount = createMemo(() => countVisibleTasks(subnode, props.today));
+
+          return (
+            <div data-testid="folder-tasks-group">
+              <details
+                open={!isCollapsed(nodeId())}
+              >
+                <summary
+                  class="list-none cursor-pointer py-1.5 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400 select-none"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleCollapse(nodeId());
+                  }}
+                >
+                  <span class="w-4 h-4 flex items-center justify-center text-stone-400 dark:text-stone-500 transition-transform group-open/folder:rotate-90">
+                    {Icons.chevronRight}
+                  </span>
+                  <span class="text-accent-500">{Icons.folder}</span>
+                  <span class="truncate">{name}</span>
+                  <span class="text-xs text-stone-400 dark:text-stone-500 ml-auto flex-shrink-0">
+                    {taskCount()}
+                  </span>
+                </summary>
+                <div class="pl-6 flex flex-col gap-1">
+                  <TaskGroupTree node={subnode} basePath={folderPath()} today={props.today} />
+                </div>
+              </details>
+            </div>
+          );
+        }}
+      </For>
+    </>
+  );
+};
+
+/**
+ * Folder task view: shows hierarchical task tree + folder contents listing.
  */
 const FolderTaskView: Component<{
   name: string;
   node: FolderNode;
   basePath: string;
-  taskGroups: { path: string; tasks: Task[] }[];
   today: string;
   onSelect: (path: string | null) => void;
 }> = (props) => {
@@ -308,42 +394,10 @@ const FolderTaskView: Component<{
 
   return (
     <div class="space-y-6">
-      {/* Tasks section */}
+      {/* Tasks section — hierarchical */}
       <Show when={showTasks()}>
         <div data-testid="folder-task-view" class="space-y-4">
-          <For each={props.taskGroups}>
-            {(group) => {
-              const visibleTasks = createMemo(() =>
-                group.tasks.filter((t) => isTaskVisible(t, props.today))
-              );
-              const tree = createMemo(() => buildTaskTree(visibleTasks()));
-
-              return (
-                <Show when={visibleTasks().length > 0}>
-                  <div data-testid="file-tasks-group">
-                    <details open>
-                      <summary class="list-none cursor-pointer py-1.5 flex items-center gap-2 text-sm font-medium text-stone-700 dark:text-stone-200 hover:text-accent-600 dark:hover:text-accent-400 select-none">
-                        <span class="text-stone-400 dark:text-stone-500">{Icons.file}</span>
-                        <span class="truncate">{group.path}</span>
-                        <ObsidianEditLink
-                          filePath={group.path}
-                          class="text-stone-400 hover:text-accent-600 dark:hover:text-accent-400 flex-shrink-0"
-                        />
-                        <span class="text-xs text-stone-400 dark:text-stone-500 ml-auto flex-shrink-0">
-                          {visibleTasks().length}
-                        </span>
-                      </summary>
-                      <div class="pl-6 flex flex-col">
-                        <For each={tree()}>
-                          {(node) => <TaskItem node={node} today={props.today} />}
-                        </For>
-                      </div>
-                    </details>
-                  </div>
-                </Show>
-              );
-            }}
-          </For>
+          <TaskGroupTree node={props.node} basePath={props.basePath} today={props.today} />
         </div>
       </Show>
 
