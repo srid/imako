@@ -106,7 +106,7 @@ pub async fn watch_vault(vault_path: PathBuf) -> Result<watch::Receiver<Vault>, 
             }
 
             // Drain additional events (debounce)
-            tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
             while notify_rx.try_recv().is_ok() {}
 
             // Reload vault

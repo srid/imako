@@ -26,7 +26,7 @@ petgraph = "0.7"
 chrono = { version = "0.4", features = ["serde"] }
 
 # Async
-tokio = { version = "1", features = ["sync", "fs", "rt"] }
+tokio = { version = "1", features = ["sync", "fs", "rt", "time"] }
 
 # Error handling
 thiserror = "2"
