@@ -53,6 +53,7 @@ async fn main() {
     // Build the Axum router with SSR rendering + server functions
     let render_state = RenderHandleState::new(serve_config.clone(), App);
     let router = axum::Router::new()
+        .route("/health", axum::routing::get(|| async { "ok" }))
         .register_server_functions()
         .fallback(axum::routing::get(render_handler).with_state(render_state))
         .into_make_service();
