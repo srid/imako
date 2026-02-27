@@ -62,6 +62,14 @@
 
         packages.default = self'.packages.imako;
 
+        # Wrapper script for `nix run` — runs dx serve
+        apps.default = {
+          type = "app";
+          program = lib.getExe (pkgs.writeShellScriptBin "imako" ''
+            exec ${lib.getExe self'.packages.imako} "$@"
+          '');
+        };
+
         # Pre-commit hooks
         pre-commit.settings.hooks = {
           nixpkgs-fmt.enable = true;

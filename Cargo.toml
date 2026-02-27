@@ -36,7 +36,12 @@ tokio = { version = "1", features = ["full"] }
 # Logging
 tracing = "0.1"
 
+# Server-only deps (behind feature flag)
+axum = { version = "0.7", optional = true }
+dioxus-fullstack = { version = "0.6", optional = true }
+tracing-subscriber = { version = "0.3", optional = true }
+
 [features]
-default = []
-server = ["dioxus/server"]
+default = ["server"]
+server = ["dioxus/server", "dep:axum", "dep:dioxus-fullstack", "dep:tracing-subscriber"]
 web = ["dioxus/web"]

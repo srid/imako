@@ -7,14 +7,14 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "imako", version, about)]
 pub struct Cli {
-    /// Path to the Obsidian vault directory
-    pub vault_path: PathBuf,
+    /// Path to your Obsidian vault
+    pub vault_path: Option<PathBuf>,
 
-    /// Port to serve the web application on
-    #[arg(long, default_value = "4009")]
+    /// Port to run the web server on
+    #[arg(long, default_value = "8080")]
     pub port: u16,
 
-    /// Host to bind to
-    #[arg(long, default_value = "localhost")]
+    /// Host to bind the web server to
+    #[arg(long, default_value = "127.0.0.1")]
     pub host: String,
 }
