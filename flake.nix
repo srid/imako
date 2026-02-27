@@ -54,6 +54,7 @@
               (lib.hasSuffix ".css" path) ||
               (lib.hasInfix "/assets/" path) ||
               (lib.hasInfix "/crates/" path) ||
+              (lib.hasInfix "/example/" path) ||
               (config.rust-project.crane-lib.filterCargoSources path type)
             ;
           };
