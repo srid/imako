@@ -1,0 +1,10 @@
+[application]
+name = "imako"
+default_platform = "fullstack"
+
+[web.app]
+title = "Imako"
+
+[web.watcher]
+reload_html = true
+watch_path = ["src", "crates"]
