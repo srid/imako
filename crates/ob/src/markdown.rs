@@ -123,7 +123,7 @@ fn convert_node_to_block<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Option<Blo
         NodeValue::List(list) => {
             let items: Vec<Vec<Block>> = node
                 .children()
-                .map(|item| convert_children_to_blocks(&item))
+                .map(|item| convert_children_to_blocks(item))
                 .collect();
 
             match list.list_type {
@@ -258,7 +258,7 @@ fn extract_text_recursive<'a>(node: &'a comrak::nodes::AstNode<'a>, out: &mut St
         NodeValue::SoftBreak | NodeValue::LineBreak => out.push(' '),
         _ => {
             for child in node.children() {
-                extract_text_recursive(&child, out);
+                extract_text_recursive(child, out);
             }
         }
     }
