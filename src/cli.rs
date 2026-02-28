@@ -11,7 +11,7 @@ pub struct Cli {
     pub vault_path: Option<PathBuf>,
 
     /// Port to run the web server on
-    #[arg(long, default_value = "8080")]
+    #[arg(long, default_value = "4021")]
     pub port: u16,
 
     /// Host to bind the web server to

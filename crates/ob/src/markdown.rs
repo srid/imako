@@ -18,6 +18,7 @@ pub fn comrak_options() -> Options<'static> {
             autolink: true,
             tasklist: true,
             footnotes: true,
+            description_lists: true,
             front_matter_delimiter: Some("---".to_string()),
             wikilinks_title_after_pipe: true,
             ..Default::default()

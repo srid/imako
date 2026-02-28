@@ -6,6 +6,13 @@ use ob::task::{Task, TaskStatus};
 /// Renders a single task item.
 #[component]
 pub fn TaskItem(task: Task, today: String) -> Element {
+    let status_str = match task.status {
+        TaskStatus::Completed => "Completed",
+        TaskStatus::InProgress => "InProgress",
+        TaskStatus::Cancelled => "Cancelled",
+        TaskStatus::Incomplete => "Incomplete",
+    };
+
     let status_class = match task.status {
         TaskStatus::Completed => "line-through text-stone-400 dark:text-stone-500",
         TaskStatus::InProgress => "text-amber-600 dark:text-amber-400",
@@ -37,11 +44,12 @@ pub fn TaskItem(task: Task, today: String) -> Element {
         div {
             class: "py-1 flex items-start gap-2 text-sm {status_class}",
             "data-testid": "task-item",
+            "data-status": "{status_str}",
             span { class: "flex-shrink-0 mt-0.5 text-stone-400 dark:text-stone-500",
                 "{checkbox}"
             }
             span { class: "flex-1 min-w-0",
-                span { "{task.description}" }
+                span { "data-testid": "task-description", "{task.description}" }
                 // Breadcrumbs
                 if !task.parent_breadcrumbs.is_empty() {
                     span { class: "text-xs text-stone-400 dark:text-stone-500 ml-2",

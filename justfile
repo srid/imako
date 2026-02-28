@@ -6,7 +6,7 @@ NOTEBOOK:=justfile_directory() / "example"
 # Run the Dioxus dev server
 [group('dev')]
 dev:
-    IMAKO_VAULT_PATH={{ NOTEBOOK }} dx serve
+    IMAKO_VAULT_PATH={{ NOTEBOOK }} dx serve --port 4021
 
 # Run tests
 [group('dev')]

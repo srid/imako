@@ -17,19 +17,87 @@ use crate::note::Note;
 /// - Resolved: `<a href="/p/<path>" data-wikilink="true">display</a>`
 /// - Broken: `<a data-wikilink="true" data-broken="true">display</a>`
 pub fn render_note_html(content: &str, notes: &[Note]) -> String {
-    // For now, use comrak's built-in HTML rendering.
-    // Wikilinks are rendered by comrak with its wikilink extension.
-    // We post-process the HTML to resolve link targets.
-
     let arena = Arena::new();
     let options = comrak_options();
     let root = comrak::parse_document(&arena, content, &options);
 
-    // Walk the AST and resolve wikilinks
+    // Collect resolved and broken wikilink targets
+    let mut resolved_targets: Vec<String> = Vec::new();
+    let mut broken_targets: Vec<String> = Vec::new();
+    collect_wikilink_targets(root, notes, &mut resolved_targets, &mut broken_targets);
+
+    // Resolve wikilink URLs in the AST
     resolve_wikilinks_in_ast(root, notes);
 
     // Render to HTML
-    render_html(root)
+    let html = render_html(root);
+
+    // Post-process HTML: add data-wikilink/data-broken attrs and target=_blank
+    post_process_html(&html, &resolved_targets, &broken_targets)
+}
+
+/// Collect wikilink targets before resolution for post-processing.
+fn collect_wikilink_targets<'a>(
+    node: &'a AstNode<'a>,
+    notes: &[Note],
+    resolved: &mut Vec<String>,
+    broken: &mut Vec<String>,
+) {
+    if let NodeValue::WikiLink(ref wl) = node.data.borrow().value {
+        let target = &wl.url;
+        if link::resolve_wikilink(target, notes).is_some() {
+            resolved.push(target.clone());
+        } else {
+            broken.push(target.clone());
+        }
+    }
+    for child in node.children() {
+        collect_wikilink_targets(child, notes, resolved, broken);
+    }
+}
+
+/// Post-process HTML to add data attributes and target=_blank.
+fn post_process_html(html: &str, _resolved: &[String], broken: &[String]) -> String {
+    let mut result = html.to_string();
+
+    // Add data-wikilink to internal links (/p/ prefix)
+    result = result.replace("<a href=\"/p/", "<a data-wikilink=\"true\" href=\"/p/");
+
+    // Add data-broken to broken wikilinks (rendered by comrak without href)
+    for target in broken {
+        // comrak renders unresolved wikilinks with the original target as text
+        // Find and add data-broken attribute
+        let search = format!("<a href=\"{}\"", target);
+        let replace = format!(
+            "<a data-wikilink=\"true\" data-broken=\"true\" href=\"{}\"",
+            target
+        );
+        result = result.replace(&search, &replace);
+
+        // Also handle wikilinks rendered without href (comrak keeps the wikilink URL)
+        let search2 = format!("<a href=\"{}", target);
+        if result.contains(&search2) && !result.contains("data-broken") {
+            result = result.replace(
+                &search2,
+                &format!(
+                    "<a data-wikilink=\"true\" data-broken=\"true\" href=\"{}",
+                    target
+                ),
+            );
+        }
+    }
+
+    // Add target=_blank to external links (http/https)
+    result = result.replace(
+        "<a href=\"http://",
+        "<a target=\"_blank\" rel=\"noopener\" href=\"http://",
+    );
+    result = result.replace(
+        "<a href=\"https://",
+        "<a target=\"_blank\" rel=\"noopener\" href=\"https://",
+    );
+
+    result
 }
 
 /// Walk the AST and resolve wikilink URLs.

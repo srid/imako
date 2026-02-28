@@ -18,7 +18,7 @@ pub fn FolderTree(node: FolderNode, base_path: String, selected_path: Option<Str
     }
 
     rsx! {
-        div { class: "space-y-0.5",
+        div { class: "space-y-0.5", "data-testid": "folder-tree",
             for (name, entry) in items.iter() {
                 {
                     let child_path = if base_path.is_empty() {
@@ -31,7 +31,7 @@ pub fn FolderTree(node: FolderNode, base_path: String, selected_path: Option<Str
                     match entry {
                         TreeEntry::Folder(subnode) => {
                             rsx! {
-                                details { open: true,
+                                details { open: true, "data-testid": "folder-node",
                                     summary {
                                         class: if is_selected {
                                             "list-none cursor-pointer py-1 px-2 -mx-2 flex items-center gap-2 text-sm rounded-md transition-colors text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 select-none"
@@ -41,6 +41,7 @@ pub fn FolderTree(node: FolderNode, base_path: String, selected_path: Option<Str
                                         Link {
                                             to: crate::Route::VaultPath { path: urlencoding::encode(&child_path).to_string() },
                                             class: "flex items-center gap-2 w-full",
+                                            "data-testid": "folder-label",
                                             span { class: "text-amber-500 flex-shrink-0", "📁" }
                                             span { class: "truncate", "{name}" }
                                         }
@@ -57,7 +58,7 @@ pub fn FolderTree(node: FolderNode, base_path: String, selected_path: Option<Str
                         }
                         TreeEntry::File => {
                             rsx! {
-                                Link {
+                                Link { "data-testid": "file-node",
                                     to: crate::Route::VaultPath { path: urlencoding::encode(&child_path).to_string() },
                                     class: if is_selected {
                                         "block py-1 px-2 -mx-2 flex items-center gap-2 text-sm rounded-md transition-colors text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
