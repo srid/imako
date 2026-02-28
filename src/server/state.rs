@@ -6,6 +6,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Global application state shared across all server function calls.
+#[derive(Debug)]
 pub struct AppState {
     pub vault_root: PathBuf,
     pub vault: Arc<RwLock<VaultState>>,
