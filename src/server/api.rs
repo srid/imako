@@ -7,19 +7,23 @@ use std::path::PathBuf;
 
 /// Get the global vault state. For now, we use a once_cell.
 /// In Phase 2 this will be replaced with proper Dioxus server context.
+#[allow(dead_code)]
 static APP_STATE: std::sync::OnceLock<super::state::AppState> = std::sync::OnceLock::new();
 
 /// Initialize the app state. Call once at startup.
+#[allow(dead_code)]
 pub fn init(vault_root: PathBuf) {
     let state = super::state::AppState::new(vault_root);
     state.start_watcher();
     APP_STATE.set(state).expect("AppState already initialized");
 }
 
+#[allow(dead_code)]
 fn app_state() -> &'static super::state::AppState {
     APP_STATE.get().expect("AppState not initialized")
 }
 
+#[allow(dead_code)]
 fn vault_info(state: &super::state::AppState) -> VaultInfo {
     let vault_name = state
         .vault_root

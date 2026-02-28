@@ -12,6 +12,7 @@ pub struct AppState {
     pub vault: Arc<RwLock<VaultState>>,
 }
 
+#[allow(dead_code)]
 impl AppState {
     /// Initialize application state by scanning the vault.
     pub fn new(vault_root: PathBuf) -> Self {

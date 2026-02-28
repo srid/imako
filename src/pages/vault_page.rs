@@ -114,7 +114,7 @@ fn NoteDetail(path: String) -> Element {
 /// Renders the detail view for a folder — lists its contents.
 #[component]
 fn FolderDetail(path: String, tree_data: Option<FolderTreeData>) -> Element {
-    let folder_name = path.split('/').last().unwrap_or(&path);
+    let folder_name = path.split('/').next_back().unwrap_or(&path);
 
     rsx! {
         div {
