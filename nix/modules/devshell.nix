@@ -11,6 +11,7 @@
         just
         nixd
         bacon
+        dioxus-cli
       ];
     };
   };

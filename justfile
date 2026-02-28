@@ -2,7 +2,7 @@
 
 # Run the app with the example vault
 run vault_path="example":
-    cargo run -- --vault {{vault_path}}
+    dx serve -- --vault {{vault_path}}
 
 # Check everything compiles
 check:
