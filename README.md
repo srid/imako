@@ -13,7 +13,7 @@ Journaling and planning for [Obsidian](https://obsidian.md/) notebooks — rewri
 
 ### Prerequisites
 
-- [Nix](https://nixos.org/) with flakes enabled
+- [Nix](https://nixos.asia/en/install) with flakes enabled
 
 ### Development
 
