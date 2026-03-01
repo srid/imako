@@ -24,6 +24,7 @@ test:
 
 # Format all code
 fmt:
+    dx fmt
     cargo fmt --all
     nixpkgs-fmt nix/**/*.nix flake.nix
 
