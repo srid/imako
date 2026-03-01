@@ -10,9 +10,12 @@ license = "AGPL-3.0-or-later"
 comrak = { version = "0.36", default-features = false, features = ["syntect"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tracing = "0.1"
+
+# OS-only dependencies (vault scanning, file watching) — not available on WASM
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 notify = { version = "7", features = ["macos_fsevent"] }
 notify-debouncer-mini = "0.5"
 walkdir = "2"
 chrono = { version = "0.4", features = ["serde"] }
-tracing = "0.1"
 tokio = { version = "1", features = ["sync", "rt"] }

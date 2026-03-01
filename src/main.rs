@@ -44,13 +44,13 @@ pub mod shared {
 // --- Server Functions ---
 
 /// Fetch the vault info and folder tree.
-#[server(GetFolderTree)]
+#[server]
 pub async fn get_folder_tree() -> Result<shared::FolderTreeData, ServerFnError> {
     server::api::get_folder_tree_impl().await
 }
 
 /// Fetch a specific note by its vault-relative path.
-#[server(GetNote)]
+#[server]
 pub async fn get_note(path: String) -> Result<shared::NoteData, ServerFnError> {
     server::api::get_note_impl(path).await
 }

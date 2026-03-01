@@ -12,12 +12,16 @@ license = "AGPL-3.0-or-later"
 
 [dependencies]
 ob = { path = "crates/ob" }
-dioxus = { version = "0.6", features = ["fullstack", "router"] }
-clap = { version = "4", features = ["derive"] }
+dioxus = { version = "0.7", features = ["fullstack", "router"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
+# Pin to match dx CLI's bundled wasm-bindgen-cli version
+wasm-bindgen = "=0.2.108"
+
+# Server-only dependencies (not available on WASM)
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
 
 [features]
