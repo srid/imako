@@ -1,4 +1,6 @@
 # Development commands for Imako
+default:
+    @just --list
 
 # Run the app with the example vault
 run vault_path="example":
