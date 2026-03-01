@@ -1,15 +1,11 @@
 //! Folder tree sidebar component.
 
+use crate::Route;
 use dioxus::prelude::*;
 use ob::FolderNode;
 
 #[component]
-pub fn FolderTree(
-    node: FolderNode,
-    base_path: String,
-    selected_path: Option<String>,
-    on_select: EventHandler<Option<String>>,
-) -> Element {
+pub fn FolderTree(node: FolderNode, base_path: String, selected_path: Option<String>) -> Element {
     rsx! {
         div {
             class: "flex flex-col gap-0.5",
@@ -23,8 +19,8 @@ pub fn FolderTree(
                         format!("{}/{}", base_path, name)
                     };
                     let is_selected = selected_path.as_deref() == Some(folder_path.as_str());
-                    let folder_path_click = folder_path.clone();
                     let folder_path_recurse = folder_path.clone();
+                    let segments: Vec<String> = folder_path.split('/').map(String::from).collect();
 
                     rsx! {
                         details {
@@ -36,13 +32,12 @@ pub fn FolderTree(
                                 } else {
                                     "list-none cursor-pointer py-1.5 flex items-center gap-2 text-sm font-semibold select-none transition-colors text-stone-700 hover:text-indigo-600"
                                 },
-                                onclick: move |_| on_select.call(Some(folder_path_click.clone())),
-                                span {
-                                    class: "w-4 h-4 flex items-center justify-center text-stone-400 transition-transform",
-                                    "▸"
+                                Link {
+                                    to: Route::VaultPath { path: segments },
+                                    class: "flex items-center gap-2 w-full",
+                                    span { class: "text-indigo-500", "📁" }
+                                    span { "{name}" }
                                 }
-                                span { class: "text-indigo-500", "📁" }
-                                span { "{name}" }
                             }
                             div {
                                 class: "pl-6 mt-0.5",
@@ -50,7 +45,6 @@ pub fn FolderTree(
                                     node: subnode.clone(),
                                     base_path: folder_path_recurse,
                                     selected_path: selected_path.clone(),
-                                    on_select: move |p| on_select.call(p),
                                 }
                             }
                         }
@@ -63,16 +57,16 @@ pub fn FolderTree(
                 {
                     let file_path = entry.path.to_string_lossy().to_string();
                     let is_selected = selected_path.as_deref() == Some(file_path.as_str());
-                    let path_click = file_path.clone();
+                    let segments: Vec<String> = file_path.split('/').map(String::from).collect();
 
                     rsx! {
-                        button {
+                        Link {
+                            to: Route::VaultPath { path: segments },
                             class: if is_selected {
                                 "w-full text-left py-1.5 flex items-center gap-2 text-sm transition-colors rounded-md text-indigo-600 bg-indigo-50 font-medium px-2 -mx-2"
                             } else {
                                 "w-full text-left py-1.5 flex items-center gap-2 text-sm transition-colors rounded-md text-stone-600 hover:text-indigo-600"
                             },
-                            onclick: move |_| on_select.call(Some(path_click.clone())),
                             span { class: "w-4 h-4" } // spacer
                             span { class: "text-stone-400", "📄" }
                             span { class: "truncate", "{filename}" }

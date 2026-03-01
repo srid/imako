@@ -4,7 +4,7 @@ use crate::components::folder_tree::FolderTree;
 use crate::components::header::Header;
 use crate::components::note_view::NoteView;
 use crate::shared::FolderTreeData;
-use crate::{get_folder_tree, get_note, Route};
+use crate::{get_folder_tree, get_note};
 use dioxus::prelude::*;
 
 #[component]
@@ -27,15 +27,6 @@ pub fn VaultPage(path: Option<String>) -> Element {
                             node: data.tree.clone(),
                             base_path: String::new(),
                             selected_path: path.clone(),
-                            on_select: move |p: Option<String>| {
-                                if let Some(file_path) = p {
-                                    navigator().push(Route::VaultPath {
-                                        path: file_path.split('/').map(String::from).collect(),
-                                    });
-                                } else {
-                                    navigator().push(Route::Home {});
-                                }
-                            },
                         }
                     },
                     Some(Err(e)) => rsx! {
