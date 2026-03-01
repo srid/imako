@@ -8,7 +8,7 @@ css:
 
 # Run the app with the example vault
 run vault_path="example": css
-    dx serve --port 6006 -- --vault {{vault_path}}
+    VAULT_PATH={{vault_path}} dx serve --port 6006
 
 # Check everything compiles
 check:
@@ -26,6 +26,14 @@ test:
 fmt:
     cargo fmt --all
     nixpkgs-fmt nix/**/*.nix flake.nix
+
+# Run E2E tests (requires `just run` in another terminal)
+test-e2e:
+    cd tests && npx playwright test
+
+# Run E2E tests with UI
+test-e2e-ui:
+    cd tests && npx playwright test --ui
 
 # Watch for changes and check
 watch:
