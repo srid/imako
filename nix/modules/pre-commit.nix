@@ -7,7 +7,14 @@
     pre-commit.settings = {
       hooks = {
         nixpkgs-fmt.enable = true;
-        rustfmt.enable = true;
+        dx-fmt = {
+          enable = true;
+          name = "dx fmt";
+          entry = "${pkgs.dioxus-cli}/bin/dx fmt --all-code";
+          types = [ "rust" ];
+          language = "system";
+          pass_filenames = false;
+        };
       };
     };
   };

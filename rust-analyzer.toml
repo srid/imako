@@ -1,0 +1,2 @@
+[rustfmt]
+overrideCommand = ["dx", "fmt", "--all-code", "-f", "-"]
