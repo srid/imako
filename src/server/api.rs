@@ -5,8 +5,7 @@ use dioxus::prelude::*;
 use ob::folder_tree::build_folder_tree_from_notes;
 use std::path::PathBuf;
 
-/// Get the global vault state. For now, we use a once_cell.
-/// In Phase 2 this will be replaced with proper Dioxus server context.
+/// Global vault state, initialized once at startup.
 #[allow(dead_code)]
 static APP_STATE: std::sync::OnceLock<super::state::AppState> = std::sync::OnceLock::new();
 
