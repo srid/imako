@@ -93,5 +93,16 @@ fn VaultPath(path: Vec<String>) -> Element {
 }
 
 fn main() {
+    // Initialize server state before launching Dioxus
+    #[cfg(feature = "server")]
+    {
+        let vault_path = std::env::var("VAULT_PATH").unwrap_or_else(|_| "example".to_string());
+        let vault_root = std::path::PathBuf::from(&vault_path)
+            .canonicalize()
+            .unwrap_or_else(|_| panic!("Vault path not found: {}", vault_path));
+        tracing::info!("Loading vault: {}", vault_root.display());
+        server::api::init(vault_root);
+    }
+
     dioxus::launch(App);
 }

@@ -4,7 +4,7 @@ default:
 
 # Run the app with the example vault
 run vault_path="example":
-    dx serve -- --vault {{vault_path}}
+    VAULT_PATH={{vault_path}} dx serve
 
 # Check everything compiles
 check:
