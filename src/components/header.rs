@@ -1,6 +1,7 @@
 //! Header component — vault name and today's date.
 use crate::shared::VaultInfo;
 use dioxus::prelude::*;
+
 #[component]
 pub fn Header(info: VaultInfo) -> Element {
   rsx! {

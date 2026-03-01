@@ -6,6 +6,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
+
 /// A node in the folder tree hierarchy.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FolderNode {
@@ -14,12 +15,14 @@ pub struct FolderNode {
   /// Files at this level, keyed by filename.
   pub files: BTreeMap<String, FileEntry>,
 }
+
 /// A file entry in the folder tree.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FileEntry {
   /// Vault-relative path to this file.
   pub path: PathBuf,
 }
+
 impl FolderNode {
   fn new() -> Self {
     Self {
@@ -28,6 +31,7 @@ impl FolderNode {
     }
   }
 }
+
 /// Build a folder tree from a set of vault-relative note paths.
 pub fn build_folder_tree<'a>(paths: impl IntoIterator<Item = &'a PathBuf>) -> FolderNode {
   let mut root = FolderNode::new();
@@ -37,6 +41,7 @@ pub fn build_folder_tree<'a>(paths: impl IntoIterator<Item = &'a PathBuf>) -> Fo
   flatten_tree(&mut root);
   root
 }
+
 /// Insert a file path into the folder tree.
 fn insert_path(root: &mut FolderNode, path: &Path) {
   let components: Vec<&str> = path
@@ -61,6 +66,7 @@ fn insert_path(root: &mut FolderNode, path: &Path) {
     },
   );
 }
+
 /// Recursively flatten single-child empty folders.
 ///
 /// If a folder has no files and exactly one subfolder, merge them:
@@ -86,11 +92,13 @@ fn flatten_tree(node: &mut FolderNode) {
     node.subfolders.insert(new_key, replacement);
   }
 }
+
 /// Build a folder tree from a HashMap of notes.
 pub fn build_folder_tree_from_notes(notes: &HashMap<PathBuf, crate::Note>) -> FolderNode {
   let paths: Vec<&PathBuf> = notes.keys().collect();
   build_folder_tree(paths)
 }
+
 #[cfg(test)]
 mod tests {
   use super::*;

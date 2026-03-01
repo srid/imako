@@ -8,12 +8,14 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
 use walkdir::WalkDir;
+
 /// Snapshot of a vault's state.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VaultState {
   /// All notes indexed by their relative path.
   pub notes: HashMap<PathBuf, Note>,
 }
+
 impl VaultState {
   /// Create an empty vault state.
   pub fn new() -> Self {
@@ -22,11 +24,13 @@ impl VaultState {
     }
   }
 }
+
 impl Default for VaultState {
   fn default() -> Self {
     Self::new()
   }
 }
+
 /// Scan the vault directory and build the initial VaultState.
 pub fn scan_vault(vault_root: &Path) -> VaultState {
   let mut notes = HashMap::new();
@@ -55,6 +59,7 @@ pub fn scan_vault(vault_root: &Path) -> VaultState {
   info!("Vault scanned: {} notes", notes.len());
   VaultState { notes }
 }
+
 /// Check if a directory entry is hidden (starts with dot).
 fn is_hidden(entry: &walkdir::DirEntry) -> bool {
   entry
@@ -63,11 +68,13 @@ fn is_hidden(entry: &walkdir::DirEntry) -> bool {
     .map(|s| s.starts_with('.'))
     .unwrap_or(false)
 }
+
 /// Watches a vault directory for filesystem changes and updates VaultState.
 pub struct VaultWatcher {
   vault_root: PathBuf,
   state: Arc<RwLock<VaultState>>,
 }
+
 impl VaultWatcher {
   /// Create a new watcher for the given vault.
   pub fn new(vault_root: PathBuf, state: Arc<RwLock<VaultState>>) -> Self {

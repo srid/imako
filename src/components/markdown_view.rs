@@ -1,6 +1,7 @@
 //! Markdown AST renderer — converts Block/Inline AST to Dioxus elements.
 use dioxus::prelude::*;
 use ob::markdown::{Block, Inline};
+
 /// Render a sequence of blocks.
 #[component]
 pub fn BlockRenderer(blocks: Vec<Block>) -> Element {
@@ -10,6 +11,7 @@ pub fn BlockRenderer(blocks: Vec<Block>) -> Element {
     }
   }
 }
+
 fn render_block(block: &Block) -> Element {
   match block {
     Block::Paragraph(inlines) => {
@@ -146,6 +148,7 @@ fn render_block(block: &Block) -> Element {
     }
   }
 }
+
 /// Render a sequence of inline elements.
 #[component]
 pub fn InlineRenderer(inlines: Vec<Inline>) -> Element {
@@ -155,6 +158,7 @@ pub fn InlineRenderer(inlines: Vec<Inline>) -> Element {
     }
   }
 }
+
 fn render_inline(inline: &Inline) -> Element {
   match inline {
     Inline::Text(text) => {

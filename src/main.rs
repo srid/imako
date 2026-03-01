@@ -8,6 +8,7 @@ mod components;
 mod pages;
 #[cfg(feature = "server")]
 mod server;
+
 /// Shared types used by both server and client.
 pub mod shared {
   use ob::{FolderNode, Note};
@@ -32,16 +33,19 @@ pub mod shared {
     pub note: Note,
   }
 }
+
 /// Fetch the vault info and folder tree.
 #[server]
 pub async fn get_folder_tree() -> Result<shared::FolderTreeData, ServerFnError> {
   server::api::get_folder_tree_impl().await
 }
+
 /// Fetch a specific note by its vault-relative path.
 #[server]
 pub async fn get_note(path: String) -> Result<shared::NoteData, ServerFnError> {
   server::api::get_note_impl(path).await
 }
+
 #[derive(Debug, Clone, Routable, PartialEq)]
 enum Route {
   #[route("/")]
@@ -49,17 +53,20 @@ enum Route {
   #[route("/p/:..path")]
   VaultPath { path: Vec<String> },
 }
+
 fn App() -> Element {
   rsx! {
     Router::<Route> {}
   }
 }
+
 #[component]
 fn Home() -> Element {
   rsx! {
     pages::vault_page::VaultPage { path: None }
   }
 }
+
 #[component]
 fn VaultPath(path: Vec<String>) -> Element {
   let joined = path.join("/");
@@ -72,6 +79,7 @@ fn VaultPath(path: Vec<String>) -> Element {
     pages::vault_page::VaultPage { path: p }
   }
 }
+
 fn main() {
   #[cfg(feature = "server")]
   {

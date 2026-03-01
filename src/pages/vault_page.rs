@@ -5,6 +5,7 @@ use crate::components::note_view::NoteView;
 use crate::shared::FolderTreeData;
 use crate::{get_folder_tree, get_note};
 use dioxus::prelude::*;
+
 #[component]
 pub fn VaultPage(path: Option<String>) -> Element {
   let folder_tree = use_server_future(get_folder_tree)?;
@@ -49,6 +50,7 @@ pub fn VaultPage(path: Option<String>) -> Element {
     }
   }
 }
+
 /// Renders the detail view for a specific note file.
 #[component]
 fn NoteDetail(path: String) -> Element {
@@ -73,6 +75,7 @@ fn NoteDetail(path: String) -> Element {
     }
   }
 }
+
 /// Renders the detail view for a folder — lists its contents.
 #[component]
 fn FolderDetail(path: String, tree_data: Option<FolderTreeData>) -> Element {
@@ -89,6 +92,7 @@ fn FolderDetail(path: String, tree_data: Option<FolderTreeData>) -> Element {
     }
   }
 }
+
 /// Navigate the tree to find and render a specific folder's contents.
 fn render_folder_contents(root: &ob::FolderNode, target_path: &str) -> Element {
   let parts: Vec<&str> = target_path.split('/').collect();
@@ -148,6 +152,7 @@ fn render_folder_contents(root: &ob::FolderNode, target_path: &str) -> Element {
     }
   }
 }
+
 /// Root view — shows vault overview.
 #[component]
 fn RootView(tree_data: Option<FolderTreeData>) -> Element {

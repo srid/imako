@@ -2,6 +2,7 @@
 use crate::markdown::{Document, comrak_to_document};
 use comrak::{Arena, Options, parse_document};
 use std::path::{Path, PathBuf};
+
 /// A parsed Obsidian note.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct Note {
@@ -10,6 +11,7 @@ pub struct Note {
   /// Parsed markdown content as a simplified AST.
   pub content: Document,
 }
+
 /// Parse a markdown file into a Note.
 ///
 /// `vault_root` is the vault directory.
@@ -23,6 +25,7 @@ pub fn parse_note(vault_root: &Path, rel_path: &Path) -> std::io::Result<Note> {
     content,
   })
 }
+
 /// Parse a markdown string into a Document AST using comrak.
 pub fn parse_markdown(source: &str) -> Document {
   let arena = Arena::new();
@@ -30,6 +33,7 @@ pub fn parse_markdown(source: &str) -> Document {
   let root = parse_document(&arena, source, &options);
   comrak_to_document(root)
 }
+
 /// Standard comrak options for Obsidian-compatible parsing.
 fn comrak_options() -> Options<'static> {
   let mut options = Options::default();
@@ -47,6 +51,7 @@ fn comrak_options() -> Options<'static> {
   options.extension.front_matter_delimiter = Some("---".to_string());
   options
 }
+
 #[cfg(test)]
 mod tests {
   use super::*;

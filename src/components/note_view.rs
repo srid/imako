@@ -2,6 +2,7 @@
 use crate::components::markdown_view::BlockRenderer;
 use crate::shared::NoteData;
 use dioxus::prelude::*;
+
 #[component]
 pub fn NoteView(data: NoteData) -> Element {
   let filename = data

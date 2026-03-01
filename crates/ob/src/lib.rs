@@ -5,8 +5,10 @@
 pub mod folder_tree;
 pub mod markdown;
 pub mod note;
+
 #[cfg(not(target_arch = "wasm32"))]
 pub mod vault;
+
 pub use folder_tree::FolderNode;
 pub use markdown::{Block, Inline};
 pub use note::Note;

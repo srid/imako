@@ -4,11 +4,13 @@
 //! enum-based representation that can be serialized to JSON and sent
 //! to the Dioxus client for rendering.
 use serde::{Deserialize, Serialize};
+
 /// A Markdown document — a sequence of block elements.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Document {
   pub blocks: Vec<Block>,
 }
+
 /// Block-level Markdown elements.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "t", content = "c")]
@@ -39,6 +41,7 @@ pub enum Block {
   /// This is extracted from list items during AST conversion.
   TaskListItem { checked: bool, content: Vec<Block> },
 }
+
 /// Inline-level Markdown elements.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "t", content = "c")]
@@ -72,14 +75,17 @@ pub enum Inline {
   /// Raw inline HTML.
   HtmlInline(String),
 }
+
 /// Convert a comrak AST into our simplified Document.
 pub fn comrak_to_document<'a>(root: &'a comrak::nodes::AstNode<'a>) -> Document {
   let blocks = convert_children_to_blocks(root);
   Document { blocks }
 }
+
 fn convert_children_to_blocks<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Vec<Block> {
   node.children().filter_map(convert_node_to_block).collect()
 }
+
 fn convert_node_to_block<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Option<Block> {
   use comrak::nodes::NodeValue;
   let val = &node.data.borrow().value;
@@ -150,12 +156,14 @@ fn convert_node_to_block<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Option<Blo
     }
   }
 }
+
 fn convert_children_to_inlines<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Vec<Inline> {
   node
     .children()
     .flat_map(|child| convert_node_to_inlines(child))
     .collect()
 }
+
 fn convert_node_to_inlines<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Vec<Inline> {
   use comrak::nodes::NodeValue;
   let val = &node.data.borrow().value;
@@ -203,6 +211,7 @@ fn convert_node_to_inlines<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Vec<Inli
     }
   }
 }
+
 /// Extract plain text from all children (for alt text, etc.)
 fn extract_text_from_children<'a>(node: &'a comrak::nodes::AstNode<'a>) -> String {
   let mut text = String::new();
@@ -211,6 +220,7 @@ fn extract_text_from_children<'a>(node: &'a comrak::nodes::AstNode<'a>) -> Strin
   }
   text
 }
+
 fn extract_text_recursive<'a>(node: &'a comrak::nodes::AstNode<'a>, out: &mut String) {
   use comrak::nodes::NodeValue;
   match &node.data.borrow().value {
