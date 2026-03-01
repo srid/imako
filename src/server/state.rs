@@ -3,12 +3,14 @@ use ob::vault::{VaultState, VaultWatcher, scan_vault};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
 /// Global application state shared across all server function calls.
 #[derive(Debug)]
 pub struct AppState {
   pub vault_root: PathBuf,
   pub vault: Arc<RwLock<VaultState>>,
 }
+
 #[allow(dead_code)]
 impl AppState {
   /// Initialize application state by scanning the vault.
