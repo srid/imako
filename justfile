@@ -8,7 +8,7 @@ css:
 
 # Run the app with the example vault
 run vault_path="example": css
-    VAULT_PATH={{vault_path}} dx serve --port 6006
+    dx serve --port 6006 -- --vault {{vault_path}}
 
 # Check everything compiles
 check:

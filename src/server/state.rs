@@ -24,6 +24,7 @@ impl AppState {
     }
 
     /// Start the filesystem watcher in the background.
+    /// TODO(Phase 2): Call this after Dioxus/tokio runtime is up for live sync.
     pub fn start_watcher(&self) -> tokio::task::JoinHandle<()> {
         let watcher = VaultWatcher::new(self.vault_root.clone(), self.vault.clone());
         tokio::spawn(async move {
