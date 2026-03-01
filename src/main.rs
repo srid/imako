@@ -102,6 +102,13 @@ fn main() {
             .unwrap_or_else(|_| panic!("Vault path not found: {}", vault_path));
         tracing::info!("Loading vault: {}", vault_root.display());
         server::api::init(vault_root);
+        // Default to port 6006 if not set by dx serve or PORT env var
+        if std::env::var("PORT").is_err() {
+            // SAFETY: called in main before any threads are spawned
+            unsafe { std::env::set_var("PORT", "6006") };
+        }
+        let port: u16 = std::env::var("PORT").unwrap().parse().unwrap();
+        tracing::info!("Serving at: http://127.0.0.1:{}", port);
     }
 
     dioxus::launch(App);
