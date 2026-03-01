@@ -5,6 +5,9 @@ default_platform = "fullstack"
 [web.app]
 title = "Imako"
 
+[web.resource.dev]
+style = ["tailwind.css"]
+
 [web.watcher]
 reload_html = true
 watch_path = ["src", "crates"]

@@ -12,6 +12,7 @@
         nixd
         bacon
         dioxus-cli
+        tailwindcss
       ];
     };
   };
