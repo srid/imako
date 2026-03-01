@@ -11,33 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: nixbuild/nix-quick-install-action@v34
 
       - name: Build app
         run: nix build
 
-      - name: Start server
-        run: |
-          VAULT_PATH=${{ github.workspace }}/example ./result/bin/imako &
-          # Wait for server to be ready
-          for i in $(seq 1 30); do
-            if curl -s -o /dev/null http://127.0.0.1:6006/; then
-              echo "Server ready on port 6006"
-              break
-            fi
-            sleep 1
-          done
-
-      - name: Install Playwright
-        working-directory: tests
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-
       - name: Run E2E tests
-        working-directory: tests
-        run: npx playwright test
+        run: nix run .#e2e
 
       - name: Upload test results
         if: failure()

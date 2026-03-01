@@ -35,6 +35,14 @@ test-e2e:
 test-e2e-ui:
     cd tests && npx playwright test --ui
 
+# Run all E2E tests (via process-compose: starts server, runs tests, exits)
+e2e:
+    nix run .#e2e
+
+# Start E2E server only (for developing tests interactively)
+e2e-server:
+    nix run .#e2e-server
+
 # Watch for changes and check
 watch:
     bacon clippy
