@@ -4,6 +4,7 @@
 //! both the server (vault operations) and client (WASM UI).
 #![allow(non_snake_case)]
 use dioxus::prelude::*;
+use dioxus_fullstack::{JsonEncoding, WebSocketOptions, Websocket};
 mod components;
 mod pages;
 #[cfg(feature = "server")]
@@ -37,8 +38,23 @@ pub async fn get_folder_tree() -> Result<ob::FolderNode, ServerFnError> {
 
 /// Fetch a specific note by its vault-relative path.
 #[server]
-pub async fn get_note(path: String) -> Result<ob::Note, ServerFnError> {
+pub async fn get_note(path: std::path::PathBuf) -> Result<ob::Note, ServerFnError> {
   server::api::get_note_impl(path).await
+}
+
+/// WebSocket endpoint for streaming vault change events to clients.
+#[get("/api/vault_events")]
+pub async fn vault_events_ws(
+  ws: WebSocketOptions,
+) -> Result<Websocket<(), ob::VaultEvent, JsonEncoding>> {
+  let mut rx = server::api::app_state().subscribe();
+  Ok(ws.on_upgrade(move |mut typed_ws| async move {
+    while let Ok(event) = rx.recv().await {
+      if typed_ws.send(event).await.is_err() {
+        break;
+      }
+    }
+  }))
 }
 
 #[derive(Debug, Clone, Routable, PartialEq)]

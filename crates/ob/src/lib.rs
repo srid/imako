@@ -2,6 +2,7 @@
 //!
 //! Pure Rust library for reading and watching Obsidian vaults.
 //! No UI dependencies — can be used from any Rust application.
+pub mod events;
 pub mod folder_tree;
 pub mod markdown;
 pub mod note;
@@ -9,6 +10,7 @@ pub mod note;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod vault;
 
+pub use events::VaultEvent;
 pub use folder_tree::FolderNode;
 pub use markdown::{Block, Inline};
 pub use note::Note;

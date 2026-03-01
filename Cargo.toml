@@ -19,10 +19,12 @@ tracing = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
 # Pin to match dx CLI's bundled wasm-bindgen-cli version
 wasm-bindgen = "=0.2.108"
+futures = "0.3"
 
 # Server-only dependencies (not available on WASM)
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
 
 [features]
 default = []

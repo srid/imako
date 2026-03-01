@@ -1,11 +1,12 @@
 //! Vault scanning and live filesystem watching.
+use crate::events::VaultEvent;
 use crate::note::{self, Note};
 use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, broadcast};
 use tracing::{info, warn};
 use walkdir::WalkDir;
 
@@ -69,17 +70,28 @@ fn is_hidden(entry: &walkdir::DirEntry) -> bool {
     .unwrap_or(false)
 }
 
-/// Watches a vault directory for filesystem changes and updates VaultState.
+/// Watches a vault directory for filesystem changes, updates VaultState,
+/// and broadcasts VaultEvents to connected clients.
 pub struct VaultWatcher {
   vault_root: PathBuf,
   state: Arc<RwLock<VaultState>>,
+  event_tx: broadcast::Sender<VaultEvent>,
 }
 
 impl VaultWatcher {
   /// Create a new watcher for the given vault.
-  pub fn new(vault_root: PathBuf, state: Arc<RwLock<VaultState>>) -> Self {
-    Self { vault_root, state }
+  pub fn new(
+    vault_root: PathBuf,
+    state: Arc<RwLock<VaultState>>,
+    event_tx: broadcast::Sender<VaultEvent>,
+  ) -> Self {
+    Self {
+      vault_root,
+      state,
+      event_tx,
+    }
   }
+
   /// Start watching for filesystem changes. Runs until cancelled.
   pub async fn watch(&self) -> notify::Result<()> {
     let (tx, rx) = std::sync::mpsc::channel();
@@ -88,8 +100,26 @@ impl VaultWatcher {
       .watcher()
       .watch(&self.vault_root, notify::RecursiveMode::Recursive)?;
     info!("Watching vault: {}", self.vault_root.display());
+
     let vault_root = self.vault_root.clone();
     let state = self.state.clone();
+    let event_tx = self.event_tx.clone();
+
+    // Spawn day boundary checker
+    let day_tx = self.event_tx.clone();
+    tokio::spawn(async move {
+      let mut current_date = chrono::Local::now().date_naive();
+      loop {
+        tokio::time::sleep(Duration::from_secs(60)).await;
+        let now = chrono::Local::now().date_naive();
+        if now != current_date {
+          current_date = now;
+          let _ = day_tx.send(VaultEvent::DayChanged { today: now });
+          info!("Day changed: {}", now);
+        }
+      }
+    });
+
     tokio::task::spawn_blocking(move || {
       while let Ok(events_result) = rx.recv() {
         match events_result {
@@ -116,16 +146,31 @@ impl VaultWatcher {
             if !paths_changed.is_empty() {
               let vault_root = vault_root.clone();
               let state = state.clone();
+              let event_tx = event_tx.clone();
               let rt = tokio::runtime::Handle::current();
               rt.block_on(async {
                 let mut vault = state.write().await;
                 for rel_path in &paths_changed {
                   let abs_path = vault_root.join(rel_path);
                   if abs_path.exists() {
+                    let was_existing = vault.notes.contains_key(rel_path);
                     match note::parse_note(&vault_root, rel_path) {
                       Ok(note) => {
-                        info!("Updated: {}", rel_path.display());
-                        vault.notes.insert(rel_path.clone(), note);
+                        vault.notes.insert(rel_path.clone(), note.clone());
+                        let event = if was_existing {
+                          info!("Modified: {}", rel_path.display());
+                          VaultEvent::NoteModified {
+                            path: rel_path.clone(),
+                            note,
+                          }
+                        } else {
+                          info!("Added: {}", rel_path.display());
+                          VaultEvent::NoteAdded {
+                            path: rel_path.clone(),
+                            note,
+                          }
+                        };
+                        let _ = event_tx.send(event);
                       }
                       Err(e) => {
                         warn!("Failed to parse {}: {}", rel_path.display(), e);
@@ -134,6 +179,9 @@ impl VaultWatcher {
                   } else {
                     info!("Deleted: {}", rel_path.display());
                     vault.notes.remove(rel_path);
+                    let _ = event_tx.send(VaultEvent::NoteDeleted {
+                      path: rel_path.clone(),
+                    });
                   }
                 }
               });

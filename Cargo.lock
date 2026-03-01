@@ -1986,10 +1986,12 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dioxus",
+ "futures",
  "ob",
  "serde",
  "serde_json",
  "tokio",
+ "tokio-stream",
  "tracing",
  "wasm-bindgen",
 ]
