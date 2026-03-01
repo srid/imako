@@ -14,7 +14,8 @@ static APP_STATE: std::sync::OnceLock<super::state::AppState> = std::sync::OnceL
 #[allow(dead_code)]
 pub fn init(vault_root: PathBuf) {
     let state = super::state::AppState::new(vault_root);
-    state.start_watcher();
+    // Note: watcher is not started here — no tokio runtime yet.
+    // Live file watching will be added in Phase 2.
     APP_STATE.set(state).expect("AppState already initialized");
 }
 
