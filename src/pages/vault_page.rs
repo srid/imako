@@ -74,10 +74,7 @@ pub fn VaultPage(path: Option<String>) -> Element {
 /// Renders the detail view for a specific note file.
 #[component]
 fn NoteDetail(path: String) -> Element {
-    let note_data = use_resource(move || {
-        let p = path.clone();
-        async move { get_note(p).await }
-    });
+    let note_data = use_resource(use_reactive!(|path| async move { get_note(path).await }));
 
     let binding = note_data.read();
     match &*binding {

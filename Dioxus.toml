@@ -6,7 +6,7 @@ default_platform = "fullstack"
 title = "Imako"
 
 [web.resource.dev]
-style = ["tailwind.css"]
+style = ["/tailwind.css"]
 
 [web.watcher]
 reload_html = true
