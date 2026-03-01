@@ -28,10 +28,10 @@ fn vault_info(state: &super::state::AppState) -> VaultInfo {
     .file_name()
     .map(|n| n.to_string_lossy().to_string())
     .unwrap_or_else(|| "Vault".to_string());
-  let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+  let today = chrono::Local::now().date_naive();
   VaultInfo {
     vault_name,
-    vault_path: state.vault_root.to_string_lossy().to_string(),
+    vault_path: state.vault_root.clone(),
     today,
   }
 }

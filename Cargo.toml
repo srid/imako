@@ -16,13 +16,13 @@ dioxus = { version = "0.7", features = ["fullstack", "router"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
 # Pin to match dx CLI's bundled wasm-bindgen-cli version
 wasm-bindgen = "=0.2.108"
 
 # Server-only dependencies (not available on WASM)
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1", features = ["full"] }
-chrono = "0.4"
 
 [features]
 default = []

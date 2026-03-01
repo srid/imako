@@ -12,13 +12,14 @@ mod server;
 /// Shared types used by both server and client.
 pub mod shared {
   use serde::{Deserialize, Serialize};
+  use std::path::PathBuf;
 
   /// Basic vault metadata.
   #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
   pub struct VaultInfo {
     pub vault_name: String,
-    pub vault_path: String,
-    pub today: String,
+    pub vault_path: PathBuf,
+    pub today: chrono::NaiveDate,
   }
 }
 
