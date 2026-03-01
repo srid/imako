@@ -21,7 +21,6 @@ wasm-bindgen = "=0.2.108"
 
 # Server-only dependencies (not available on WASM)
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-clap = { version = "4", features = ["derive", "env"] }
 tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
 

@@ -13,19 +13,6 @@ mod pages;
 #[cfg(feature = "server")]
 mod server;
 
-/// CLI arguments for the Imako server.
-#[cfg(feature = "server")]
-#[derive(clap::Parser)]
-#[command(
-    name = "imako",
-    about = "Journaling and planning for Obsidian notebooks"
-)]
-struct Cli {
-    /// Path to the Obsidian vault directory
-    #[arg(long, env = "VAULT_PATH", default_value = "example")]
-    vault: String,
-}
-
 /// Shared types used by both server and client.
 pub mod shared {
     use ob::{FolderNode, Note};
@@ -109,11 +96,10 @@ fn main() {
     // Initialize server state before launching Dioxus
     #[cfg(feature = "server")]
     {
-        use clap::Parser;
-        let cli = Cli::parse();
-        let vault_root = std::path::PathBuf::from(&cli.vault)
+        let vault_path = std::env::var("VAULT_PATH").unwrap_or_else(|_| "example".to_string());
+        let vault_root = std::path::PathBuf::from(&vault_path)
             .canonicalize()
-            .unwrap_or_else(|_| panic!("Vault path not found: {}", cli.vault));
+            .unwrap_or_else(|_| panic!("Vault path not found: {}", vault_path));
         tracing::info!("Loading vault: {}", vault_root.display());
         server::api::init(vault_root);
     }
