@@ -25,6 +25,6 @@ tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
 
 [features]
-default = []
+default = ["server"]
 server = ["dioxus/server"]
 web = ["dioxus/web"]
