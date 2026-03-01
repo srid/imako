@@ -2,29 +2,29 @@
 use crate::components::folder_tree::FolderTree;
 use crate::components::header::Header;
 use crate::components::note_view::NoteView;
-use crate::shared::FolderTreeData;
-use crate::{get_folder_tree, get_note};
+use crate::{get_folder_tree, get_note, get_vault_info};
 use dioxus::prelude::*;
 
 #[component]
 pub fn VaultPage(path: Option<String>) -> Element {
+  let vault_info = use_server_future(get_vault_info)?;
   let folder_tree = use_server_future(get_folder_tree)?;
   rsx! {
     div { class: "flex h-screen bg-white text-stone-800 font-sans antialiased",
       aside { class: "w-72 shrink-0 border-r border-stone-200 bg-stone-50 overflow-y-auto p-4",
-        match &*folder_tree.read() {
-            Some(Ok(data)) => rsx! {
-              Header { info: data.info.clone() }
+        match (&*vault_info.read(), &*folder_tree.read()) {
+            (Some(Ok(info)), Some(Ok(tree))) => rsx! {
+              Header { info: info.clone() }
               FolderTree {
-                node: data.tree.clone(),
+                node: tree.clone(),
                 base_path: String::new(),
                 selected_path: path.clone(),
               }
             },
-            Some(Err(e)) => rsx! {
+            (Some(Err(e)), _) | (_, Some(Err(e))) => rsx! {
               div { class: "text-red-600 text-sm p-4", "Error loading vault: {e}" }
             },
-            None => rsx! {
+            _ => rsx! {
               div { class: "flex items-center justify-center p-8",
                 div { class: "animate-pulse text-stone-400 text-sm", "Loading vault…" }
               }
@@ -39,11 +39,11 @@ pub fn VaultPage(path: Option<String>) -> Element {
             Some(folder_path) => rsx! {
               FolderDetail {
                 path: folder_path.clone(),
-                tree_data: folder_tree.read().as_ref().and_then(|r| r.as_ref().ok().cloned()),
+                tree: folder_tree.read().as_ref().and_then(|r| r.as_ref().ok().cloned()),
               }
             },
             None => rsx! {
-              RootView { tree_data: folder_tree.read().as_ref().and_then(|r| r.as_ref().ok().cloned()) }
+              RootView { tree: folder_tree.read().as_ref().and_then(|r| r.as_ref().ok().cloned()) }
             },
         }
       }
@@ -57,9 +57,9 @@ fn NoteDetail(path: String) -> Element {
   let note_data = use_resource(use_reactive!(|path| async move { get_note(path).await }));
   let binding = note_data.read();
   match &*binding {
-    Some(Ok(data)) => {
+    Some(Ok(note)) => {
       rsx! {
-        NoteView { data: data.clone() }
+        NoteView { note: note.clone() }
       }
     }
     Some(Err(e)) => {
@@ -78,7 +78,7 @@ fn NoteDetail(path: String) -> Element {
 
 /// Renders the detail view for a folder — lists its contents.
 #[component]
-fn FolderDetail(path: String, tree_data: Option<FolderTreeData>) -> Element {
+fn FolderDetail(path: String, tree: Option<ob::FolderNode>) -> Element {
   let folder_name = path.split('/').next_back().unwrap_or(&path);
   rsx! {
     div { class: "space-y-6",
@@ -86,8 +86,8 @@ fn FolderDetail(path: String, tree_data: Option<FolderTreeData>) -> Element {
         span { "📁" }
         span { "{folder_name}" }
       }
-      if let Some(data) = &tree_data {
-        {render_folder_contents(&data.tree, &path)}
+      if let Some(root) = &tree {
+        {render_folder_contents(root, &path)}
       }
     }
   }
@@ -155,13 +155,13 @@ fn render_folder_contents(root: &ob::FolderNode, target_path: &str) -> Element {
 
 /// Root view — shows vault overview.
 #[component]
-fn RootView(tree_data: Option<FolderTreeData>) -> Element {
+fn RootView(tree: Option<ob::FolderNode>) -> Element {
   rsx! {
     div { class: "space-y-6",
       h2 { class: "text-lg font-semibold text-stone-700", "Vault" }
-      if let Some(data) = &tree_data {
+      if let Some(root) = &tree {
         div { class: "space-y-2",
-          for (name , _) in &data.tree.subfolders {
+          for (name , _) in &root.subfolders {
             a {
               class: "flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-stone-50 text-stone-700 cursor-pointer transition-colors",
               href: "/p/{name}",
@@ -169,7 +169,7 @@ fn RootView(tree_data: Option<FolderTreeData>) -> Element {
               span { class: "font-medium", "{name}" }
             }
           }
-          for (filename , entry) in &data.tree.files {
+          for (filename , entry) in &root.files {
             {
                 let file_path = entry.path.to_string_lossy().to_string();
                 rsx! {

@@ -1,7 +1,8 @@
 //! Server function implementations.
-use crate::shared::{FolderTreeData, NoteData, VaultInfo};
+use crate::shared::VaultInfo;
 use dioxus::prelude::*;
 use ob::folder_tree::build_folder_tree_from_notes;
+use ob::{FolderNode, Note};
 use std::path::PathBuf;
 
 /// Global vault state, initialized once at startup.
@@ -35,15 +36,18 @@ fn vault_info(state: &super::state::AppState) -> VaultInfo {
   }
 }
 
-pub async fn get_folder_tree_impl() -> Result<FolderTreeData, ServerFnError> {
+pub async fn get_vault_info_impl() -> Result<VaultInfo, ServerFnError> {
   let state = app_state();
-  let vault = state.vault.read().await;
-  let tree = build_folder_tree_from_notes(&vault.notes);
-  let info = vault_info(state);
-  Ok(FolderTreeData { info, tree })
+  Ok(vault_info(state))
 }
 
-pub async fn get_note_impl(path: String) -> Result<NoteData, ServerFnError> {
+pub async fn get_folder_tree_impl() -> Result<FolderNode, ServerFnError> {
+  let state = app_state();
+  let vault = state.vault.read().await;
+  Ok(build_folder_tree_from_notes(&vault.notes))
+}
+
+pub async fn get_note_impl(path: String) -> Result<Note, ServerFnError> {
   let state = app_state();
   let vault = state.vault.read().await;
   let path_buf = PathBuf::from(&path);
@@ -51,9 +55,5 @@ pub async fn get_note_impl(path: String) -> Result<NoteData, ServerFnError> {
     .notes
     .get(&path_buf)
     .ok_or_else(|| ServerFnError::new(format!("Note not found: {}", path)))?;
-  let info = vault_info(state);
-  Ok(NoteData {
-    info,
-    note: note.clone(),
-  })
+  Ok(note.clone())
 }

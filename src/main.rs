@@ -11,8 +11,8 @@ mod server;
 
 /// Shared types used by both server and client.
 pub mod shared {
-  use ob::{FolderNode, Note};
   use serde::{Deserialize, Serialize};
+
   /// Basic vault metadata.
   #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
   pub struct VaultInfo {
@@ -20,29 +20,23 @@ pub mod shared {
     pub vault_path: String,
     pub today: String,
   }
-  /// Response for a folder tree request.
-  #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-  pub struct FolderTreeData {
-    pub info: VaultInfo,
-    pub tree: FolderNode,
-  }
-  /// Response for a note request.
-  #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-  pub struct NoteData {
-    pub info: VaultInfo,
-    pub note: Note,
-  }
 }
 
-/// Fetch the vault info and folder tree.
+/// Fetch vault metadata.
 #[server]
-pub async fn get_folder_tree() -> Result<shared::FolderTreeData, ServerFnError> {
+pub async fn get_vault_info() -> Result<shared::VaultInfo, ServerFnError> {
+  server::api::get_vault_info_impl().await
+}
+
+/// Fetch the folder tree.
+#[server]
+pub async fn get_folder_tree() -> Result<ob::FolderNode, ServerFnError> {
   server::api::get_folder_tree_impl().await
 }
 
 /// Fetch a specific note by its vault-relative path.
 #[server]
-pub async fn get_note(path: String) -> Result<shared::NoteData, ServerFnError> {
+pub async fn get_note(path: String) -> Result<ob::Note, ServerFnError> {
   server::api::get_note_impl(path).await
 }
 
