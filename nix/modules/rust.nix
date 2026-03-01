@@ -7,6 +7,9 @@
   perSystem = { config, self', pkgs, lib, ... }: {
     rust-project.crates."imako" = {
       path = ./../..;
+      crane.args = {
+        cargoExtraArgs = "--features server";
+      };
     };
     packages.default = self'.packages.imako;
   };
