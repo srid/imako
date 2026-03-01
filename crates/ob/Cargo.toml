@@ -1,7 +1,7 @@
 [package]
 name = "ob"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Rust library for working with Obsidian vaults"
 authors = ["Sridhar Ratnakumar <srid@srid.ca>"]
 license = "AGPL-3.0-or-later"

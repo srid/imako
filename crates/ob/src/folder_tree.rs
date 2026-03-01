@@ -92,12 +92,13 @@ fn flatten_tree(node: &mut FolderNode) {
     let mut replacements: Vec<(String, String, FolderNode)> = Vec::new();
 
     for key in &keys {
-        if let Some(child) = node.subfolders.get(key) {
-            if child.files.is_empty() && child.subfolders.len() == 1 {
-                let (child_name, grandchild) = child.subfolders.iter().next().unwrap();
-                let merged_name = format!("{}/{}", key, child_name);
-                replacements.push((key.clone(), merged_name, grandchild.clone()));
-            }
+        if let Some(child) = node.subfolders.get(key)
+            && child.files.is_empty()
+            && child.subfolders.len() == 1
+        {
+            let (child_name, grandchild) = child.subfolders.iter().next().unwrap();
+            let merged_name = format!("{}/{}", key, child_name);
+            replacements.push((key.clone(), merged_name, grandchild.clone()));
         }
     }
 

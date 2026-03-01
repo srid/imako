@@ -5,7 +5,7 @@ resolver = "2"
 [package]
 name = "imako"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Journaling and planning for Obsidian notebooks"
 authors = ["Sridhar Ratnakumar <srid@srid.ca>"]
 license = "AGPL-3.0-or-later"

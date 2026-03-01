@@ -1,6 +1,6 @@
 //! Application state — holds the vault state and provides access to server functions.
 
-use ob::vault::{scan_vault, VaultState, VaultWatcher};
+use ob::vault::{VaultState, VaultWatcher, scan_vault};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;

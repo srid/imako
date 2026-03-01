@@ -1,7 +1,7 @@
 //! Vault scanning and live filesystem watching.
 
 use crate::note::{self, Note};
-use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
+use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

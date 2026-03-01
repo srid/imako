@@ -1,7 +1,7 @@
 //! Note parsing — reads Obsidian markdown files into structured data.
 
-use crate::markdown::{comrak_to_document, Document};
-use comrak::{parse_document, Arena, Options};
+use crate::markdown::{Document, comrak_to_document};
+use comrak::{Arena, Options, parse_document};
 use std::path::{Path, PathBuf};
 
 /// A parsed Obsidian note.

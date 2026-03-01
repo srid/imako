@@ -23,7 +23,9 @@ fn render_block(block: &Block) -> Element {
         },
         Block::Heading { level, content } => {
             let class = match level {
-                1 => "text-3xl font-bold text-stone-900 tracking-tight mt-10 mb-6 pb-2 border-b border-stone-200",
+                1 => {
+                    "text-3xl font-bold text-stone-900 tracking-tight mt-10 mb-6 pb-2 border-b border-stone-200"
+                }
                 2 => "text-2xl font-bold text-stone-900 tracking-tight mt-8 mb-4",
                 3 => "text-xl font-bold text-stone-900 tracking-tight mt-6 mb-3",
                 4 => "text-lg font-bold text-stone-900 tracking-tight mt-5 mb-2",
